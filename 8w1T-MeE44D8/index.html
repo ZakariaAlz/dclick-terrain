@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Vague 5 · Alaa</title>
+<style>
+:root {
+  --bg: #f4f1ea; --panel: #fffdf8; --fg: #1b2129; --muted: #5d6670; --line: #ddd6c8;
+  --accent: #0b5cad; --ok: #1d6b45; --ok-bg: #e2f1e8; --warn: #8a4f00; --warn-bg: #fbecd2;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #12161b; --panel: #1b2128; --fg: #e8ecf0; --muted: #9ba6b1; --line: #2d3741;
+  --accent: #79b6f5; --ok: #6fd3a0; --ok-bg: #173327; --warn: #f3bd6b; --warn-bg: #3a2a12; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 18px 0 10px; }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 2px 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .3s; }
+.nav { display: block; text-align: center; background: var(--accent); color: var(--panel); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.status { font-size: .9rem; color: var(--muted); }
+.status b.late { color: var(--warn); }
+.status b.ahead { color: var(--ok); }
+ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+li.done { opacity: .55; }
+li.next { border: 2px solid var(--accent); }
+.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.panels { display: grid; gap: 2px; }
+.ref { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+.flag { display: inline-block; font-size: .8rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 1rem system-ui, sans-serif; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; cursor: pointer; }
+.acts a { border: 1px solid var(--line); color: var(--fg); background: transparent; }
+.acts button { border: 2px solid var(--ok); color: var(--ok); background: transparent; }
+li.done .acts button { background: var(--ok-bg); }
+.send { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+details { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+summary { font-weight: 700; cursor: pointer; }
+details ol { margin: 8px 0 0; display: block; padding-left: 20px; list-style: decimal; }
+details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">D'click · Vague 5</div>
+    <h1>Alaa</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <div class="bar">
+    <div class="prog"><span id="count"></span><span id="clock"></span></div>
+    <div class="meter"><i id="meter"></i></div>
+    <a class="nav" id="nav" target="_blank" rel="noopener"></a>
+    <div class="status" id="status"></div>
+  </div>
+
+  <ol id="stops"></ol>
+
+  <a class="send" id="send" target="_blank" rel="noopener">Envoyer mon avancement sur WhatsApp</a>
+
+  <details>
+    <summary>Rappels</summary>
+    <ol>
+      <li>Moto à l'arrêt complet avant de sortir le téléphone.</li>
+      <li>GPS précis (moins de 10 m) devant le panneau, avant les photos.</li>
+      <li>3 photos : vue d'ensemble, face frontale, contenu (marque).</li>
+      <li>Écris le code (A01, A02…) dans le formulaire pour chaque panneau.</li>
+      <li>Panneau introuvable, démonté ou caché : photo de l'endroit + note, puis arrêt suivant.</li>
+      <li>À 4 h, tu t'arrêtes là où tu es et tu envoies ton avancement.</li>
+      <li>Termine avant la nuit (coucher du soleil vers 17 h 58) : une photo de nuit ne permet pas de lire la marque.</li>
+    </ol>
+  </details>
+</div>
+
+<script>
+const R = {"agent": "Alaa", "km": 24.6, "n_panels": 46, "total_min": 238, "stops": [{"order": 1, "lat": 36.730634, "lon": 3.0852419999999996, "svc": 13.7, "arrive_min": 0, "leave_min": 14, "panels": [{"ref": "A01", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A02", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A03", "support": "abribus", "stacked": true, "near_photo": false}]}, {"order": 2, "lat": 36.728756, "lon": 3.09007, "svc": 4.7, "arrive_min": 15, "leave_min": 20, "panels": [{"ref": "A04", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 3, "lat": 36.716351, "lon": 3.107641, "svc": 4.7, "arrive_min": 22, "leave_min": 27, "panels": [{"ref": "A05", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 4, "lat": 36.715476, "lon": 3.108563, "svc": 4.7, "arrive_min": 27, "leave_min": 32, "panels": [{"ref": "A06", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 5, "lat": 36.713999, "lon": 3.098714, "svc": 4.7, "arrive_min": 33, "leave_min": 38, "panels": [{"ref": "A07", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 6, "lat": 36.710561, "lon": 3.088627, "svc": 4.7, "arrive_min": 39, "leave_min": 44, "panels": [{"ref": "A08", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 7, "lat": 36.708375, "lon": 3.084394, "svc": 4.7, "arrive_min": 45, "leave_min": 49, "panels": [{"ref": "A09", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 8, "lat": 36.707358, "lon": 3.0819615000000002, "svc": 7.2, "arrive_min": 50, "leave_min": 57, "panels": [{"ref": "A10", "support": "abribus", "stacked": false, "near_photo": false}, {"ref": "A11", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 9, "lat": 36.706248, "lon": 3.079606, "svc": 4.7, "arrive_min": 58, "leave_min": 63, "panels": [{"ref": "A12", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 10, "lat": 36.704989, "lon": 3.076873, "svc": 4.7, "arrive_min": 63, "leave_min": 68, "panels": [{"ref": "A13", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 11, "lat": 36.7019285, "lon": 3.0735885, "svc": 7.2, "arrive_min": 69, "leave_min": 76, "panels": [{"ref": "A14", "support": "abribus", "stacked": false, "near_photo": false}, {"ref": "A15", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 12, "lat": 36.700645, "lon": 3.073218, "svc": 4.7, "arrive_min": 76, "leave_min": 81, "panels": [{"ref": "A16", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 13, "lat": 36.695316, "lon": 3.077175, "svc": 4.7, "arrive_min": 82, "leave_min": 86, "panels": [{"ref": "A17", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 14, "lat": 36.699885, "lon": 3.050359, "svc": 4.7, "arrive_min": 91, "leave_min": 96, "panels": [{"ref": "A18", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 15, "lat": 36.71329, "lon": 3.04526, "svc": 4.7, "arrive_min": 97, "leave_min": 102, "panels": [{"ref": "A19", "support": "unipole", "stacked": false, "near_photo": false}]}, {"order": 16, "lat": 36.7135, "lon": 3.045345, "svc": 4.7, "arrive_min": 102, "leave_min": 107, "panels": [{"ref": "A20", "support": "unipole", "stacked": false, "near_photo": false}]}, {"order": 17, "lat": 36.71467, "lon": 3.048722, "svc": 18.2, "arrive_min": 108, "leave_min": 126, "panels": [{"ref": "A21", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A22", "support": "panneau_4x3", "stacked": true, "near_photo": false}, {"ref": "A23", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A24", "support": "abribus", "stacked": true, "near_photo": false}]}, {"order": 18, "lat": 36.718572, "lon": 3.044335, "svc": 4.7, "arrive_min": 127, "leave_min": 132, "panels": [{"ref": "A25", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 19, "lat": 36.729634, "lon": 3.046481, "svc": 4.7, "arrive_min": 133, "leave_min": 138, "panels": [{"ref": "A26", "support": "unipole", "stacked": false, "near_photo": false}]}, {"order": 20, "lat": 36.727072, "lon": 3.050071, "svc": 22.7, "arrive_min": 138, "leave_min": 161, "panels": [{"ref": "A27", "support": "terrasse", "stacked": true, "near_photo": false}, {"ref": "A28", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A29", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A30", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A31", "support": "abribus", "stacked": true, "near_photo": false}]}, {"order": 21, "lat": 36.730745, "lon": 3.048312, "svc": 4.7, "arrive_min": 162, "leave_min": 166, "panels": [{"ref": "A32", "support": "terrasse", "stacked": false, "near_photo": false}]}, {"order": 22, "lat": 36.734394, "lon": 3.04907, "svc": 9.2, "arrive_min": 167, "leave_min": 176, "panels": [{"ref": "A33", "support": "panneau_4x3", "stacked": true, "near_photo": false}, {"ref": "A34", "support": "abribus", "stacked": true, "near_photo": false}]}, {"order": 23, "lat": 36.735744, "lon": 3.04809, "svc": 4.7, "arrive_min": 176, "leave_min": 181, "panels": [{"ref": "A35", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 24, "lat": 36.73647, "lon": 3.047836, "svc": 9.2, "arrive_min": 181, "leave_min": 190, "panels": [{"ref": "A36", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A37", "support": "abribus", "stacked": true, "near_photo": false}]}, {"order": 25, "lat": 36.738453, "lon": 3.06447, "svc": 13.7, "arrive_min": 192, "leave_min": 206, "panels": [{"ref": "A38", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A39", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A40", "support": "facade_mur", "stacked": true, "near_photo": false}]}, {"order": 26, "lat": 36.741016, "lon": 3.079669, "svc": 9.2, "arrive_min": 207, "leave_min": 216, "panels": [{"ref": "A41", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A42", "support": "abribus", "stacked": true, "near_photo": false}]}, {"order": 27, "lat": 36.739093, "lon": 3.088295, "svc": 4.7, "arrive_min": 217, "leave_min": 222, "panels": [{"ref": "A43", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 28, "lat": 36.748305, "lon": 3.0828329999999995, "svc": 13.7, "arrive_min": 224, "leave_min": 238, "panels": [{"ref": "A44", "support": "terrasse", "stacked": true, "near_photo": false}, {"ref": "A45", "support": "abribus", "stacked": true, "near_photo": false}, {"ref": "A46", "support": "abribus", "stacked": true, "near_photo": false}]}]};
+const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
+  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre" };
+const KEY = "dclick-v5-" + R.agent;
+const CAP = 240, CHUNK = 10;
+
+let state = { done: [], start: null };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+const pt = s => s.lat.toFixed(6) + "," + s.lon.toFixed(6);
+const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
+const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const isDone = s => state.done.includes(s.order);
+
+document.getElementById("sub").textContent =
+  `${R.n_panels} panneaux, ${R.stops.length} arrêts, ${String(R.km).replace(".", ",")} km à moto. ` +
+  `Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.`;
+
+function render() {
+  const pending = R.stops.filter(s => !isDone(s));
+  const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
+  document.getElementById("count").textContent = `${donePanels} / ${R.n_panels} panneaux`;
+  document.getElementById("meter").style.width = (100 * donePanels / R.n_panels) + "%";
+
+  const nav = document.getElementById("nav");
+  if (pending.length) {
+    // Les 10 prochains arrêts non faits, dans l'ordre: Google Maps part de la position du téléphone.
+    const next = pending.slice(0, CHUNK), last = next[next.length - 1];
+    let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
+    if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
+    nav.href = url;
+    nav.textContent = next.length > 1 ? `Naviguer : arrêts ${next[0].order} à ${last.order}` : `Naviguer : arrêt ${last.order}`;
+    nav.hidden = false;
+  } else {
+    nav.hidden = true;
+  }
+
+  const st = document.getElementById("status"), clock = document.getElementById("clock");
+  if (state.start) {
+    const el = (Date.now() - state.start) / 60000;
+    clock.textContent = `${hm(Math.max(0, el))} sur 4 h`;
+    const lastDone = R.stops.filter(isDone).pop();
+    const delta = lastDone ? el - lastDone.leave_min : 0;
+    const pace = Math.abs(delta) < 3 ? "dans les temps"
+      : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>`
+      : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
+    st.innerHTML = `Chrono lancé à ${clockOf(state.start)}, fin à ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
+  } else {
+    clock.textContent = "4 h";
+    st.textContent = "Le chrono démarre quand tu touches « Fait » au 1er arrêt.";
+  }
+
+  const firstPending = pending[0] && pending[0].order;
+  document.getElementById("stops").innerHTML = R.stops.map(s => {
+    const flags = [];
+    if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
+    if (s.panels.some(p => p.near_photo)) flags.push("Doublon possible, vérifier");
+    return `<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
+      <div class="n">${s.order}</div>
+      <div>
+        <div class="when">Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}</div>
+        <div class="panels">${s.panels.map(p => `<div><span class="ref">${p.ref}</span> · ${SUP[p.support] || p.support}</div>`).join("")}</div>
+        ${flags.map(f => `<div class="flag">${f}</div>`).join("")}
+      </div>
+      <div class="acts">
+        <a href="https://maps.google.com/?q=${pt(s)}" target="_blank" rel="noopener">Carte</a>
+        <button type="button" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
+      </div>
+    </li>`;
+  }).join("");
+
+  const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
+  const msg = `Vague 5 · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
+    (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
+  document.getElementById("send").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+}
+
+document.getElementById("stops").addEventListener("click", e => {
+  const b = e.target.closest("button[data-o]");
+  if (!b) return;
+  const o = Number(b.dataset.o), marked = !state.done.includes(o);
+  if (marked) {
+    state.done.push(o);
+    // Le chrono part à l'arrivée au 1er panneau: on retire le temps passé sur cet arrêt.
+    if (!state.start) state.start = Date.now() - R.stops.find(s => s.order === o).svc * 60000;
+  } else {
+    state.done = state.done.filter(x => x !== o);
+  }
+  save();
+  render();
+  const next = R.stops.find(s => !isDone(s));
+  if (marked && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+render();
+setInterval(render, 30000);
+</script>
+</body>
+</html>
