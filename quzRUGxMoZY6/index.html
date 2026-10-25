@@ -31,6 +31,8 @@ h1 { margin: 2px 0 4px; font-size: 1.6rem; }
 ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
 li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
 li.done { opacity: .55; }
+li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; }
+.when a { color: var(--accent); }
 li.next { border: 2px solid var(--accent); }
 .n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
 .when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -87,7 +89,8 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outlin
 const R = {"agent": "Mohamed Graba", "km": 37.1, "n_panels": 43, "total_min": 239, "stops": [{"order": 1, "lat": 36.785893, "lon": 3.047312, "svc": 4.7, "arrive_min": 0, "leave_min": 5, "panels": [{"ref": "M01", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 2, "lat": 36.788305, "lon": 3.0459815, "svc": 7.2, "arrive_min": 5, "leave_min": 13, "panels": [{"ref": "M02", "support": "panneau_4x3", "stacked": false, "near_photo": true}, {"ref": "M03", "support": "facade_mur", "stacked": false, "near_photo": true}]}, {"order": 3, "lat": 36.790173, "lon": 3.04762, "svc": 4.7, "arrive_min": 13, "leave_min": 18, "panels": [{"ref": "M04", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 4, "lat": 36.793391, "lon": 3.054003, "svc": 4.7, "arrive_min": 19, "leave_min": 24, "panels": [{"ref": "M05", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 5, "lat": 36.794158, "lon": 3.053063, "svc": 4.7, "arrive_min": 24, "leave_min": 29, "panels": [{"ref": "M06", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 6, "lat": 36.794603, "lon": 3.053191, "svc": 4.7, "arrive_min": 29, "leave_min": 34, "panels": [{"ref": "M07", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 7, "lat": 36.798904, "lon": 3.049574, "svc": 4.7, "arrive_min": 35, "leave_min": 39, "panels": [{"ref": "M08", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 8, "lat": 36.793525, "lon": 3.053423, "svc": 4.7, "arrive_min": 40, "leave_min": 45, "panels": [{"ref": "M09", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 9, "lat": 36.792974, "lon": 3.05478, "svc": 4.7, "arrive_min": 45, "leave_min": 50, "panels": [{"ref": "M10", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 10, "lat": 36.792456, "lon": 3.056331, "svc": 4.7, "arrive_min": 50, "leave_min": 55, "panels": [{"ref": "M11", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 11, "lat": 36.792241, "lon": 3.056759, "svc": 4.7, "arrive_min": 55, "leave_min": 60, "panels": [{"ref": "M12", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 12, "lat": 36.791765, "lon": 3.057797, "svc": 4.7, "arrive_min": 60, "leave_min": 65, "panels": [{"ref": "M13", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 13, "lat": 36.790881, "lon": 3.059848, "svc": 4.7, "arrive_min": 65, "leave_min": 70, "panels": [{"ref": "M14", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 14, "lat": 36.789868, "lon": 3.06185, "svc": 4.7, "arrive_min": 70, "leave_min": 75, "panels": [{"ref": "M15", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 15, "lat": 36.791272, "lon": 3.061247, "svc": 4.7, "arrive_min": 76, "leave_min": 80, "panels": [{"ref": "M16", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 16, "lat": 36.789055, "lon": 3.06288, "svc": 4.7, "arrive_min": 81, "leave_min": 86, "panels": [{"ref": "M17", "support": "terrasse", "stacked": false, "near_photo": false}]}, {"order": 17, "lat": 36.785676, "lon": 3.063083, "svc": 4.7, "arrive_min": 87, "leave_min": 92, "panels": [{"ref": "M18", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 18, "lat": 36.780965, "lon": 3.061747, "svc": 4.7, "arrive_min": 93, "leave_min": 97, "panels": [{"ref": "M19", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 19, "lat": 36.780614, "lon": 3.061593, "svc": 4.7, "arrive_min": 98, "leave_min": 102, "panels": [{"ref": "M20", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 20, "lat": 36.773741, "lon": 3.059856, "svc": 4.7, "arrive_min": 104, "leave_min": 108, "panels": [{"ref": "M21", "support": "abribus", "stacked": false, "near_photo": false}]}, {"order": 21, "lat": 36.774397, "lon": 3.061596, "svc": 4.7, "arrive_min": 110, "leave_min": 115, "panels": [{"ref": "M22", "support": "panneau_4x3", "stacked": false, "near_photo": false}]}, {"order": 22, "lat": 36.774681, "lon": 3.061365, "svc": 4.7, "arrive_min": 115, "leave_min": 119, "panels": [{"ref": "M23", "support": "panneau_4x3", "stacked": false, "near_photo": true}]}, {"order": 23, "lat": 36.739713, "lon": 3.049741, "svc": 4.7, "arrive_min": 128, "leave_min": 132, "panels": [{"ref": "M24", "support": "terrasse", "stacked": false, "near_photo": false}]}, {"order": 24, "lat": 36.737792, "lon": 3.049053, "svc": 4.7, "arrive_min": 133, "leave_min": 138, "panels": [{"ref": "M25", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 25, "lat": 36.7346755, "lon": 3.0488855, "svc": 7.2, "arrive_min": 139, "leave_min": 146, "panels": [{"ref": "M26", "support": "abribus", "stacked": false, "near_photo": false}, {"ref": "M27", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 26, "lat": 36.73397, "lon": 3.035842, "svc": 4.7, "arrive_min": 148, "leave_min": 153, "panels": [{"ref": "M28", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 27, "lat": 36.734296, "lon": 3.0320324999999997, "svc": 7.2, "arrive_min": 153, "leave_min": 160, "panels": [{"ref": "M29", "support": "facade_mur", "stacked": false, "near_photo": false}, {"ref": "M30", "support": "terrasse", "stacked": false, "near_photo": false}]}, {"order": 28, "lat": 36.74045, "lon": 2.906345, "svc": 4.7, "arrive_min": 173, "leave_min": 178, "panels": [{"ref": "M31", "support": "unipole", "stacked": false, "near_photo": false}]}, {"order": 29, "lat": 36.739593, "lon": 2.900355, "svc": 4.7, "arrive_min": 178, "leave_min": 183, "panels": [{"ref": "M32", "support": "unipole", "stacked": false, "near_photo": false}]}, {"order": 30, "lat": 36.739206, "lon": 2.897519, "svc": 4.7, "arrive_min": 183, "leave_min": 188, "panels": [{"ref": "M33", "support": "unipole", "stacked": false, "near_photo": false}]}, {"order": 31, "lat": 36.739086, "lon": 2.896558, "svc": 4.7, "arrive_min": 188, "leave_min": 193, "panels": [{"ref": "M34", "support": "unipole", "stacked": false, "near_photo": false}]}, {"order": 32, "lat": 36.750561, "lon": 2.886959, "svc": 4.7, "arrive_min": 196, "leave_min": 201, "panels": [{"ref": "M35", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 33, "lat": 36.752629, "lon": 2.888102, "svc": 4.7, "arrive_min": 202, "leave_min": 206, "panels": [{"ref": "M36", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 34, "lat": 36.75308, "lon": 2.888162, "svc": 9.2, "arrive_min": 206, "leave_min": 216, "panels": [{"ref": "M37", "support": "panneau_4x3", "stacked": true, "near_photo": false}, {"ref": "M38", "support": "terrasse", "stacked": true, "near_photo": false}]}, {"order": 35, "lat": 36.757889, "lon": 2.890775, "svc": 4.7, "arrive_min": 216, "leave_min": 221, "panels": [{"ref": "M39", "support": "facade_mur", "stacked": false, "near_photo": false}]}, {"order": 36, "lat": 36.757477, "lon": 2.890496, "svc": 9.2, "arrive_min": 221, "leave_min": 230, "panels": [{"ref": "M40", "support": "facade_mur", "stacked": true, "near_photo": false}, {"ref": "M41", "support": "terrasse", "stacked": true, "near_photo": false}]}, {"order": 37, "lat": 36.751101, "lon": 2.8762205, "svc": 7.2, "arrive_min": 232, "leave_min": 239, "panels": [{"ref": "M42", "support": "facade_mur", "stacked": false, "near_photo": false}, {"ref": "M43", "support": "facade_mur", "stacked": false, "near_photo": false}]}]};
 const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
   terrasse: "Terrasse", sucette: "Sucette", autre: "Autre" };
-const KEY = "dclick-v5-" + R.agent;
+// Même origine (github.io) pour toutes les pages: la clé doit distinguer chaque page.
+const KEY = "dclick-v5-" + (R.key || R.agent);
 const CAP = 240, CHUNK = 10;
 
 let state = { done: [], start: null };
@@ -99,7 +102,7 @@ const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart
 const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 const isDone = s => state.done.includes(s.order);
 
-document.getElementById("sub").textContent =
+document.getElementById("sub").textContent = R.intro ||
   `${R.n_panels} panneaux, ${R.stops.length} arrêts, ${String(R.km).replace(".", ",")} km à moto. ` +
   `Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.`;
 
@@ -123,7 +126,10 @@ function render() {
   }
 
   const st = document.getElementById("status"), clock = document.getElementById("clock");
-  if (state.start) {
+  if (R.reloc) {
+    clock.textContent = "";
+    st.textContent = "Pas de chrono : avance à ton rythme, journée par journée.";
+  } else if (state.start) {
     const el = (Date.now() - state.start) / 60000;
     clock.textContent = `${hm(Math.max(0, el))} sur 4 h`;
     const lastDone = R.stops.filter(isDone).pop();
@@ -138,14 +144,15 @@ function render() {
   }
 
   const firstPending = pending[0] && pending[0].order;
-  document.getElementById("stops").innerHTML = R.stops.map(s => {
+  document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
+    const head = s.day && (i === 0 || R.stops[i - 1].day !== s.day) ? `<li class="dayh">${s.day}</li>` : "";
     const flags = [];
     if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
     if (s.panels.some(p => p.near_photo)) flags.push("Doublon possible, vérifier");
-    return `<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
+    return `${head}<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
       <div class="n">${s.order}</div>
       <div>
-        <div class="when">Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}</div>
+        <div class="when">${s.note || `Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}`}</div>
         <div class="panels">${s.panels.map(p => `<div><span class="ref">${p.ref}</span> · ${SUP[p.support] || p.support}</div>`).join("")}</div>
         ${flags.map(f => `<div class="flag">${f}</div>`).join("")}
       </div>
@@ -157,7 +164,7 @@ function render() {
   }).join("");
 
   const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
-  const msg = `Vague 5 · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
+  const msg = `${R.title || "Vague 5"} · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
     (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
   document.getElementById("send").href = "https://wa.me/?text=" + encodeURIComponent(msg);
 }
