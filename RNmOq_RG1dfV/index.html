@@ -81,7 +81,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outlin
       <li>Deux photos : vue d'ensemble (à 25-40 m), puis le contenu de chaque face (marque lisible).</li>
       <li>Écris le code (Z01, Z02…) dans le formulaire pour chaque panneau.</li>
       <li>Panneau introuvable, démonté ou caché : photo de l'endroit + note, puis arrêt suivant.</li>
-      <li>À 4 h, tu t'arrêtes là où tu es et tu envoies ton avancement.</li>
+      <li>À 4 h, tu t'arrêtes là où tu es et tu envoies ton avancement à Zakaria (0770 88 05 35).</li>
       <li>Termine avant la nuit (coucher du soleil vers 17 h 58) : une photo de nuit ne permet pas de lire la marque.</li>
     </ol>
   </details>
@@ -168,7 +168,7 @@ function render() {
   const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
   const msg = `${R.title || "Vague 5"} · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
     (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
-  document.getElementById("send").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+  document.getElementById("send").href = "https://wa.me/213770880535?text=" + encodeURIComponent(msg);
 }
 
 document.getElementById("stops").addEventListener("click", e => {
