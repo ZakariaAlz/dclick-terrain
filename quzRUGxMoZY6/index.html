@@ -6,25 +6,27 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Vague 5 · Mohamed Graba</title>
 <style>
+/* Palette Flasher (palettes-dusens-v12.html): orange = action, bleu = fait, magenta = alerte. */
 :root {
-  --bg: #f4f1ea; --panel: #fffdf8; --fg: #1b2129; --muted: #5d6670; --line: #ddd6c8;
-  --accent: #0b5cad; --ok: #1d6b45; --ok-bg: #e2f1e8; --warn: #8a4f00; --warn-bg: #fbecd2;
+  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
+  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
 }
 @media (prefers-color-scheme: dark) { :root {
-  --bg: #12161b; --panel: #1b2128; --fg: #e8ecf0; --muted: #9ba6b1; --line: #2d3741;
-  --accent: #79b6f5; --ok: #6fd3a0; --ok-bg: #173327; --warn: #f3bd6b; --warn-bg: #3a2a12; } }
+  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
 header { padding: 18px 0 10px; }
-.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
 h1 { margin: 2px 0 4px; font-size: 1.6rem; }
 .sub { color: var(--muted); font-size: .92rem; margin: 0; }
 .bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
 .prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
 .meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.meter i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .3s; }
-.nav { display: block; text-align: center; background: var(--accent); color: var(--panel); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
 .status { font-size: .9rem; color: var(--muted); }
 .status b.late { color: var(--warn); }
 .status b.ahead { color: var(--ok); }
