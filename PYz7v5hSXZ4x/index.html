@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>D'click · Tracé 02</title>
+<style>
+/* Palette Flasher (palettes-dusens-v12.html): orange = action, bleu = fait, magenta = alerte. */
+:root {
+  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
+  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 18px 0 10px; }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { margin: 2px 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.status { font-size: .9rem; color: var(--muted); }
+.status b.late { color: var(--warn); }
+.status b.ahead { color: var(--ok); }
+ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+li.done { opacity: .55; }
+li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; }
+.when a { color: var(--accent); }
+li.next { border: 2px solid var(--accent); }
+.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.panels { display: grid; gap: 2px; }
+.ref { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+.flag { display: inline-block; font-size: .8rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 1rem system-ui, sans-serif; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; cursor: pointer; }
+.acts a { border: 1px solid var(--line); color: var(--fg); background: transparent; }
+.acts button { border: 2px solid var(--ok); color: var(--ok); background: transparent; }
+li.done .acts button { background: var(--ok-bg); }
+.send { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+details { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+summary { font-weight: 700; cursor: pointer; }
+details ol { margin: 8px 0 0; display: block; padding-left: 20px; list-style: decimal; }
+details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">D'click · Tracé 02 · jour 2</div>
+    <h1>Alaa</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <div class="bar">
+    <div class="prog"><span id="count"></span><span id="clock"></span></div>
+    <div class="meter"><i id="meter"></i></div>
+    <a class="nav" id="nav" target="_blank" rel="noopener"></a>
+    <div class="status" id="status"></div>
+  </div>
+
+  <ol id="stops"></ol>
+
+  <a class="send" id="send" target="_blank" rel="noopener">Envoyer mon avancement sur WhatsApp</a>
+  <a class="send" href="tel:+213770776695">Une question sur le terrain : appeler Assil</a>
+
+  <details>
+    <summary>Rappels</summary>
+    <ol>
+      <li>Moto à l'arrêt complet avant de sortir le téléphone.</li>
+      <li>GPS précis (moins de 10 m) devant le panneau, avant les photos.</li>
+      <li>Deux photos : vue d'ensemble (à 25-40 m), puis le contenu de chaque face (marque lisible).</li>
+      <li>Écris le code (02-01, 02-02…) dans le formulaire pour chaque panneau.</li>
+      <li>Panneau introuvable, démonté ou caché : photo de l'endroit + note, puis arrêt suivant.</li>
+      <li>Centre commercial : gare la moto une fois et fais toutes les faces à pied, dans l'ordre de la liste.</li>
+      <li>Termine le tracé en entier : il est payé comme un tracé complet, quel que soit le nombre de panneaux. À la fin, envoie ton avancement à Zakaria (0770 88 05 35). Si tu dépasses de plus de 45 min, envoie-le aussi : c'est notre calcul qu'on corrige, pas toi.</li>
+      <li>Termine avant la nuit (coucher du soleil vers 17 h) : une photo de nuit ne permet pas de lire la marque.</li>
+    </ol>
+  </details>
+</div>
+
+<script>
+const R = {"key": "T02", "agent": "Alaa", "title": "Tracé 02", "km": 24.8, "n_panels": 42, "total_min": 224, "intro": "42 panneaux, 8 arrêts, 24,8 km à moto, environ 3 h 44 du 1er au dernier panneau. Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.", "stops": [{"order": 1, "lat": 36.696717, "lon": 3.05323, "svc": 4.7, "arrive_min": 0, "leave_min": 5, "note": null, "day": null, "panels": [{"ref": "02-01", "support": "unipole", "stacked": false, "near_photo": false, "label": ""}]}, {"order": 2, "lat": 36.73544011764706, "lon": 3.0544370588235297, "svc": 7.7, "arrive_min": 11, "leave_min": 19, "note": null, "day": null, "panels": [{"ref": "02-02", "support": "abribus", "stacked": false, "near_photo": false, "label": "position estimée à ~100 m près"}]}, {"order": 3, "lat": 36.735660806722684, "lon": 3.0530225462184877, "svc": 7.7, "arrive_min": 19, "leave_min": 27, "note": null, "day": null, "panels": [{"ref": "02-03", "support": "abribus", "stacked": false, "near_photo": false, "label": "position estimée à ~100 m près"}]}, {"order": 4, "lat": 36.73702014511873, "lon": 3.0886509366754615, "svc": 7.7, "arrive_min": 32, "leave_min": 40, "note": null, "day": null, "panels": [{"ref": "02-04", "support": "abribus", "stacked": false, "near_photo": false, "label": "position estimée à ~100 m près"}]}, {"order": 5, "lat": 36.73742926121372, "lon": 3.088580686015831, "svc": 7.7, "arrive_min": 40, "leave_min": 48, "note": null, "day": null, "panels": [{"ref": "02-05", "support": "abribus", "stacked": false, "near_photo": false, "label": "position estimée à ~100 m près"}]}, {"order": 6, "lat": 36.72757, "lon": 3.165318, "svc": 4.7, "arrive_min": 58, "leave_min": 63, "note": null, "day": null, "panels": [{"ref": "02-06", "support": "unipole", "stacked": false, "near_photo": false, "label": ""}]}, {"order": 7, "lat": 36.727641, "lon": 3.185739, "svc": 4.7, "arrive_min": 64, "leave_min": 69, "note": null, "day": null, "panels": [{"ref": "02-07", "support": "unipole", "stacked": false, "near_photo": false, "label": ""}]}, {"order": 8, "lat": 36.728993, "lon": 3.179501, "svc": 150, "arrive_min": 74, "leave_min": 224, "note": "Prévu à +1 h 14 · <b>City Center Alger</b>, à pied : 35 faces, dans l'ordre", "day": null, "panels": [{"ref": "02-08", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 1"}, {"ref": "02-09", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 20"}, {"ref": "02-10", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "OVERHEAD"}, {"ref": "02-11", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 2"}, {"ref": "02-12", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 10"}, {"ref": "02-13", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 18"}, {"ref": "02-14", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 22"}, {"ref": "02-15", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 3"}, {"ref": "02-16", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 5"}, {"ref": "02-17", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "MUR SAS BACKLIT GRAND FORMAT"}, {"ref": "02-18", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "FAÇADES EXTERNES 1"}, {"ref": "02-19", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 14"}, {"ref": "02-20", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 7"}, {"ref": "02-21", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 15"}, {"ref": "02-22", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "ÉCRAN DIGITAL GRAND FORMAT FOOD COURT"}, {"ref": "02-23", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "FAÇADE EXTERNE : FAÇADE PRINCIPALE 2"}, {"ref": "02-24", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 16"}, {"ref": "02-25", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 21"}, {"ref": "02-26", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 9"}, {"ref": "02-27", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "FAÇADE EXTERNE : FAÇADE PRINCIPALE 3"}, {"ref": "02-28", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "FAÇADE EXTERNE : FAÇADE PRINCIPALE 1"}, {"ref": "02-29", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 4"}, {"ref": "02-30", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 6"}, {"ref": "02-31", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 11"}, {"ref": "02-32", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 13"}, {"ref": "02-33", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 19"}, {"ref": "02-34", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "MURS PORTRAITS PARKING 2"}, {"ref": "02-35", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "CITY CENTER LCD CHANNEL 3 écrans"}, {"ref": "02-36", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 17"}, {"ref": "02-37", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "MURS PORTRAITS PARKING 1"}, {"ref": "02-38", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 8"}, {"ref": "02-39", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "PANNEAUX 8M2 PARKING 12"}, {"ref": "02-40", "support": "face_2m2_mall", "stacked": false, "near_photo": false, "label": "FAÇADES EXTERNES 2"}, {"ref": "02-41", "support": "unipole", "stacked": false, "near_photo": false, "label": "U12A - CITY CENTER (unipole devant le centre)"}, {"ref": "02-42", "support": "unipole", "stacked": false, "near_photo": false, "label": "U12Z - CITY CENTER (unipole devant le centre)"}]}]};
+const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
+  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade",
+  grand_panneau: "Grand panneau", pionnier: "Pionnier", face_2m2_mall: "Face 2 m² (centre commercial)" };
+// Même origine (github.io) pour toutes les pages: la clé doit distinguer chaque page.
+const KEY = "dclick-v6-" + R.key;
+const CAP = R.total_min, CHUNK = 10;
+
+let state = { done: [], start: null };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+const pt = s => s.lat.toFixed(6) + "," + s.lon.toFixed(6);
+const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
+const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const isDone = s => state.done.includes(s.order);
+
+document.getElementById("sub").textContent = R.intro ||
+  `${R.n_panels} panneaux, ${R.stops.length} arrêts, ${String(R.km).replace(".", ",")} km à moto. ` +
+  `Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.`;
+
+function render() {
+  const pending = R.stops.filter(s => !isDone(s));
+  const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
+  document.getElementById("count").textContent = `${donePanels} / ${R.n_panels} panneaux`;
+  document.getElementById("meter").style.width = (100 * donePanels / R.n_panels) + "%";
+
+  const nav = document.getElementById("nav");
+  if (pending.length) {
+    // Les 10 prochains arrêts non faits, dans l'ordre: Google Maps part de la position du téléphone.
+    const next = pending.slice(0, CHUNK), last = next[next.length - 1];
+    let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
+    if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
+    nav.href = url;
+    nav.textContent = next.length > 1 ? `Naviguer : arrêts ${next[0].order} à ${last.order}` : `Naviguer : arrêt ${last.order}`;
+    nav.hidden = false;
+  } else {
+    nav.hidden = true;
+  }
+
+  const st = document.getElementById("status"), clock = document.getElementById("clock");
+  if (R.reloc) {
+    clock.textContent = "";
+    st.textContent = "Pas de chrono : avance à ton rythme, journée par journée.";
+  } else if (state.start) {
+    const el = (Date.now() - state.start) / 60000;
+    clock.textContent = `${hm(Math.max(0, el))} sur ${hm(CAP)}`;
+    const lastDone = R.stops.filter(isDone).pop();
+    const delta = lastDone ? el - lastDone.leave_min : 0;
+    const pace = Math.abs(delta) < 3 ? "dans les temps"
+      : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>`
+      : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
+    st.innerHTML = `Chrono lancé à ${clockOf(state.start)}, fin à ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
+  } else {
+    clock.textContent = hm(CAP);
+    st.textContent = "Le chrono démarre quand tu touches « Fait » au 1er arrêt.";
+  }
+
+  const firstPending = pending[0] && pending[0].order;
+  document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
+    const head = s.day && (i === 0 || R.stops[i - 1].day !== s.day) ? `<li class="dayh">${s.day}</li>` : "";
+    const flags = [];
+    if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
+    if (s.panels.some(p => p.near_photo)) flags.push("Peut-être déjà photographié au jour 1 : vérifier");
+    return `${head}<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
+      <div class="n">${s.order}</div>
+      <div>
+        <div class="when">${s.note || `Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}`}</div>
+        <div class="panels">${s.panels.map(p => `<div><span class="ref">${p.ref}</span> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
+        ${flags.map(f => `<div class="flag">${f}</div>`).join("")}
+      </div>
+      <div class="acts">
+        <a href="https://maps.google.com/?q=${pt(s)}" target="_blank" rel="noopener">Carte</a>
+        <button type="button" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
+      </div>
+    </li>`;
+  }).join("");
+
+  const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
+  const msg = `${R.title || "Vague 5"} · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
+    (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
+  document.getElementById("send").href = "https://wa.me/213770880535?text=" + encodeURIComponent(msg);
+}
+
+document.getElementById("stops").addEventListener("click", e => {
+  const b = e.target.closest("button[data-o]");
+  if (!b) return;
+  const o = Number(b.dataset.o), marked = !state.done.includes(o);
+  if (marked) {
+    state.done.push(o);
+    // Le chrono part à l'arrivée au 1er panneau: on retire le temps passé sur cet arrêt.
+    if (!state.start) state.start = Date.now() - R.stops.find(s => s.order === o).svc * 60000;
+  } else {
+    state.done = state.done.filter(x => x !== o);
+  }
+  save();
+  render();
+  const next = R.stops.find(s => !isDone(s));
+  if (marked && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+render();
+setInterval(render, 30000);
+</script>
+</body>
+</html>

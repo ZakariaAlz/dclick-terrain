@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>D'click · Pilotage vague 6</title>
+<style>
+/* Palette Flasher (palettes-dusens-v12.html): orange = action, bleu = fait, magenta = alerte. */
+:root {
+  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
+  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 18px 0 10px; }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { margin: 2px 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.status { font-size: .9rem; color: var(--muted); }
+.status b.late { color: var(--warn); }
+.status b.ahead { color: var(--ok); }
+ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+li.done { opacity: .55; }
+li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; }
+.when a { color: var(--accent); }
+li.next { border: 2px solid var(--accent); }
+.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.panels { display: grid; gap: 2px; }
+.ref { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+.flag { display: inline-block; font-size: .8rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 1rem system-ui, sans-serif; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; cursor: pointer; }
+.acts a { border: 1px solid var(--line); color: var(--fg); background: transparent; }
+.acts button { border: 2px solid var(--ok); color: var(--ok); background: transparent; }
+li.done .acts button { background: var(--ok-bg); }
+.send { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+details { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+summary { font-weight: 700; cursor: pointer; }
+details ol { margin: 8px 0 0; display: block; padding-left: 20px; list-style: decimal; }
+details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+</style>
+<style>
+.wrap { max-width: 1040px; }
+h2 { font-size: 1.2rem; margin: 28px 0 8px; }
+p, li.txt { max-width: 72ch; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+.kpi { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.kpi b { display: block; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
+.kpi span { color: var(--muted); font-size: .85rem; }
+.rule { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 12px; padding: 12px 16px; }
+.rule ol { display: block; list-style: decimal; padding-left: 20px; margin: 6px 0 0; gap: 0; }
+.rule li { display: list-item; background: none; border: 0; padding: 4px 0; }
+.tbl { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+tr.day td { background: var(--bg); font-weight: 800; }
+td a { color: var(--accent); font-weight: 600; }
+td button { font: 600 .85rem system-ui, sans-serif; border: 1px solid var(--line); background: transparent; color: var(--fg); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.bar2 { height: 8px; background: var(--line); border-radius: 4px; min-width: 80px; }
+.bar2 i { display: block; height: 100%; background: var(--btn); border-radius: 4px; }
+.muted { color: var(--muted); }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">D'click · Vague 6 · Pilotage (Amine, Assil)</div>
+    <h1>Tous les tracés jusqu'au dernier panneau</h1>
+    <p class="sub" id="lede"></p>
+    <div class="kpis" id="kpis"></div>
+  </header>
+
+  <h2>Règle de paie proposée</h2>
+  <div class="rule">
+    <ol>
+      <li><b>Un tracé = un forfait.</b> Chaque tracé a la même charge estimée (<span id="band"></span>, du 1er au dernier panneau). Le nombre de panneaux varie, la paie non : 43 faces dans un centre commercial prennent autant de temps que 27 panneaux dispersés sur la route.</li>
+      <li><b>Payé quand il est terminé :</b> tous les arrêts faits, chaque panneau avec photos et GPS, ou une photo de l'endroit s'il est introuvable ou démonté.</li>
+      <li><b>Flexibilité :</b> un agent peut faire deux ou trois tracés le même jour, ou les étaler. Il est payé par tracé, pas par jour. Si un agent est absent, son tracé peut passer à la personne indiquée dans la colonne « Peut aussi ».</li>
+      <li><b>Dépassement :</b> si un tracé dure plus de 45 min de plus que prévu, c'est notre estimation qui est fausse, pas l'agent. On ne le pénalise pas : on corrige le calcul et on recalcule les tracés suivants pour tout le monde.</li>
+      <li><b>Accès :</b> le chrono part du premier panneau. La colonne « Accès » donne la distance depuis le bureau d'El Biar, si vous voulez une prime de transport pour les tracés éloignés.</li>
+    </ol>
+  </div>
+  <p class="muted">Pourquoi c'est équitable même si l'estimation se trompe : tous les tracés sont calculés avec le même modèle. Une erreur générale (tout prend 10 % de plus) touche tout le monde pareil. Et chaque agent reçoit le même nombre de tracés, avec le même mélange de secteurs.</p>
+
+  <h2>Équilibre par agent</h2>
+  <div class="tbl"><table id="agents"></table></div>
+
+  <h2>Calendrier</h2>
+  <p class="muted">Un jour par ligne de groupe ; les dates sont indicatives, l'ordre conseillé enchaîne les secteurs voisins. « Copier » met le message WhatsApp de l'agent dans le presse-papier.</p>
+  <div class="tbl"><table id="cal"></table></div>
+
+  <h2>Après le jour 1 : vérifier le calcul</h2>
+  <div class="rule">
+    <ol>
+      <li>Pour chaque agent, notez l'heure de la 1re et de la dernière photo, et le nombre de panneaux faits (le bouton « Envoyer mon avancement » de sa page donne déjà le temps écoulé).</li>
+      <li>Envoyez-les à Zakaria. Le modèle est recalé en quelques minutes et les tracés suivants sont recalculés.</li>
+      <li>Les liens des agents ne changent pas : la page se met à jour à la même adresse.</li>
+    </ol>
+  </div>
+
+  <h2>Comment c'est calculé</h2>
+  <p id="how" class="muted"></p>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script>
+const D = {"rows": [{"day": 1, "id": "V5", "agent": "Zinedine", "n_panels": 44, "stops": 22, "km": 36.7, "total_min": 236, "url": "https://zakariaalz.github.io/dclick-terrain/RNmOq_RG1dfV/", "allowed": "déjà envoyé"}, {"day": 1, "id": "V5", "agent": "Alaa", "n_panels": 46, "stops": 28, "km": 24.6, "total_min": 238, "url": "https://zakariaalz.github.io/dclick-terrain/8w1T-MeE44D8/", "allowed": "déjà envoyé"}, {"day": 1, "id": "V5", "agent": "Mohamed Graba", "n_panels": 43, "stops": 37, "km": 37.1, "total_min": 239, "url": "https://zakariaalz.github.io/dclick-terrain/quzRUGxMoZY6/", "allowed": "déjà envoyé"}, {"day": 2, "id": "01", "agent": "Zinedine", "n_panels": 30, "stops": 26, "km": 17.9, "total_min": 225, "url": "https://zakariaalz.github.io/dclick-terrain/WYOwZpPPIVNu/", "access_km": 6.7, "n_mall": 0, "n_search": 17, "allowed": "Zinedine, Alaa", "others": "Alaa", "message": "*D'click · Tracé 01 · Zinedine*\n30 panneaux, 26 arrêts, 17,9 km · environ 3 h 45.\n\nhttps://zakariaalz.github.io/dclick-terrain/WYOwZpPPIVNu/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 2, "id": "02", "agent": "Alaa", "n_panels": 42, "stops": 8, "km": 24.8, "total_min": 224, "url": "https://zakariaalz.github.io/dclick-terrain/PYz7v5hSXZ4x/", "access_km": 9.8, "n_mall": 35, "n_search": 0, "allowed": "Alaa", "others": "personne", "message": "*D'click · Tracé 02 · Alaa*\n42 panneaux, 8 arrêts, 24,8 km · environ 3 h 44.\n\nhttps://zakariaalz.github.io/dclick-terrain/PYz7v5hSXZ4x/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nCentre commercial dans ce tracé : les faces se font à pied, l'éclairage intérieur permet de le garder pour la fin."}, {"day": 2, "id": "03", "agent": "Mohamed Graba", "n_panels": 29, "stops": 25, "km": 37.2, "total_min": 225, "url": "https://zakariaalz.github.io/dclick-terrain/LR6YC-mReHk2/", "access_km": 9.4, "n_mall": 0, "n_search": 14, "allowed": "Alaa, Mohamed Graba", "others": "Alaa", "message": "*D'click · Tracé 03 · Mohamed Graba*\n29 panneaux, 25 arrêts, 37,2 km · environ 3 h 45.\n\nhttps://zakariaalz.github.io/dclick-terrain/LR6YC-mReHk2/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 3, "id": "04", "agent": "Zinedine", "n_panels": 25, "stops": 23, "km": 19.0, "total_min": 224, "url": "https://zakariaalz.github.io/dclick-terrain/Cme3TIlvlNXt/", "access_km": 3.2, "n_mall": 0, "n_search": 10, "allowed": "Zinedine", "others": "personne", "message": "*D'click · Tracé 04 · Zinedine*\n25 panneaux, 23 arrêts, 19,0 km · environ 3 h 44.\n\nhttps://zakariaalz.github.io/dclick-terrain/Cme3TIlvlNXt/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 3, "id": "05", "agent": "Alaa", "n_panels": 31, "stops": 16, "km": 46.8, "total_min": 225, "url": "https://zakariaalz.github.io/dclick-terrain/GYduhH-xYSaX/", "access_km": 21.1, "n_mall": 16, "n_search": 5, "allowed": "Zinedine, Alaa", "others": "Zinedine", "message": "*D'click · Tracé 05 · Alaa*\n31 panneaux, 16 arrêts, 46,8 km · environ 3 h 45.\n\nhttps://zakariaalz.github.io/dclick-terrain/GYduhH-xYSaX/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nCentre commercial dans ce tracé : les faces se font à pied, l'éclairage intérieur permet de le garder pour la fin.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 3, "id": "06", "agent": "Mohamed Graba", "n_panels": 30, "stops": 27, "km": 32.4, "total_min": 217, "url": "https://zakariaalz.github.io/dclick-terrain/eixLU8cyPWRK/", "access_km": 15.0, "n_mall": 0, "n_search": 19, "allowed": "Mohamed Graba", "others": "personne", "message": "*D'click · Tracé 06 · Mohamed Graba*\n30 panneaux, 27 arrêts, 32,4 km · environ 3 h 37.\n\nhttps://zakariaalz.github.io/dclick-terrain/eixLU8cyPWRK/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 4, "id": "07", "agent": "Zinedine", "n_panels": 26, "stops": 21, "km": 22.4, "total_min": 223, "url": "https://zakariaalz.github.io/dclick-terrain/JVTbfVs7Y6RD/", "access_km": 5.4, "n_mall": 0, "n_search": 15, "allowed": "Zinedine, Alaa", "others": "Alaa", "message": "*D'click · Tracé 07 · Zinedine*\n26 panneaux, 21 arrêts, 22,4 km · environ 3 h 43.\n\nhttps://zakariaalz.github.io/dclick-terrain/JVTbfVs7Y6RD/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 4, "id": "08", "agent": "Alaa", "n_panels": 28, "stops": 20, "km": 46.4, "total_min": 220, "url": "https://zakariaalz.github.io/dclick-terrain/4QL7ejZ-8krn/", "access_km": 18.9, "n_mall": 0, "n_search": 0, "allowed": "Alaa", "others": "personne", "message": "*D'click · Tracé 08 · Alaa*\n28 panneaux, 20 arrêts, 46,4 km · environ 3 h 40.\n\nhttps://zakariaalz.github.io/dclick-terrain/4QL7ejZ-8krn/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail."}, {"day": 4, "id": "09", "agent": "Mohamed Graba", "n_panels": 35, "stops": 21, "km": 10.2, "total_min": 223, "url": "https://zakariaalz.github.io/dclick-terrain/FK0DoxJ43NZ7/", "access_km": 7.1, "n_mall": 14, "n_search": 18, "allowed": "Zinedine, Alaa, Mohamed Graba", "others": "Zinedine, Alaa", "message": "*D'click · Tracé 09 · Mohamed Graba*\n35 panneaux, 21 arrêts, 10,2 km · environ 3 h 43.\n\nhttps://zakariaalz.github.io/dclick-terrain/FK0DoxJ43NZ7/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nCentre commercial dans ce tracé : les faces se font à pied, l'éclairage intérieur permet de le garder pour la fin.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 5, "id": "10", "agent": "Zinedine", "n_panels": 33, "stops": 29, "km": 29.1, "total_min": 224, "url": "https://zakariaalz.github.io/dclick-terrain/ZXG3pxOzFbuK/", "access_km": 11.0, "n_mall": 0, "n_search": 13, "allowed": "Zinedine", "others": "personne", "message": "*D'click · Tracé 10 · Zinedine*\n33 panneaux, 29 arrêts, 29,1 km · environ 3 h 44.\n\nhttps://zakariaalz.github.io/dclick-terrain/ZXG3pxOzFbuK/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}, {"day": 5, "id": "11", "agent": "Alaa", "n_panels": 32, "stops": 25, "km": 56.2, "total_min": 226, "url": "https://zakariaalz.github.io/dclick-terrain/KQbr084UsraZ/", "access_km": 25.3, "n_mall": 0, "n_search": 0, "allowed": "Alaa", "others": "personne", "message": "*D'click · Tracé 11 · Alaa*\n32 panneaux, 25 arrêts, 56,2 km · environ 3 h 46.\n\nhttps://zakariaalz.github.io/dclick-terrain/KQbr084UsraZ/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail."}, {"day": 5, "id": "12", "agent": "Mohamed Graba", "n_panels": 30, "stops": 16, "km": 23.1, "total_min": 219, "url": "https://zakariaalz.github.io/dclick-terrain/6ShoknFGB9OA/", "access_km": 9.0, "n_mall": 11, "n_search": 10, "allowed": "Zinedine, Mohamed Graba", "others": "Zinedine", "message": "*D'click · Tracé 12 · Mohamed Graba*\n30 panneaux, 16 arrêts, 23,1 km · environ 3 h 39.\n\nhttps://zakariaalz.github.io/dclick-terrain/6ShoknFGB9OA/\n\nFais les arrêts dans l'ordre, touche *Fait* après chacun.\nLe tracé est payé en entier une fois terminé, quel que soit le nombre de panneaux : chaque tracé a été calculé pour la même charge de travail.\nCentre commercial dans ce tracé : les faces se font à pied, l'éclairage intérieur permet de le garder pour la fin.\nPoints de Graba au GPS faux dans ce tracé : la page te dit vers où sa tournée a continué."}], "per_agent": {"Zinedine": {"traces": 5, "min": 1132, "panels": 158}, "Alaa": {"traces": 5, "min": 1133, "panels": 179}, "Mohamed Graba": {"traces": 5, "min": 1123, "panels": 167}}, "params": {"TRAVEL_FACTOR": 1.0, "STOP_OVERHEAD": 3.7, "PHOTO": {"statique": 1.0, "trivision": 2.5, "deroulant": 3.6, "numerique_a": 7.2}, "EXTRA_FORM": 1.5, "SEARCH_STACKED": 2, "SEARCH_EST": 3, "SEARCH_LANDMARK": 6, "MALL_ENTRY": 10, "MALL_FACE": 4, "AUDIT_EXTRA": 5.5, "CAP": 240, "FLOOR": 225}, "min": 217, "max": 226, "n_new": 371, "n_traces": 12, "n_search": 121, "n_mall": 76};
+const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const P = D.params;
+const days = Math.max(...D.rows.map(r => r.day));
+document.getElementById("lede").textContent =
+  `${D.n_new} panneaux restants après le jour 1, en ${D.n_traces} nouveaux tracés, soit ${days} jours en tout pour 3 agents. ` +
+  `Le jour 1 est la vague 5, déjà envoyée.`;
+document.getElementById("band").textContent = `${hm(D.min)} à ${hm(D.max)}`;
+document.getElementById("kpis").innerHTML = [
+  [D.n_new, "panneaux restants"], [D.n_traces, "nouveaux tracés"], [days, "jours (3 agents)"],
+  [`${hm(D.min)} – ${hm(D.max)}`, "charge d'un tracé"]].map(([b, s]) => `<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
+
+const maxMin = Math.max(...Object.values(D.per_agent).map(a => a.min));
+document.getElementById("agents").innerHTML = "<tr><th>Agent</th><th>Tracés</th><th>Charge totale</th><th></th><th>Panneaux</th></tr>" +
+  Object.entries(D.per_agent).map(([a, v]) => `<tr><td><b>${esc(a)}</b></td><td>${v.traces}</td><td>${hm(v.min)}</td>
+    <td><div class="bar2"><i style="width:${100 * v.min / maxMin}%"></i></div></td><td>${v.panels}</td></tr>`).join("");
+
+let html = "<tr><th>Tracé</th><th>Agent</th><th>Panneaux</th><th>Arrêts</th><th>Km</th><th>Durée</th><th>Accès</th><th>Peut aussi</th><th>Page agent</th><th></th></tr>";
+for (let d = 1; d <= days; d++) {
+  html += `<tr class="day"><td colspan="10">Jour ${d}${d === 1 ? " · vague 5, déjà envoyée" : ""}</td></tr>`;
+  for (const r of D.rows.filter(r => r.day === d)) {
+    const extra = [r.n_mall ? `${r.n_mall} en centre commercial` : "", r.n_search ? `${r.n_search} GPS faux` : ""].filter(Boolean).join(", ");
+    html += `<tr><td><b>${esc(r.id)}</b></td><td>${esc(r.agent)}</td><td>${r.n_panels}${extra ? ` <span class="muted">(${extra})</span>` : ""}</td>
+      <td>${r.stops}</td><td>${String(r.km).replace(".", ",")}</td><td>${hm(r.total_min)}</td>
+      <td>${r.access_km != null ? String(r.access_km).replace(".", ",") + " km" : ""}</td>
+      <td>${esc(r.others || "—")}</td>
+      <td><a href="${r.url}" target="_blank" rel="noopener">Ouvrir</a></td>
+      <td>${r.message ? `<button type="button" data-id="${esc(r.id)}">Copier</button>` : ""}</td></tr>`;
+  }
+}
+document.getElementById("cal").innerHTML = html;
+document.getElementById("cal").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-id]");
+  if (!b) return;
+  const r = D.rows.find(r => r.id === b.dataset.id);
+  const t = document.getElementById("toast");
+  try { await navigator.clipboard.writeText(r.message); t.textContent = `Message du tracé ${r.id} copié`; }
+  catch (err) { t.textContent = "Copie impossible : ouvrez la page et copiez le lien à la main"; }
+  t.hidden = false; setTimeout(() => t.hidden = true, 2200);
+});
+
+document.getElementById("how").textContent =
+  `Trajets : durées routières réelles d'Alger (serveur OSRM, sens uniques compris) × ${P.TRAVEL_FACTOR} pour la moto, ` +
+  `valeur mesurée sur 91 trajets réels des vagues 1-2. Sur place : ${P.STOP_OVERHEAD} min par arrêt (garer, GPS, formulaire, repartir), ` +
+  `plus les photos : ${P.PHOTO.statique} min statique, ${P.PHOTO.trivision} trivision, ${P.PHOTO.deroulant} déroulant, ${P.PHOTO.numerique_a} écran. ` +
+  `+${P.EXTRA_FORM} min par panneau supplémentaire au même arrêt, +${P.SEARCH_EST} min quand la position est estimée, ` +
+  `+${P.SEARCH_LANDMARK} min quand le parc n'a qu'une adresse. Centres commerciaux : ${P.MALL_ENTRY} min pour garer et entrer, ` +
+  `puis ${P.MALL_FACE} min par face (valeur prudente, pas encore mesurée). Points de Graba au GPS faux : le temps réel qu'il a mis ` +
+  `à les recenser, plus ${P.AUDIT_EXTRA} min d'audit et de recherche par panneau. OR-Tools répartit tout en tracés de charge égale ` +
+  `(plafond ${P.CAP} min), sans jamais donner à un agent des points qu'il a recensés lui-même, sauf les points de Graba sans aucun repère, ` +
+  `que lui seul peut retrouver. Chaque ordre est ensuite vérifié arrêt par arrêt (2-opt, or-opt).`;
+</script>
+</body>
+</html>
