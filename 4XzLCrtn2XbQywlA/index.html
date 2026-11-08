@@ -129,11 +129,12 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 const P = D.params;
 const days = Math.max(...D.rows.map(r => r.day));
 document.getElementById("lede").textContent =
-  `${D.n_new} panneaux restants après le jour 1, en ${D.n_traces} nouveaux tracés, soit ${days} jours en tout pour 3 agents. ` +
-  `Le jour 1 est la vague 5, déjà envoyée.`;
+  `${D.n_new} panneaux dehors restants après le jour 1, en ${D.n_traces} nouveaux tracés, soit ${days} jours en tout pour 3 agents. ` +
+  `Le jour 1 est la vague 5, déjà envoyée.` +
+  (D.deferred.length ? ` Les ${D.deferred.reduce((a, d) => a + d.faces, 0)} faces des centres commerciaux viennent en dernier, après autorisation.` : "");
 document.getElementById("band").textContent = `${hm(D.min)} à ${hm(D.max)}`;
 document.getElementById("kpis").innerHTML = [
-  [D.n_new, "panneaux restants"], [D.n_traces, "nouveaux tracés"], [days, "jours (3 agents)"],
+  [D.n_new, "panneaux dehors"], [D.n_traces, "nouveaux tracés"], [days, "jours (3 agents)"],
   [`${hm(D.min)} – ${hm(D.max)}`, "charge d'un tracé"]].map(([b, s]) => `<div class="kpi"><b>${b}</b><span>${s}</span></div>`).join("");
 
 const maxMin = Math.max(...Object.values(D.per_agent).map(a => a.min));
@@ -171,7 +172,7 @@ if (D.deferred.length) {
   document.getElementById("deferred").innerHTML = `<h2>En dernier : centres commerciaux (autorisation à obtenir)</h2>
     <p class="muted">${faces} faces intérieures, environ ${hm(mins)} de travail sur place, hors de tous les tracés ci-dessus.
     On les planifie quand l'autorisation arrive, avec les consignes sans QR (photo de l'enseigne dehors en entrant et en sortant,
-    un repère fixe par face).${few.length ? ` Elles iront d'abord à ${few.join(" et ")}, qui ont un tracé de moins : chacun finit alors avec le même nombre de tracés.` : ""}</p>
+    un repère fixe par face).${few.length ? ` Elles iront d'abord à ${few.join(" et ")}, qui ${few.length > 1 ? "ont" : "a"} un tracé de moins : chacun finit alors avec le même nombre de tracés.` : ""}</p>
     <div class="tbl"><table><tr><th>Centre commercial</th><th>Faces</th><th>Sur place (estimé)</th></tr>
     ${D.deferred.map(d => `<tr><td><b>${esc(d.mall)}</b></td><td>${d.faces}</td><td>${hm(d.svc)}</td></tr>`).join("")}</table></div>`;
 }
