@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>D'click · Tracé 05</title>
+<style>
+/* Palette Flasher (palettes-dusens-v12.html): orange = action, bleu = fait, magenta = alerte. */
+:root {
+  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
+  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 18px 0 10px; }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { margin: 2px 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.status { font-size: .9rem; color: var(--muted); }
+.status b.late { color: var(--warn); }
+.status b.ahead { color: var(--ok); }
+ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+li.done { opacity: .55; }
+li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; }
+.when a { color: var(--accent); }
+li.next { border: 2px solid var(--accent); }
+.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.panels { display: grid; gap: 2px; }
+.ref { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+.flag { display: inline-block; font-size: .8rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 1rem system-ui, sans-serif; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; cursor: pointer; }
+.acts a { border: 1px solid var(--line); color: var(--fg); background: transparent; }
+.acts button { border: 2px solid var(--ok); color: var(--ok); background: transparent; }
+li.done .acts button { background: var(--ok-bg); }
+.send { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+details { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+summary { font-weight: 700; cursor: pointer; }
+details ol { margin: 8px 0 0; display: block; padding-left: 20px; list-style: decimal; }
+details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+li .mallrules { display: block; list-style: decimal; margin: 8px 0 4px; padding: 8px 10px 8px 28px; background: var(--warn-bg); border-radius: 8px; color: var(--fg); font-size: .88rem; gap: 0; }
+li .mallrules li { display: list-item; background: none; border: 0; padding: 2px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">D'click · Tracé 05 · jour 3</div>
+    <h1>Alae</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+
+  <div class="bar">
+    <div class="prog"><span id="count"></span><span id="clock"></span></div>
+    <div class="meter"><i id="meter"></i></div>
+    <a class="nav" id="nav" target="_blank" rel="noopener"></a>
+    <div class="status" id="status"></div>
+  </div>
+
+  <ol id="stops"></ol>
+
+  <a class="send" id="send" target="_blank" rel="noopener">Envoyer mon avancement sur WhatsApp</a>
+  <a class="send" href="tel:+213770776695">Une question sur le terrain : appeler Assil</a>
+
+  <details>
+    <summary>Rappels</summary>
+    <ol>
+      <li><b>Panneau trouvé en route, pas dans ta liste :</b> prends-le en photo et remplis le questionnaire, avec NOUVEAU dans « Observations libres ».</li>
+      <li>Écris le code de l'arrêt (05-01, 05-02…) dans « Observations libres ».</li>
+      <li>Moto à l'arrêt complet avant de sortir le téléphone.</li>
+      <li>Le GPS de SensQuest est parfois imprécis : devant le panneau, attends moins de 10 m avant de valider.</li>
+      <li>Deux photos : vue d'ensemble (25 à 40 m), puis chaque face, marque lisible.</li>
+      <li>Panneau introuvable : note « introuvable » ou dis-le sur WhatsApp, puis arrêt suivant.</li>
+      <li>Termine le tracé en entier, il est payé complet. À la fin, envoie ton avancement à Zakaria (0770 88 05 35).</li>
+      <li>Termine avant la nuit, vers 17 h.</li>
+    </ol>
+  </details>
+</div>
+
+<script>
+const R = {"key": "T14v7", "agent": "Alae", "title": "Tracé 14 · lundi 16/11", "km": 67.7, "n_panels": 0, "rows": true, "total_min": 210, "intro": "Tactique B : ratissage complet. Tu entres dans la commune, tu suis les grands axes indiqués jusqu'à la sortie, et tu photographies TOUT panneau publicitaire que tu vois. Les panneaux sûrs de la commune sont dans la liste. Départ conseillé 9 h, fin prévue vers 12 h 30 (3 h 30 de travail, 67,7 km). Communes dans l'ordre : El Madania → El Magharia → Hussein Dey → Belouizdad. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent.", "stops": [{"order": 1, "lat": 36.7394891, "lon": 3.0594294, "svc": 0, "arrive_min": 0, "leave_min": 7, "note": "Vers 9 h 00 · <b>Ratissage</b> : suis Avenue Belkacemi Mohamed, Avenue des Frères Bouadou. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. El Madania · 9 h 00 → 9 h 34 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.735909,3.074824\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> vers Kouba</small>", "panels": []}, {"order": 2, "lat": 36.749680587938435, "lon": 3.0552445890119655, "svc": 0, "arrive_min": 7, "leave_min": 15, "note": "Vers 9 h 07 · <b>Ratissage</b> : suis Avenue des Frères Bouadou, Boulevard Laala Abderahmane, Boulevard des Martyrs. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. El Madania · 9 h 00 → 9 h 34 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.735909,3.074824\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> vers Kouba</small>", "panels": []}, {"order": 3, "lat": 36.7438396, "lon": 3.0708762, "svc": 0, "arrive_min": 19, "leave_min": 25, "note": "Vers 9 h 19 · <b>Ratissage</b> : suis Boulevard Oulmane Khelifa. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. El Madania · 9 h 00 → 9 h 34 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.735909,3.074824\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> vers Kouba</small>", "panels": []}, {"order": 4, "lat": 36.7342996, "lon": 3.0803762, "svc": 0, "arrive_min": 25, "leave_min": 30, "note": "Vers 9 h 25 · <b>Ratissage</b> : suis les rues du secteur. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. El Madania · 9 h 00 → 9 h 34 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.735909,3.074824\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> vers Kouba</small>", "panels": []}, {"order": 5, "lat": 36.7403461, "lon": 3.0776394, "svc": 0, "arrive_min": 33, "leave_min": 34, "note": "Vers 9 h 33 · <b>Ratissage</b> : suis les rues du secteur. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. El Madania · 9 h 00 → 9 h 34 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.735909,3.074824\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> vers Kouba</small>", "panels": []}, {"order": 6, "lat": 36.73448391797942, "lon": 3.106953074742726, "svc": 0, "arrive_min": 42, "leave_min": 48, "note": "Vers 9 h 42 · <b>Ratissage</b> : suis Chemin Fernane Hannafi, Route de Badjarrah, Rue Boudjemâa Moghni. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. El Magharia · 9 h 42 → 9 h 59 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> vers Hussein Dey</small>", "panels": []}, {"order": 7, "lat": 36.73662528050358, "lon": 3.1144589711209094, "svc": 0, "arrive_min": 54, "leave_min": 58, "note": "Vers 9 h 54 · <b>Ratissage</b> : suis Avenue de Tripoli, Rue Capitaine Mouzaoui. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. El Magharia · 9 h 42 → 9 h 59 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> vers Hussein Dey</small>", "panels": []}, {"order": 8, "lat": 36.7322147, "lon": 3.1129091, "svc": 0, "arrive_min": 59, "leave_min": 59, "note": "Vers 9 h 59 · <b>Ratissage</b> : suis Rue Boudjemâa Moghni. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. El Magharia · 9 h 42 → 9 h 59 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734364,3.082074\" target=\"_blank\" rel=\"noopener\">voie express</a> · sortie par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> vers Hussein Dey</small>", "panels": []}, {"order": 9, "lat": 36.7414001, "lon": 3.0970871, "svc": 0, "arrive_min": 61, "leave_min": 65, "note": "Vers 10 h 01 · <b>Ratissage</b> : suis Rue Boudjemâa Moghni. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 10, "lat": 36.7359673, "lon": 3.0959002, "svc": 0, "arrive_min": 67, "leave_min": 74, "note": "Vers 10 h 07 · <b>Ratissage</b> : suis Chemin Fernane Hannafi, Rue Saoudi Boualem. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 11, "lat": 36.7464948, "lon": 3.0941194, "svc": 0, "arrive_min": 74, "leave_min": 88, "note": "Vers 10 h 14 · <b>Ratissage</b> : suis Rue Saoudi Boualem, Rue Rahim Keddour, Pont de Hussin Day. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 12, "lat": 36.73393381553821, "lon": 3.1234098882962584, "svc": 0, "arrive_min": 88, "leave_min": 104, "note": "Vers 10 h 28 · <b>Ratissage</b> : suis RN 5E, Avenue Bekri Bouguerra, Avenue de l&#x27;ALN. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 13, "lat": 36.7460241, "lon": 3.0992299, "svc": 0, "arrive_min": 108, "leave_min": 112, "note": "Vers 10 h 48 · <b>Ratissage</b> : suis Avenue de l&#x27;ALN, RN 5. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 14, "lat": 36.74397505139138, "lon": 3.1011788825594886, "svc": 0, "arrive_min": 114, "leave_min": 127, "note": "Vers 10 h 54 · <b>Ratissage</b> : suis RN 5E, شارع العناصر, Chemin Fernane Hannafi (ex chemin vauban), Avenue de l&#x27;ALN. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 15, "lat": 36.7366781, "lon": 3.1144787, "svc": 0, "arrive_min": 132, "leave_min": 143, "note": "Vers 11 h 12 · <b>Ratissage</b> : suis Avenue de l&#x27;ALN, Avenue de Tripoli, Rue Capitaine Mouzaoui. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 16, "lat": 36.742697787099694, "lon": 3.098867635810747, "svc": 0, "arrive_min": 144, "leave_min": 147, "note": "Vers 11 h 24 · <b>Ratissage</b> : suis Avenue de Tripoli. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 17, "lat": 36.7468172, "lon": 3.087779, "svc": 0, "arrive_min": 149, "leave_min": 151, "note": "Vers 11 h 29 · <b>Ratissage</b> : suis Avenue de Tripoli, Rue Hassiba Benbouali. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Hussein Dey · 10 h 01 → 11 h 31 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.734313,3.107701\" target=\"_blank\" rel=\"noopener\">Rue Boudjemâa Moghni</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> vers Belouizdad</small>", "panels": []}, {"order": 18, "lat": 36.7502642, "lon": 3.0776908, "svc": 0, "arrive_min": 167, "leave_min": 192, "note": "Vers 11 h 47 · <b>Ratissage</b> : suis Avenue de l&#x27;ALN, Rue Hassiba Benbouali, Chemin Fernane Hannafi. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "4. Belouizdad · 11 h 47 → 12 h 30 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a></small>", "panels": []}, {"order": 19, "lat": 36.75450281097114, "lon": 3.060689173996019, "svc": 0, "arrive_min": 193, "leave_min": 199, "note": "Vers 12 h 13 · <b>Ratissage</b> : suis Rue Hassiba Benbouali, Rue Belouizdad Mohamed. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "4. Belouizdad · 11 h 47 → 12 h 30 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a></small>", "panels": []}, {"order": 20, "lat": 36.744430270342235, "lon": 3.077614868151116, "svc": 0, "arrive_min": 201, "leave_min": 206, "note": "Vers 12 h 21 · <b>Ratissage</b> : suis Rue Belouizdad Mohamed. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "4. Belouizdad · 11 h 47 → 12 h 30 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a></small>", "panels": []}, {"order": 21, "lat": 36.7446812, "lon": 3.082795, "svc": 0, "arrive_min": 208, "leave_min": 210, "note": "Vers 12 h 28 · <b>Ratissage</b> : suis Chemin des fusillés du 17 mai 1957. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "4. Belouizdad · 11 h 47 → 12 h 30 · ratissage complet<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a> · sortie par <a href=\"https://maps.google.com/?q=36.746488,3.087138\" target=\"_blank\" rel=\"noopener\">route principale</a></small>", "panels": []}]};
+const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
+  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade",
+  grand_panneau: "Grand panneau", pionnier: "Pionnier", face_2m2_mall: "Face 2 m² (centre commercial)" };
+// Même origine (github.io) pour toutes les pages: la clé doit distinguer chaque page.
+const KEY = "dclick-v6-" + R.key;
+const CAP = R.total_min, CHUNK = 10;
+
+let state = { done: [], start: null };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+const pt = s => s.lat.toFixed(6) + "," + s.lon.toFixed(6);
+const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
+const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const isDone = s => state.done.includes(s.order);
+
+document.getElementById("sub").textContent = R.intro ||
+  `${R.n_panels} panneaux, ${R.stops.length} arrêts, ${String(R.km).replace(".", ",")} km à moto. ` +
+  `Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.`;
+
+function render() {
+  const pending = R.stops.filter(s => !isDone(s));
+  const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
+  const doneRows = R.stops.filter(isDone).length;
+  document.getElementById("count").textContent = R.rows ? `${doneRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} panneaux sûrs` : `${donePanels} / ${R.n_panels} panneaux`;
+  document.getElementById("meter").style.width = (R.rows ? 100 * doneRows / R.stops.length : 100 * donePanels / R.n_panels) + "%";
+
+  const nav = document.getElementById("nav");
+  if (pending.length) {
+    // Les 10 prochains arrêts non faits, dans l'ordre: Google Maps part de la position du téléphone.
+    const next = pending.slice(0, CHUNK), last = next[next.length - 1];
+    let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
+    if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
+    nav.href = url;
+    nav.textContent = next.length > 1 ? `Naviguer : arrêts ${next[0].order} à ${last.order}` : `Naviguer : arrêt ${last.order}`;
+    nav.hidden = false;
+  } else {
+    nav.hidden = true;
+  }
+
+  const st = document.getElementById("status"), clock = document.getElementById("clock");
+  if (R.reloc) {
+    clock.textContent = "";
+    st.textContent = "Pas de chrono : avance à ton rythme, journée par journée.";
+  } else if (state.start) {
+    const el = (Date.now() - state.start) / 60000;
+    clock.textContent = `${hm(Math.max(0, el))} sur ${hm(CAP)}`;
+    const lastDone = R.stops.filter(isDone).pop();
+    const delta = lastDone ? el - lastDone.leave_min : 0;
+    const pace = Math.abs(delta) < 3 ? "dans les temps"
+      : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>`
+      : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
+    st.innerHTML = `Chrono lancé à ${clockOf(state.start)}, fin à ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
+  } else {
+    clock.textContent = hm(CAP);
+    st.textContent = "Le chrono démarre quand tu touches « Fait » au 1er arrêt.";
+  }
+
+  const firstPending = pending[0] && pending[0].order;
+  document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
+    const head = s.day && (i === 0 || R.stops[i - 1].day !== s.day) ? `<li class="dayh">${s.day}</li>` : "";
+    const flags = [];
+    if (s.panels.some(p => p.gps_doubt)) flags.push("GPS douteux : cherche 5 minutes autour. Rien ? Note « introuvable » ou dis-le sur WhatsApp.");
+    else if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
+    if (s.panels.some(p => p.near_photo)) flags.push("Peut-être déjà photographié au jour 1 : vérifier");
+    return `${head}<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
+      <div class="n">${s.order}</div>
+      <div>
+        <div class="when">${s.note || `Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}`}</div>
+        <div class="panels">${s.panels.map(p => `<div><span class="ref">${p.ref}</span> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
+        ${flags.map(f => `<div class="flag">${f}</div>`).join("")}
+      </div>
+      <div class="acts">
+        <a href="https://maps.google.com/?q=${pt(s)}" target="_blank" rel="noopener">Carte</a>
+        <button type="button" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
+      </div>
+    </li>`;
+  }).join("");
+
+  const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
+  const msg = `${R.title || "Vague 5"} · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
+    (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
+  document.getElementById("send").href = "https://wa.me/213770880535?text=" + encodeURIComponent(msg);
+}
+
+document.getElementById("stops").addEventListener("click", e => {
+  const b = e.target.closest("button[data-o]");
+  if (!b) return;
+  const o = Number(b.dataset.o), marked = !state.done.includes(o);
+  if (marked) {
+    state.done.push(o);
+    // Le chrono part à l'arrivée au 1er panneau: on retire le temps passé sur cet arrêt.
+    if (!state.start) state.start = Date.now() - R.stops.find(s => s.order === o).svc * 60000;
+  } else {
+    state.done = state.done.filter(x => x !== o);
+  }
+  save();
+  render();
+  const next = R.stops.find(s => !isDone(s));
+  if (marked && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+render();
+setInterval(render, 30000);
+</script>
+</body>
+</html>
