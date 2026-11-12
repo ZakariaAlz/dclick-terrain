@@ -84,7 +84,7 @@ li .mallrules li { display: list-item; background: none; border: 0; padding: 2px
       <li>Deux photos : vue d'ensemble (à 25-40 m), puis le contenu de chaque face (marque lisible).</li>
       <li>Écris le code (08-01, 08-02…) dans le formulaire pour chaque panneau.</li>
       <li>Panneau introuvable, démonté ou caché : photo de l'endroit + note, puis arrêt suivant.</li>
-      <li><b>Panneau en vue qui n'est pas dans ta liste :</b> certains points de la base ont un GPS faux, donc des panneaux ont pu être oubliés. Relève-le aussi et écris « NOUVEAU » à la place du code.</li>
+      <li><b>Panneau pas dans ta liste ?</b> Prends-le aussi, avec NOUVEAU comme code.</li>
 
       <li>Termine le tracé en entier : il est payé comme un tracé complet, quel que soit le nombre de panneaux. À la fin, envoie ton avancement à Zakaria (0770 88 05 35). Si tu dépasses de plus de 45 min, envoie-le aussi : c'est notre calcul qu'on corrige, pas toi.</li>
       <li>Termine avant la nuit (coucher du soleil vers 17 h) : une photo de nuit ne permet pas de lire la marque.</li>
@@ -155,7 +155,7 @@ function render() {
   document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
     const head = s.day && (i === 0 || R.stops[i - 1].day !== s.day) ? `<li class="dayh">${s.day}</li>` : "";
     const flags = [];
-    if (s.panels.some(p => p.gps_doubt)) flags.push("GPS douteux : la position a été recopiée lors du relevé. Cherche le panneau dans les 100 m autour et demande aux riverains. Introuvable : photo de l'endroit + note « introuvable ».");
+    if (s.panels.some(p => p.gps_doubt)) flags.push("GPS douteux : cherche dans les 100 m. Rien ? Photo de l'endroit + « introuvable ».");
     else if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
     if (s.panels.some(p => p.near_photo)) flags.push("Peut-être déjà photographié au jour 1 : vérifier");
     return `${head}<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
