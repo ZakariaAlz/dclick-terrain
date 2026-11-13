@@ -6,167 +6,230 @@
 <meta name="robots" content="noindex,nofollow">
 <title>D&#x27;click · Tracé 08</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Palette Flasher : orange = action, bleu = fait, magenta = alerte. */
-:root {
-  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
-  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
-  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --pass: #8a8378;
+/* « Signalétique » : la page se lit comme la route. Plaque de sortie pour l'arrêt en cours, panneau directionnel pour
+   chaque commune, ruban segmenté par commune. ADN DSR (orange Flasher, bleu pétrole, magenta), deux thèmes : nhar / lil. */
+:root, [data-theme="nhar"] {
+  --fond: #f4f0e9; --surface: #ffffff; --surface-2: #faf8f4; --filet: #e2dcd2; --filet-fort: #cfc7ba;
+  --encre: #17140f; --encre-2: #5a5348; --encre-3: #8a8275;
+  --orange: #d93813; --orange-vif: #e8581f; --orange-txt: #b3300f; --orange-voile: #fbe6dc;
+  --bleu: #1c4452; --bleu-txt: #24586a; --bleu-voile: #e2ecef;
+  --magenta: #a21d4f; --magenta-voile: #f6e2ea;
+  --plaque: #102e3a; --plaque-txt: #ffffff; --plaque-filet: #e0481a;
+  --fait: #1c4452; --fait-txt: #ffffff; --toast: #102e3a;
+  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) { :root {
-  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
-  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --pass: #8d8d8d; } }
+[data-theme="lil"] {
+  --fond: #0a1317; --surface: #101d23; --surface-2: #14242b; --filet: #1f323b; --filet-fort: #2b434d;
+  --encre: #f1ebe2; --encre-2: #a7b3b7; --encre-3: #71808a;
+  --orange: #f0642c; --orange-vif: #ff7a3d; --orange-txt: #ff8a52; --orange-voile: #2a1810;
+  --bleu: #6aa6bd; --bleu-txt: #8cc0d3; --bleu-voile: #12303b;
+  --magenta: #ef6f99; --magenta-voile: #2d1220;
+  --plaque: #123441; --plaque-txt: #f1ebe2; --plaque-filet: #f0642c;
+  --fait: #2a5c6e; --fait-txt: #f1ebe2; --toast: #f1ebe2;
+  color-scheme: dark;
+}
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
-header { padding: 18px 0 10px; }
-.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
-h1 { margin: 2px 0 4px; font-size: 1.6rem; }
-.sub { color: var(--muted); font-size: .92rem; margin: 0; }
-.banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--fg); font-size: .92rem; }
-.banner b { color: var(--warn); }
-.banner.sq { background: var(--ok-bg); }
-.banner.sq b { color: var(--ok); }
-.bar { position: sticky; top: 0; z-index: 500; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
-.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .92rem; }
-.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
-.meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
-.row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
-.newbtn { font: 700 .95rem system-ui, sans-serif; border-radius: 10px; padding: 0 14px; border: 2px solid var(--accent); color: var(--accent); background: var(--panel); cursor: pointer; }
-.status { font-size: .9rem; color: var(--muted); }
-.status b.late { color: var(--warn); }
-.status b.ahead { color: var(--ok); }
-.alert { display: none; background: var(--warn-bg); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--fond); color: var(--encre); font: 400 16px/24px "Barlow", "Segoe UI", system-ui, sans-serif; transition: background .25s, color .25s; }
+.cond { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; }
+.mono { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; }
+.wrap { max-width: 640px; margin: 0 auto; padding-bottom: 48px; }
+.pad { padding: 0 16px; }
+/* En-tête : plaque routière, filet orange */
+header { background: var(--plaque); color: var(--plaque-txt); padding: 20px 16px 16px; border-bottom: 4px solid var(--plaque-filet); }
+.htop { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.kick { font: 600 12px/16px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
+.theme { font: 700 13px/16px "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; background: transparent; color: var(--plaque-txt); border: 1px solid currentColor; border-radius: 999px; padding: 6px 12px; cursor: pointer; opacity: .9; }
+header h1 { margin: 8px 0 4px; font: 800 44px/44px "Barlow Condensed", sans-serif; letter-spacing: .01em; text-transform: uppercase; }
+header .sub { margin: 0; font: 400 15px/22px "Barlow", sans-serif; opacity: .9; }
+.intro-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 700 15px/20px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.35); padding: 4px 10px; border-radius: 3px; }
+/* Bandeaux */
+.note-band { margin: 16px 0 0; padding: 12px 14px; background: var(--surface); border-left: 4px solid var(--bleu); font: 500 15px/22px "Barlow", sans-serif; }
+.note-band.mag { border-left-color: var(--magenta); }
+.note-band b { font-weight: 700; }
+.startpick { margin: 16px 0 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--encre-2); font: 600 15px/20px "Barlow", sans-serif; }
+.startpick button { font: 700 17px/20px "Barlow Condensed", sans-serif; letter-spacing: .03em; border-radius: 3px; padding: 10px 14px; border: 1px solid var(--filet-fort); background: var(--surface); color: var(--encre); cursor: pointer; }
+.startpick button[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: #fff; }
+details { margin: 16px 0 0; background: var(--surface); padding: 12px 14px; border: 1px solid var(--filet); }
+summary { font: 700 16px/22px "Barlow", sans-serif; cursor: pointer; }
+details ol, details ul { margin: 8px 0 0; padding-left: 20px; font-size: 15px; line-height: 22px; color: var(--encre); }
+details li { padding: 3px 0; }
+.remarks { border-left: 4px solid var(--orange); }
+/* Barre fixe */
+.bar { position: sticky; top: 0; z-index: 1000; background: var(--fond); padding: 10px 16px 12px; border-bottom: 1px solid var(--filet); display: grid; gap: 10px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font: 700 16px/20px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--encre-2); font-variant-numeric: tabular-nums; }
+.ruban { display: flex; gap: 3px; }
+.seg { flex: 1 1 0; min-width: 0; }
+.seg .tr { height: 8px; background: var(--filet); position: relative; overflow: hidden; }
+.seg .tr i { position: absolute; inset: 0 auto 0 0; background: var(--orange); }
+.seg.fin .tr i { background: var(--fait); }
+.seg.cur .tr { outline: 2px solid var(--orange); outline-offset: 1px; }
+.seg span { display: block; font: 600 11px/14px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--encre-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+.seg.cur span { color: var(--orange-txt); }
+/* Arrêt en cours : plaque de sortie */
+.now { background: var(--surface); border: 1px solid var(--filet); padding: 12px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: start; }
+.plaque { background: var(--orange); color: #fff; font: 800 34px/34px "Barlow Condensed", sans-serif; padding: 8px 10px 6px; min-width: 64px; text-align: center; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); font-variant-numeric: tabular-nums; }
+.plaque small { display: block; font: 700 10px/12px "Barlow Condensed", sans-serif; letter-spacing: .12em; opacity: .9; }
+.now.pass .plaque { background: var(--bleu); }
+.now .t { font: 700 20px/24px "Barlow Condensed", sans-serif; letter-spacing: .02em; text-transform: uppercase; }
+.now .note { font: 500 15px/21px "Barlow", sans-serif; color: var(--encre-2); margin-top: 2px; }
+.now .panels { grid-column: 1 / -1; }
+.now .row3 { grid-column: 1 / -1; }
+.now.fin { grid-template-columns: 1fr; border-left: 4px solid var(--fait); }
+.row3 { display: grid; grid-template-columns: 1.15fr 1fr 1.1fr; gap: 8px; }
+.row3 a, .row3 button { font: 700 17px/20px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; border-radius: 4px; padding: 12px 6px; min-height: 52px; text-align: center; text-decoration: none; cursor: pointer; background: var(--surface); color: var(--bleu-txt); border: 1.5px solid var(--bleu-txt); display: flex; align-items: center; justify-content: center; }
+.row3 .abs { color: var(--magenta); border-color: var(--magenta); }
+.row3 .ok { background: linear-gradient(90deg, var(--orange), var(--orange-vif)); color: #fff; border: 0; font-size: 20px; }
+li.done .row3 .ok { background: var(--fait); color: var(--fait-txt); }
+li.absent .row3 .abs, li.skipped .row3 .abs { background: var(--magenta); color: #fff; }
+.mini { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
+.mini a, .mini button { font: 700 15px/18px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; border-radius: 4px; padding: 8px 6px; min-height: 42px; border: 1px solid var(--filet-fort); background: var(--surface); color: var(--encre); text-decoration: none; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.mini .new { border-color: var(--orange); color: var(--orange-txt); }
+.mini button[aria-pressed="true"] { background: var(--magenta); border-color: var(--magenta); color: #fff; }
+.status { font: 500 14px/20px "Barlow", sans-serif; color: var(--encre-2); }
+.status b.late { color: var(--magenta); }
+.status b.ahead { color: var(--bleu-txt); }
+.alert { display: none; background: var(--magenta-voile); border-left: 4px solid var(--magenta); padding: 10px 12px; font: 500 15px/21px "Barlow", sans-serif; }
 .alert.on { display: block; }
-#sendnag { background: var(--ok-bg); }
-#sendnag a { display: block; margin-top: 8px; text-align: center; font-weight: 700; padding: 10px; border-radius: 10px; background: var(--btn); color: var(--on-btn); text-decoration: none; }
-#sendnag.fin { border: 2px solid var(--ok); }
-.alert button { margin-top: 8px; width: 100%; font: 700 1rem system-ui, sans-serif; padding: 10px; border-radius: 10px; border: 2px solid var(--warn); color: var(--warn); background: transparent; cursor: pointer; }
-ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
-.stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
-.stops > li.done, .stops > li.absent, .stops > li.skipped { opacity: .55; }
-.stops > li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; opacity: 1; }
-.dayh small { font-weight: 500; color: var(--muted); }
-.when a, .dayh a { color: var(--accent); }
-.stops > li.next { border: 2px solid var(--accent); }
-.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
-li.pass .n { color: var(--pass); }
-.when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.panels { display: grid; gap: 4px; margin-top: 2px; }
-.ref { font: 700 .95rem ui-monospace, Menlo, monospace; border: 1px dashed var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 1px 6px; cursor: copy; }
-.tag { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 6px; padding: 1px 7px; margin-left: 4px; }
-.tag.abs { color: var(--warn); background: var(--warn-bg); }
-.tag.skp { color: var(--muted); background: var(--line); }
-.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; margin-top: 8px; }
-.acts a, .acts button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 12px 6px; text-align: center; text-decoration: none; cursor: pointer; background: transparent; }
-.acts a { border: 1px solid var(--line); color: var(--fg); }
-.acts .abs { border: 1px solid var(--warn); color: var(--warn); }
-.acts .ok { border: 2px solid var(--ok); color: var(--ok); }
-li.done .acts .ok { background: var(--ok-bg); }
-li.absent .acts .abs { background: var(--warn-bg); }
-.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
-.send.main { background: var(--btn); color: var(--on-btn); border: 0; }
-details { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
-summary { font-weight: 700; cursor: pointer; }
-details ol, details ul { margin: 8px 0 0; padding-left: 20px; }
-details li { padding: 2px 0; }
-#map { height: 360px; border-radius: 10px; margin-top: 10px; }
-.maptools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.maptools button { font: 600 .9rem system-ui, sans-serif; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.alert button, .alert a { display: block; width: 100%; margin-top: 8px; text-align: center; text-decoration: none; font: 700 17px/22px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; padding: 12px; border-radius: 4px; border: 0; cursor: pointer; background: linear-gradient(90deg, var(--orange), var(--orange-vif)); color: #fff; }
+#sendnag { background: var(--bleu-voile); border-left-color: var(--bleu); }
+/* Liste complète */
+h2.liste { font: 800 22px/26px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; margin: 24px 0 0; }
+ol.stops { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
+.stops > li { background: var(--surface); border: 1px solid var(--filet); padding: 12px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.stops > li.next { border: 2px solid var(--orange); }
+.stops > li.done, .stops > li.absent, .stops > li.skipped { background: var(--surface-2); }
+.stops > li.done .panels, .stops > li.absent .panels, .stops > li.skipped .panels, .stops > li.done .when, .stops > li.skipped .when { display: none; }
+/* Panneau directionnel par commune */
+.stops > li.dayh { display: block; border: 0; padding: 0; background: none; margin-top: 12px; }
+.dir { background: var(--plaque); color: var(--plaque-txt); padding: 10px 12px; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
+.dir .c { font: 800 24px/26px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; }
+.dir .c::before { content: "→ "; color: var(--plaque-filet); }
+.dir .m { font: 500 14px/20px "Barlow", sans-serif; opacity: .9; margin-top: 2px; }
+.dir .m a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.dir .sens { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.2); font: 600 14px/20px "Barlow", sans-serif; color: #ffd2c2; }
+.dir .k { font: 700 13px/16px "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase; opacity: .85; margin-top: 4px; }
+.n { font: 800 26px/30px "Barlow Condensed", sans-serif; color: var(--orange-txt); font-variant-numeric: tabular-nums; }
+li.pass .n { color: var(--bleu-txt); }
+.when { font: 500 15px/21px "Barlow", sans-serif; color: var(--encre-2); font-variant-numeric: tabular-nums; }
+.when b { color: var(--encre); }
+.panels { display: grid; gap: 4px; margin-top: 4px; font: 400 15px/22px "Barlow", sans-serif; }
+.ref { font: 600 15px/20px "IBM Plex Mono", monospace; border: 1px dashed var(--filet-fort); border-radius: 3px; background: var(--surface-2); color: var(--encre); padding: 2px 6px; cursor: copy; }
+.tag { display: inline-block; font: 700 12px/16px "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--magenta); color: var(--magenta); border-radius: 3px; padding: 0 6px; margin-left: 6px; }
+.tag.skp { border-color: var(--encre-3); color: var(--encre-3); }
+.stops .row3 { grid-column: 1 / -1; margin-top: 8px; }
+/* Fin de page */
+.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 4px; border: 1.5px solid var(--bleu-txt); background: var(--surface); color: var(--bleu-txt); font: 700 18px/22px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; text-align: center; text-decoration: none; }
+.send.main { background: linear-gradient(90deg, var(--orange), var(--orange-vif)); color: #fff; border: 0; }
+#map { height: 380px; margin-top: 10px; position: relative; z-index: 0; isolation: isolate; }
+[data-theme="lil"] #map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6); }
+.maptools, .reglages { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.maptools button, .reglages button { font: 700 15px/18px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; border-radius: 4px; padding: 10px 12px; border: 1px solid var(--filet-fort); background: var(--surface-2); color: var(--encre); cursor: pointer; }
+.reglages button[aria-pressed="true"] { border-color: var(--bleu-txt); color: var(--bleu-txt); }
 .news li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-.news button { font: 600 .85rem system-ui, sans-serif; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
-.startpick { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .9rem; color: var(--muted); }
-.startpick button { font: 600 .9rem system-ui, sans-serif; border-radius: 999px; padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
-.startpick button[aria-pressed="true"] { border: 2px solid var(--accent); color: var(--accent); }
-.tools { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-.tools button { font: 600 .9rem system-ui, sans-serif; border-radius: 10px; padding: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
-.tools button[aria-pressed="true"] { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
-.sens { display: inline-block; margin-top: 4px; font-size: .85rem; font-weight: 600; color: var(--warn); }
-.prog small { color: var(--muted); }
-.remarks { margin-top: 10px; background: var(--ok-bg); border: 0; }
-.remarks ol { padding-left: 20px; }
-.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: .92rem; max-width: 92vw; z-index: 1000; display: none; }
+.news button { font: 600 13px/18px "Barlow", sans-serif; border: 1px solid var(--filet-fort); background: transparent; color: var(--encre-2); border-radius: 4px; padding: 4px 8px; cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--toast); color: var(--fond); padding: 12px 16px; border-radius: 4px; font: 600 15px/22px "Barlow", sans-serif; max-width: 92vw; z-index: 2000; display: none; }
 .toast.on { display: block; }
-a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
+
+
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">D&#x27;click · Tracé 08 · jour 4</div>
+    <div class="htop"><div class="kick">D&#x27;click · Tracé 08 · jour 4</div><button type="button" class="theme" id="theme" aria-label="Changer de thème">Lil</button></div>
     <h1>Alae</h1>
     <p class="sub" id="sub"></p>
-    <div class="banner sq"><b>Photos et questionnaires : uniquement dans SensQuest.</b> Cette page te guide et compte ton avancement, elle ne remplace jamais SensQuest.</div>
-    <div class="banner" id="friday" hidden><b>Vendredi, au choix :</b> départ 9 h et fin avant la prière, ou départ 14 h après la prière. Choisis ci-dessous, toutes les heures se recalent.</div>
-    <div class="startpick" id="startpick"></div>
-    <details class="remarks" id="remarks" open hidden><summary id="remsum"></summary><div id="remtxt"></div></details>
+    <div class="intro-meta" id="meta"></div>
   </header>
+  <div class="pad">
+    <div class="note-band"><b>Tsawer w l'questionnaire ghir f SensQuest.</b> Had la page t'guidik bark.</div>
+    <div class="note-band mag" id="friday" hidden><b>Jem3a :</b> tebda 9h w tkemmel 9bel salat, wela tebda 14h ba3d salat. Khtar lta7t.</div>
+    <div class="startpick" id="startpick"></div>
+    <details class="remarks" id="remarks" hidden><summary id="remsum"></summary><div id="remtxt"></div></details>
+  </div>
 
   <div class="bar">
     <div class="prog"><span id="count"></span><span id="clock"></span></div>
-    <div class="meter"><i id="meter"></i></div>
-    <div class="row2"><a class="nav" id="nav" target="_blank" rel="noopener"></a><button class="newbtn" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button></div>
-    <div class="tools"><button type="button" id="pause" aria-pressed="false">Pause (prière, repas)</button><button type="button" id="wake" aria-pressed="false">Garder l'écran allumé</button><button type="button" id="sound" aria-pressed="true">Sons discrets : activés</button></div>
+    <div class="ruban" id="ruban" aria-label="Avancement par commune"></div>
+    <div class="now" id="now"></div>
+    <div class="mini"><a id="nav" target="_blank" rel="noopener"></a><button class="new" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button><button type="button" id="pause" aria-pressed="false">Pause</button></div>
     <div class="status" id="status"></div>
     <div class="alert" id="late"></div>
     <div class="alert" id="sendnag"></div>
   </div>
 
-  <details id="mapbox">
-    <summary>Carte du tracé et ma position</summary>
-    <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
-    <div class="maptools"><button type="button" id="locate">Me localiser</button><button type="button" id="fit">Tout le tracé</button></div>
-  </details>
+  <div class="pad">
+    <details id="mapbox">
+      <summary>La carte</summary>
+      <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
+      <div class="maptools"><button type="button" id="locate">Win rani ?</button><button type="button" id="fit">Kamel l'tracé</button></div>
+    </details>
 
-  <ol class="stops" id="stops"></ol>
+    <h2 class="liste">Kamel l'liste</h2>
+    <ol class="stops" id="stops"></ol>
 
-  <details id="newsbox" hidden>
-    <summary id="newssum">Mes nouveaux panneaux</summary>
-    <ol class="news" id="news"></ol>
-  </details>
+    <details id="newsbox" hidden>
+      <summary id="newssum">Les panneaux jdad</summary>
+      <ol class="news" id="news"></ol>
+    </details>
 
-  <a class="send main" id="send" target="_blank" rel="noopener">Envoyer mon bilan sur WhatsApp</a>
-  <a class="send" id="sendany" target="_blank" rel="noopener">Envoyer le bilan à un autre contact</a>
-  <a class="send" href="tel:+213770880535">Ila 3andak questions sa9sini : appeler Zakaria</a>
+    <a class="send main" id="send" target="_blank" rel="noopener">Ab3at l'bilan f WhatsApp</a>
+    <a class="send" id="sendany" target="_blank" rel="noopener">Ab3at l'bilan l wa7ed akhor</a>
+    <a class="send" href="tel:+213770880535">Ila 3andak questions sa9sini : 3ayatli f telephone</a>
 
-  <details>
-    <summary>Mode d'emploi de la page</summary>
+    <details>
+      <summary>Réglages</summary>
+      <div class="reglages"><button type="button" id="wake" aria-pressed="false">L'écran ma ytfach</button><button type="button" id="sound" aria-pressed="true">Son : ON</button></div>
+    </details>
+    <details>
+    <summary>Kifach tkhdem b la page</summary>
     <ul>
-      <li><b>Photos et questionnaire : toujours dans SensQuest</b>, pour chaque panneau. La page ne fait que te guider.</li>
-      <li><b>Y aller</b> ouvre Google Maps vers cet arrêt depuis ta position. <b>Naviguer</b> enchaîne les 10 prochains arrêts.</li>
-      <li>Touche le <b>code</b> d'un panneau (ex. 05-01) : il est copié, colle-le dans « Observations libres » de SensQuest.</li>
-      <li><b>Fait</b> : photos prises et questionnaire envoyé dans SensQuest. <b>Introuvable</b> : rien au bout de 5 minutes, tu repars. Sur une ligne de ratissage, <b>Sauter</b> la passe.</li>
-      <li><b>+ Nouveau</b> : un panneau qui n'est pas dans ta liste. La page note seulement ta position GPS ; les photos et le questionnaire se font dans SensQuest, avec NOUVEAU dans « Observations libres ».</li>
-      <li>Choisis ton <b>heure de départ</b> en haut : toutes les heures se recalent, puis suivent ton vrai départ dès le 1er arrêt.</li>
-      <li><b>Sons discrets</b> (une petite note, une vibration) : panneau sûr à moins de 150 m, arrêt qui dure 5 min de plus que prévu, retard de plus de 15 min. Bouton pour les couper.</li>
-      <li><b>Pause</b> pour la prière ou le repas : le chrono s'arrête, tu ne prends pas de retard.</li>
-      <li>Plus de 15 minutes de retard : la page te propose de passer à la commune suivante. Les panneaux sûrs restent prioritaires.</li>
-      <li><b>Envoyer mon bilan</b> : faits, introuvables, annulés, sautés, ce qui reste et les nouveaux. La page te le rappelle à la fin de chaque commune, toutes les heures, et quand le tracé est terminé.</li>
+      <li><b>Tsawer w questionnaire :</b> ghir f SensQuest.</li>
+      <li><b>Plassatha fel maps :</b> Google Maps l had l'arrêt. <b>Roh :</b> les 10 arrêts jayin.</li>
+      <li>Touchi l'<b>code</b> (ex. 05-01) : ytna9el, 7ottou f « Observations » f SensQuest.</li>
+      <li><b>Fait :</b> tsawer w l'questionnaire tba3at. <b>Introuvable :</b> 5 d9aye9 w ma l9itouch. <b>Khalli :</b> t9oss had l'ratissage.</li>
+      <li><b>+ Nouveau :</b> panneau jdid machi f la liste. La page tsajjel l'GPS, w nta tsawer w dir l'questionnaire f SensQuest b NOUVEAU.</li>
+      <li><b>Pause :</b> l salat wela l makla, l'chrono yo9ef.</li>
+      <li><b>Son :</b> note sghira ki panneau 9rib, ki tetwel f arrêt, wela ki tet3attel.</li>
+      <li><b>Ab3at l'bilan :</b> f kol commune, kol sa3a, w f lekher.</li>
     </ul>
   </details>
   <details>
     <summary>Rappels</summary>
     <ol>
-      <li><b>Zones sensibles :</b> jamais de photo face à une caserne, un commissariat, une ambassade ou un bâtiment officiel. Si un policier ou un gardien te le demande, range le téléphone, explique que tu relèves les panneaux publicitaires pour une étude, et passe à l'arrêt suivant.</li>
-      <li>Moto à l'arrêt complet avant de sortir le téléphone.</li>
-      <li>Le GPS de SensQuest est parfois imprécis : devant le panneau, attends moins de 10 m avant de valider.</li>
-      <li>Deux photos : vue d'ensemble (25 à 40 m), puis chaque face, marque lisible.</li>
-      <li>Termine le tracé en entier, il est payé complet.</li>
+      <li>Rod balek 9bel ma tsawar : ma tsawarch caserne, commissariat, ambassade wala bâtiment officiel. Ila 7absek chi wa7ed : khabbi l'telephone, 9ollo rak tsawar les panneaux publicitaires l étude, w kemmel.</li>
+      <li>O9ef l'moto mlih 9bel ma tkharraj l'telephone.</li>
+      <li>GPS : stenna yahbat ta7t 10 m 9bel ma tvalidi.</li>
+      <li>Photos : wa7da men b3id (25 à 30 m) w les photos le9rab, la marque w l'slogan ybanou mlih.</li>
+      <li>Kemmel l'tracé kamel.</li>
     </ol>
   </details>
+  </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const R = {"key": "T08v13", "id": "08", "day": 4, "topic": "dclick-3t6kY3LyQZjXzVqSo62ivc1a", "remarks": {"title": "Mlahdat 3la nhar 1 w 2 (9rahom 9bel ma tebda)", "html": "<p>L'GPS ta3ek mlih (wast 15 m) w les questionnaires m9adin, saha ! Bessah kayen 3 hwayej lazem tsala7hom :</p><ol><li><b>« Absent » :</b> ila l'panneau makanch, cochi ghir « Absent », ma tzidch m3ah états okhrin. 13 khatrat tla9ina « Absent » m3a états okhrin.</li><li><b>Doublons :</b> ma tsawarch nafs l'panneau zouj khatrat. 4 doublons possibles f youmin.</li><li><b>Observations :</b> 26 men 48 kanou fargin. Ktab dima l'code ta3 l'arrêt (ex. 05-01), w NOUVEAU ila l'panneau jdid. Touchi l'code f la page w ylsa9.</li></ol>"}, "geom": [[2.99024, 36.81303], [2.9898, 36.81282], [2.98937, 36.81265], [2.98809, 36.81232], [2.98763, 36.81231], [2.98504, 36.81293], [2.98474, 36.81294], [2.98431, 36.81298], [2.98397, 36.8129], [2.98363, 36.81282], [2.98328, 36.81273], [2.98296, 36.81266], [2.98253, 36.81264], [2.98223, 36.81269], [2.98159, 36.81285], [2.98122, 36.81297], [2.98027, 36.81323], [2.97989, 36.81334], [2.97927, 36.81352], [2.97885, 36.81363], [2.97815, 36.81383], [2.97783, 36.81391], [2.97756, 36.81398], [2.97724, 36.81403], [2.97681, 36.81403], [2.97636, 36.8139], [2.97586, 36.81376], [2.9754, 36.81363], [2.9751, 36.81363], [2.97472, 36.81364], [2.97316, 36.81367], [2.97272, 36.81369], [2.97232, 36.81371], [2.97272, 36.81369], [2.97307, 36.81368], [2.97472, 36.81364], [2.97503, 36.81363], [2.9754, 36.81363], [2.97586, 36.81376], [2.97629, 36.81388], [2.97681, 36.81403], [2.97724, 36.81403], [2.97756, 36.81398], [2.97783, 36.81391], [2.97815, 36.81383], [2.97885, 36.81363], [2.97917, 36.81355], [2.9798, 36.81337], [2.98027, 36.81323], [2.98122, 36.81297], [2.98159, 36.81285], [2.98196, 36.81274], [2.98253, 36.81264], [2.98296, 36.81266], [2.98328, 36.81273], [2.98358, 36.8128], [2.98397, 36.8129], [2.98431, 36.81298], [2.98474, 36.81294], [2.98504, 36.81293], [2.98755, 36.81234], [2.98788, 36.8123], [2.98937, 36.81265], [2.9898, 36.81282], [2.99018, 36.813], [2.99099, 36.81337], [2.99125, 36.8135], [2.99152, 36.81364], [2.99257, 36.81417], [2.99304, 36.8144], [2.99336, 36.81456], [2.9936, 36.81468], [2.9941, 36.81486], [2.99453, 36.81492], [2.99494, 36.81493], [2.99539, 36.81486], [2.9959, 36.81477], [2.99625, 36.81472], [2.99658, 36.8147], [2.99687, 36.81473], [2.99764, 36.81494], [2.9994, 36.81537], [2.99984, 36.81548], [3.00065, 36.81568], [3.00108, 36.81576], [3.0014, 36.81579], [3.00181, 36.81581], [3.00255, 36.81581], [3.00302, 36.81581], [3.00339, 36.81581], [3.00371, 36.81582], [3.00417, 36.81582], [3.00462, 36.81587], [3.00513, 36.81596], [3.00557, 36.81602], [3.00602, 36.81614], [3.00649, 36.81632], [3.00685, 36.81647], [3.00719, 36.8166], [3.00754, 36.81674], [3.00795, 36.8169], [3.00855, 36.81705], [3.00903, 36.81714], [3.00944, 36.81719], [3.01027, 36.81729], [3.01069, 36.81735], [3.01102, 36.81739], [3.01146, 36.81744], [3.01191, 36.81747], [3.01221, 36.81746], [3.01316, 36.8172], [3.01391, 36.81693], [3.01419, 36.81684], [3.01451, 36.81674], [3.01484, 36.81663], [3.01533, 36.81652], [3.01569, 36.8165], [3.01606, 36.81649], [3.01639, 36.81648], [3.01673, 36.81644], [3.01707, 36.81636], [3.01739, 36.81621], [3.01778, 36.81595], [3.01803, 36.81575], [3.01824, 36.81555], [3.01848, 36.81524], [3.01863, 36.81478], [3.01868, 36.81433], [3.01886, 36.81398], [3.01909, 36.81374], [3.01955, 36.81353], [3.02004, 36.81343], [3.02041, 36.81333], [3.02086, 36.8132], [3.02112, 36.81307], [3.02138, 36.81282], [3.02154, 36.81264], [3.02179, 36.81236], [3.02197, 36.81219], [3.0222, 36.81206], [3.0225, 36.81196], [3.02299, 36.8118], [3.02376, 36.81165], [3.02419, 36.8115], [3.0245, 36.81141], [3.02486, 36.81141], [3.0252, 36.81142], [3.02573, 36.81143], [3.02619, 36.81146], [3.02659, 36.81162], [3.02719, 36.81181], [3.02755, 36.81189], [3.02786, 36.81188], [3.0282, 36.81181], [3.02846, 36.81172], [3.02877, 36.81162], [3.0291, 36.8115], [3.02962, 36.81126], [3.03004, 36.81103], [3.03055, 36.81073], [3.03088, 36.8105], [3.03112, 36.81035], [3.03196, 36.80978], [3.03226, 36.80961], [3.0328, 36.80949], [3.03308, 36.80946], [3.03336, 36.80944], [3.03367, 36.80947], [3.03395, 36.80955], [3.03444, 36.80967], [3.03496, 36.80966], [3.03522, 36.80957], [3.03552, 36.80941], [3.03586, 36.8092], [3.03619, 36.80903], [3.03668, 36.80893], [3.03713, 36.80899], [3.03755, 36.80911], [3.03808, 36.80936], [3.03849, 36.80944], [3.039, 36.80948], [3.03938, 36.80932], [3.03994, 36.80899], [3.04032, 36.80863], [3.0405, 36.80815], [3.04061, 36.8077], [3.0405, 36.80815], [3.0404, 36.80847], [3.04014, 36.80884], [3.03944, 36.80856], [3.03888, 36.80801], [3.03864, 36.80774], [3.03815, 36.80723], [3.03846, 36.80699], [3.03856, 36.80664], [3.03878, 36.80647], [3.0391, 36.80644], [3.03938, 36.80645], [3.03974, 36.80631], [3.04, 36.80616], [3.04035, 36.80596], [3.04063, 36.80581], [3.04099, 36.80568], [3.04174, 36.80543], [3.04205, 36.80526], [3.04231, 36.80508], [3.04274, 36.80479], [3.04307, 36.80454], [3.04355, 36.80488], [3.04397, 36.80536], [3.04377, 36.80559], [3.04423, 36.80531], [3.04459, 36.80517], [3.04488, 36.8051], [3.04521, 36.80502], [3.0456, 36.80488], [3.04586, 36.80464], [3.046, 36.80436], [3.04623, 36.80382], [3.04644, 36.80353], [3.04678, 36.80333], [3.04641, 36.80278], [3.046, 36.80225], [3.04632, 36.80197], [3.04668, 36.80165], [3.04698, 36.80138], [3.04735, 36.80104], [3.04784, 36.80057], [3.0484, 36.80003], [3.04872, 36.79966], [3.04894, 36.79942], [3.04927, 36.79901], [3.04894, 36.79942], [3.04872, 36.79966], [3.0484, 36.80003], [3.04784, 36.80057], [3.04735, 36.80104], [3.04713, 36.80124], [3.04737, 36.80141], [3.0478, 36.8017], [3.04808, 36.80193], [3.04837, 36.8019], [3.04876, 36.80137], [3.04899, 36.801], [3.04902, 36.80072], [3.04899, 36.80044], [3.04895, 36.80004], [3.049, 36.79974], [3.04908, 36.79952], [3.04932, 36.79917], [3.04956, 36.7989], [3.04983, 36.79869], [3.05011, 36.79848], [3.05038, 36.79828], [3.05107, 36.7978], [3.05131, 36.79758], [3.05148, 36.79717], [3.05144, 36.79684], [3.05139, 36.79659], [3.05128, 36.79614], [3.05124, 36.79573], [3.05167, 36.79501], [3.05194, 36.79477], [3.05217, 36.79458], [3.05086, 36.79339], [3.05062, 36.79326], [3.04998, 36.79316], [3.04948, 36.7931], [3.04874, 36.79273], [3.0485, 36.79194], [3.04834, 36.79133], [3.04831, 36.7911], [3.04818, 36.79089], [3.04804, 36.79057], [3.04776, 36.79028], [3.04707, 36.78949], [3.04686, 36.78925], [3.04644, 36.78875], [3.04611, 36.78838], [3.0463, 36.78858], [3.04686, 36.78925], [3.04707, 36.78949], [3.04762, 36.79012], [3.04798, 36.79051], [3.04813, 36.79077], [3.04828, 36.79105], [3.04834, 36.79133], [3.0485, 36.79194], [3.04866, 36.79257], [3.04918, 36.79289], [3.04948, 36.79302], [3.05006, 36.79309], [3.05048, 36.79314], [3.05076, 36.79321], [3.05163, 36.79386], [3.052, 36.79416], [3.05233, 36.79443], [3.05268, 36.79416], [3.05292, 36.79398], [3.05313, 36.79379], [3.05339, 36.79358], [3.05366, 36.79342], [3.0541, 36.79323], [3.05476, 36.79294], [3.05426, 36.79316], [3.054, 36.79339], [3.05365, 36.79357], [3.0534, 36.79377], [3.0536, 36.79345], [3.0541, 36.79323], [3.05361, 36.79247], [3.05319, 36.7918], [3.0528, 36.79192], [3.05241, 36.79191], [3.05212, 36.79174], [3.05193, 36.79144], [3.05179, 36.7911], [3.05224, 36.79103], [3.05276, 36.79107], [3.05344, 36.79105], [3.05382, 36.79104], [3.05423, 36.79104], [3.05476, 36.79102], [3.05549, 36.79106], [3.05617, 36.79116], [3.05673, 36.7912], [3.05704, 36.79111], [3.0573, 36.791], [3.05753, 36.79131], [3.05769, 36.79154], [3.05786, 36.79178], [3.05813, 36.79167], [3.05842, 36.79152], [3.05895, 36.79127], [3.05948, 36.79101], [3.06055, 36.79055], [3.06113, 36.7903], [3.06148, 36.79015], [3.06188, 36.78989], [3.06184, 36.79024], [3.06181, 36.79052], [3.06142, 36.79069], [3.06085, 36.79095], [3.06055, 36.79055], [3.06113, 36.7903], [3.06148, 36.79015], [3.06188, 36.78989], [3.0625, 36.78934], [3.06262, 36.78912], [3.06276, 36.78865], [3.06284, 36.78829], [3.06301, 36.78755], [3.0631, 36.78712], [3.0632, 36.78666], [3.06325, 36.78641], [3.06334, 36.78591], [3.06315, 36.78563], [3.06279, 36.78526], [3.06276, 36.78495], [3.06286, 36.78468], [3.06292, 36.78446], [3.06284, 36.78416], [3.06275, 36.7839], [3.06261, 36.78345], [3.06245, 36.78298], [3.06235, 36.78264], [3.06224, 36.78232], [3.06215, 36.78203], [3.06204, 36.78171], [3.06187, 36.78118], [3.06177, 36.78096], [3.06163, 36.78064], [3.06152, 36.78038], [3.06181, 36.78089], [3.06192, 36.78116], [3.0621, 36.7817], [3.0622, 36.78201], [3.0623, 36.7823], [3.0624, 36.78262], [3.06261, 36.78328], [3.06274, 36.78363], [3.06285, 36.7839], [3.06294, 36.78414], [3.06303, 36.78435], [3.06334, 36.78458], [3.06334, 36.78484], [3.0633, 36.78507], [3.06343, 36.78547], [3.06349, 36.78569], [3.06341, 36.78616], [3.06323, 36.78713], [3.063, 36.78816], [3.06289, 36.78865], [3.06278, 36.78907], [3.06283, 36.78902]], "friday": false, "agent": "Alae", "title": "Tracé 08 · samedi 14/11", "km": 18.4, "n_panels": 17, "rows": true, "total_min": 179, "intro": "Tactique B : ratissage. Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom. Les panneaux sûrs de la commune sont dans la liste. Départ prévu ⟦0⟧, fin prévue vers ⟦179⟧ (2 h 59 de travail, 18,4 km). Communes dans l'ordre : Hammamet → Raïs Hamidou → Bologhine → Oued Koreiche → Bab El Oued → Casbah. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent. Les heures tiennent compte de la circulation réelle mesurée les 11 et 12/11. Plus de 15 min de retard sur l'heure indiquée : saute les points de ratissage restants et passe à la commune suivante.", "stops": [{"order": 1, "lat": 36.813, "lon": 2.990263, "svc": 5.5, "arrive_min": 0.0, "leave_min": 5.5, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · ⟦0⟧ → ⟦28⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-01", "support": "sucette", "label": "(centre / sans lieu-dit) · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 2, "lat": 36.812762, "lon": 2.983654, "svc": 5.5, "arrive_min": 7.6, "leave_min": 13.1, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · ⟦0⟧ → ⟦28⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-02", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 3, "lat": 36.813659, "lon": 2.974515, "svc": 5.5, "arrive_min": 15.9, "leave_min": 21.4, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · ⟦0⟧ → ⟦28⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-03", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 4, "lat": 36.813741, "lon": 2.972235, "svc": 5.5, "arrive_min": 23.0, "leave_min": 28.5, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · ⟦0⟧ → ⟦28⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-04", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 5, "lat": 36.8170501, "lon": 3.0085486, "svc": 0, "arrive_min": 34.7, "leave_min": 39.2, "note": "<b>Ratissage</b> : suis Avenue Ho Chi Minh, Boulevard Touati Saïd. Photos et questionnaire dans SensQuest pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Raïs Hamidou · ⟦35⟧ → ⟦55⟧ · 2 panneaux sûrs · ratissage jusqu'à ⟦55⟧<br><small>Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom.</small><br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": [], "kind": "pass", "commune": "Raïs Hamidou"}, {"order": 6, "lat": 36.817478, "lon": 3.012214, "svc": 8.0, "arrive_min": 41.4, "leave_min": 49.4, "note": "<b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "2. Raïs Hamidou · ⟦35⟧ → ⟦55⟧ · 2 panneaux sûrs · ratissage jusqu'à ⟦55⟧<br><small>Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom.</small><br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": [{"ref": "08-05", "support": "facade_mur", "label": "Raïs Hamidou · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "08-06", "support": "facade_mur", "label": "Raïs Hamidou · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Raïs Hamidou"}, {"order": 7, "lat": 36.81185522134938, "lon": 3.0274038677474486, "svc": 0, "arrive_min": 49.8, "leave_min": 55.3, "note": "<b>Ratissage</b> : suis Boulevard Touati Saïd. Photos et questionnaire dans SensQuest pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Raïs Hamidou · ⟦35⟧ → ⟦55⟧ · 2 panneaux sûrs · ratissage jusqu'à ⟦55⟧<br><small>Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom.</small><br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": [], "kind": "pass", "commune": "Raïs Hamidou"}, {"order": 8, "lat": 36.8077047, "lon": 3.0406064, "svc": 0, "arrive_min": 56.3, "leave_min": 61.5, "note": "<b>Ratissage</b> : suis Boulevard Touati Saïd, Boulevard Émir Khaled. Photos et questionnaire dans SensQuest pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Bologhine · ⟦56⟧ → ⟦82⟧ · 1 panneau sûr · ratissage jusqu'à ⟦82⟧<br><small>Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom.</small><br><small>Entrée par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · sortie par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> vers Bab El Oued</small>", "panels": [], "kind": "pass", "commune": "Bologhine"}, {"order": 9, "lat": 36.802089845045536, "lon": 3.046176665159264, "svc": 0, "arrive_min": 64.6, "leave_min": 70.4, "note": "<b>Ratissage</b> : suis Avenue Ziar Abdelkader, Boulevard Émir Khaled. Photos et questionnaire dans SensQuest pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Bologhine · ⟦56⟧ → ⟦82⟧ · 1 panneau sûr · ratissage jusqu'à ⟦82⟧<br><small>Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom.</small><br><small>Entrée par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · sortie par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> vers Bab El Oued</small>", "panels": [], "kind": "pass", "commune": "Bologhine"}, {"order": 10, "lat": 36.80136847963387, "lon": 3.048760957950576, "svc": 0, "arrive_min": 72.2, "leave_min": 74.8, "note": "<b>Ratissage</b> : suis Rue Cdt Mira Abderahmane, Boulevard Émir Khaled. Photos et questionnaire dans SensQuest pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "3. Bologhine · ⟦56⟧ → ⟦82⟧ · 1 panneau sûr · ratissage jusqu'à ⟦82⟧<br><small>Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom.</small><br><small>Entrée par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · sortie par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> vers Bab El Oued</small>", "panels": [], "kind": "pass", "commune": "Bologhine"}, {"order": 11, "lat": 36.798904, "lon": 3.049574, "svc": 5.5, "arrive_min": 76.8, "leave_min": 82.3, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "3. Bologhine · ⟦56⟧ → ⟦82⟧ · 1 panneau sûr · ratissage jusqu'à ⟦82⟧<br><small>Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom.</small><br><small>Entrée par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · sortie par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> vers Bab El Oued</small>", "panels": [{"ref": "08-07", "support": "facade_mur", "label": "Village Marie · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bologhine"}, {"order": 12, "lat": 36.788305, "lon": 3.0459815, "svc": 5.5, "arrive_min": 87.2, "leave_min": 92.7, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "4. Oued Koreiche · ⟦87⟧ → ⟦93⟧ · 1 panneau sûr<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> · sortie par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> vers Bab El Oued</small>", "panels": [{"ref": "08-08", "support": "facade_mur", "label": "Oued Koriche · ton relevé du 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Oued Koreiche"}, {"order": 13, "lat": 36.793525, "lon": 3.053423, "svc": 5.5, "arrive_min": 99.1, "leave_min": 104.6, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · ⟦99⟧ → ⟦142⟧ · 5 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-09", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 14, "lat": 36.792974, "lon": 3.05478, "svc": 5.5, "arrive_min": 106.2, "leave_min": 111.7, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · ⟦99⟧ → ⟦142⟧ · 5 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-10", "support": "facade_mur", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 15, "lat": 36.793391, "lon": 3.054003, "svc": 5.5, "arrive_min": 113.2, "leave_min": 118.7, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · ⟦99⟧ → ⟦142⟧ · 5 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-11", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 16, "lat": 36.791948, "lon": 3.052708, "svc": 5.5, "arrive_min": 122.3, "leave_min": 127.8, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · ⟦99⟧ → ⟦142⟧ · 5 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-12", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 17, "lat": 36.789868, "lon": 3.06185, "svc": 5.5, "arrive_min": 136.6, "leave_min": 142.1, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · ⟦99⟧ → ⟦142⟧ · 5 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-13", "support": "panneau_4x3", "label": "El Kettani · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 18, "lat": 36.785676, "lon": 3.063083, "svc": 5.5, "arrive_min": 146.9, "leave_min": 152.4, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · ⟦147⟧ → ⟦179⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-14", "support": "abribus", "label": "Place des Martyrs · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 19, "lat": 36.780965, "lon": 3.061747, "svc": 5.5, "arrive_min": 155.7, "leave_min": 161.2, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · ⟦147⟧ → ⟦179⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-15", "support": "abribus", "label": "Bab Azzoun · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 20, "lat": 36.780614, "lon": 3.061593, "svc": 5.5, "arrive_min": 162.4, "leave_min": 167.9, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · ⟦147⟧ → ⟦179⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-16", "support": "panneau_4x3", "label": "Bab Azzoun · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 21, "lat": 36.789055, "lon": 3.06288, "svc": 5.5, "arrive_min": 173.3, "leave_min": 178.8, "note": "6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · ⟦147⟧ → ⟦179⟧ · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-17", "support": "terrasse", "label": "La Basse Casbah · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}]};
+const R = {"key": "T08v13", "id": "08", "day": 4, "topic": "dclick-3t6kY3LyQZjXzVqSo62ivc1a", "remarks": {"title": "Remarques 3la nhar 1 ou 2 (a9rahom 9bel matabda)", "html": "<p>GPS ta3ak khalwi khouya Alae, bassah kayan hwayaj lazam triglihom ou tameliorihom :</p><ol><li><b>Absent :</b> ida mal9itch panneau fi point, cocher ghir « Absent », madirch m3ah état wahdokhar, ou roh l li morah.</li><li><b>Les panneaux jdad :</b> ki takhdam les panneaux jdad ki dour 3la secteur, aktab NOUVEAU f les notes.</li><li><b>Moula7adat :</b> khoud wa9tak fel questionnaire ou zidli les remarques.</li><li><b>Photos :</b> siyi a7kamhom bien ou eviti tkoun haja tban bzf wala mgenyathom. Vue d'ensemble men 25 m hata 30 m à peu près, ou les photos le9rab lazam la marque fihom tban mlih, surtout slogan ta3ha.</li><li><b>Doublons :</b> ma tsawarch nafs l'panneau zouj khatrat.</li><li><b>Rod balek 9bel ma tsawar :</b> verifiyi daymen ida ta9dar tsawar Alae, surtout fel playas li fihom doula kima fel Val.</li></ol>"}, "geom": [[2.99024, 36.81303], [2.9898, 36.81282], [2.98937, 36.81265], [2.98809, 36.81232], [2.98763, 36.81231], [2.98504, 36.81293], [2.98474, 36.81294], [2.98431, 36.81298], [2.98397, 36.8129], [2.98363, 36.81282], [2.98328, 36.81273], [2.98296, 36.81266], [2.98253, 36.81264], [2.98223, 36.81269], [2.98159, 36.81285], [2.98122, 36.81297], [2.98027, 36.81323], [2.97989, 36.81334], [2.97927, 36.81352], [2.97885, 36.81363], [2.97815, 36.81383], [2.97783, 36.81391], [2.97756, 36.81398], [2.97724, 36.81403], [2.97681, 36.81403], [2.97636, 36.8139], [2.97586, 36.81376], [2.9754, 36.81363], [2.9751, 36.81363], [2.97472, 36.81364], [2.97316, 36.81367], [2.97272, 36.81369], [2.97232, 36.81371], [2.97272, 36.81369], [2.97307, 36.81368], [2.97472, 36.81364], [2.97503, 36.81363], [2.9754, 36.81363], [2.97586, 36.81376], [2.97629, 36.81388], [2.97681, 36.81403], [2.97724, 36.81403], [2.97756, 36.81398], [2.97783, 36.81391], [2.97815, 36.81383], [2.97885, 36.81363], [2.97917, 36.81355], [2.9798, 36.81337], [2.98027, 36.81323], [2.98122, 36.81297], [2.98159, 36.81285], [2.98196, 36.81274], [2.98253, 36.81264], [2.98296, 36.81266], [2.98328, 36.81273], [2.98358, 36.8128], [2.98397, 36.8129], [2.98431, 36.81298], [2.98474, 36.81294], [2.98504, 36.81293], [2.98755, 36.81234], [2.98788, 36.8123], [2.98937, 36.81265], [2.9898, 36.81282], [2.99018, 36.813], [2.99099, 36.81337], [2.99125, 36.8135], [2.99152, 36.81364], [2.99257, 36.81417], [2.99304, 36.8144], [2.99336, 36.81456], [2.9936, 36.81468], [2.9941, 36.81486], [2.99453, 36.81492], [2.99494, 36.81493], [2.99539, 36.81486], [2.9959, 36.81477], [2.99625, 36.81472], [2.99658, 36.8147], [2.99687, 36.81473], [2.99764, 36.81494], [2.9994, 36.81537], [2.99984, 36.81548], [3.00065, 36.81568], [3.00108, 36.81576], [3.0014, 36.81579], [3.00181, 36.81581], [3.00255, 36.81581], [3.00302, 36.81581], [3.00339, 36.81581], [3.00371, 36.81582], [3.00417, 36.81582], [3.00462, 36.81587], [3.00513, 36.81596], [3.00557, 36.81602], [3.00602, 36.81614], [3.00649, 36.81632], [3.00685, 36.81647], [3.00719, 36.8166], [3.00754, 36.81674], [3.00795, 36.8169], [3.00855, 36.81705], [3.00903, 36.81714], [3.00944, 36.81719], [3.01027, 36.81729], [3.01069, 36.81735], [3.01102, 36.81739], [3.01146, 36.81744], [3.01191, 36.81747], [3.01221, 36.81746], [3.01316, 36.8172], [3.01391, 36.81693], [3.01419, 36.81684], [3.01451, 36.81674], [3.01484, 36.81663], [3.01533, 36.81652], [3.01569, 36.8165], [3.01606, 36.81649], [3.01639, 36.81648], [3.01673, 36.81644], [3.01707, 36.81636], [3.01739, 36.81621], [3.01778, 36.81595], [3.01803, 36.81575], [3.01824, 36.81555], [3.01848, 36.81524], [3.01863, 36.81478], [3.01868, 36.81433], [3.01886, 36.81398], [3.01909, 36.81374], [3.01955, 36.81353], [3.02004, 36.81343], [3.02041, 36.81333], [3.02086, 36.8132], [3.02112, 36.81307], [3.02138, 36.81282], [3.02154, 36.81264], [3.02179, 36.81236], [3.02197, 36.81219], [3.0222, 36.81206], [3.0225, 36.81196], [3.02299, 36.8118], [3.02376, 36.81165], [3.02419, 36.8115], [3.0245, 36.81141], [3.02486, 36.81141], [3.0252, 36.81142], [3.02573, 36.81143], [3.02619, 36.81146], [3.02659, 36.81162], [3.02719, 36.81181], [3.02755, 36.81189], [3.02786, 36.81188], [3.0282, 36.81181], [3.02846, 36.81172], [3.02877, 36.81162], [3.0291, 36.8115], [3.02962, 36.81126], [3.03004, 36.81103], [3.03055, 36.81073], [3.03088, 36.8105], [3.03112, 36.81035], [3.03196, 36.80978], [3.03226, 36.80961], [3.0328, 36.80949], [3.03308, 36.80946], [3.03336, 36.80944], [3.03367, 36.80947], [3.03395, 36.80955], [3.03444, 36.80967], [3.03496, 36.80966], [3.03522, 36.80957], [3.03552, 36.80941], [3.03586, 36.8092], [3.03619, 36.80903], [3.03668, 36.80893], [3.03713, 36.80899], [3.03755, 36.80911], [3.03808, 36.80936], [3.03849, 36.80944], [3.039, 36.80948], [3.03938, 36.80932], [3.03994, 36.80899], [3.04032, 36.80863], [3.0405, 36.80815], [3.04061, 36.8077], [3.0405, 36.80815], [3.0404, 36.80847], [3.04014, 36.80884], [3.03944, 36.80856], [3.03888, 36.80801], [3.03864, 36.80774], [3.03815, 36.80723], [3.03846, 36.80699], [3.03856, 36.80664], [3.03878, 36.80647], [3.0391, 36.80644], [3.03938, 36.80645], [3.03974, 36.80631], [3.04, 36.80616], [3.04035, 36.80596], [3.04063, 36.80581], [3.04099, 36.80568], [3.04174, 36.80543], [3.04205, 36.80526], [3.04231, 36.80508], [3.04274, 36.80479], [3.04307, 36.80454], [3.04355, 36.80488], [3.04397, 36.80536], [3.04377, 36.80559], [3.04423, 36.80531], [3.04459, 36.80517], [3.04488, 36.8051], [3.04521, 36.80502], [3.0456, 36.80488], [3.04586, 36.80464], [3.046, 36.80436], [3.04623, 36.80382], [3.04644, 36.80353], [3.04678, 36.80333], [3.04641, 36.80278], [3.046, 36.80225], [3.04632, 36.80197], [3.04668, 36.80165], [3.04698, 36.80138], [3.04735, 36.80104], [3.04784, 36.80057], [3.0484, 36.80003], [3.04872, 36.79966], [3.04894, 36.79942], [3.04927, 36.79901], [3.04894, 36.79942], [3.04872, 36.79966], [3.0484, 36.80003], [3.04784, 36.80057], [3.04735, 36.80104], [3.04713, 36.80124], [3.04737, 36.80141], [3.0478, 36.8017], [3.04808, 36.80193], [3.04837, 36.8019], [3.04876, 36.80137], [3.04899, 36.801], [3.04902, 36.80072], [3.04899, 36.80044], [3.04895, 36.80004], [3.049, 36.79974], [3.04908, 36.79952], [3.04932, 36.79917], [3.04956, 36.7989], [3.04983, 36.79869], [3.05011, 36.79848], [3.05038, 36.79828], [3.05107, 36.7978], [3.05131, 36.79758], [3.05148, 36.79717], [3.05144, 36.79684], [3.05139, 36.79659], [3.05128, 36.79614], [3.05124, 36.79573], [3.05167, 36.79501], [3.05194, 36.79477], [3.05217, 36.79458], [3.05086, 36.79339], [3.05062, 36.79326], [3.04998, 36.79316], [3.04948, 36.7931], [3.04874, 36.79273], [3.0485, 36.79194], [3.04834, 36.79133], [3.04831, 36.7911], [3.04818, 36.79089], [3.04804, 36.79057], [3.04776, 36.79028], [3.04707, 36.78949], [3.04686, 36.78925], [3.04644, 36.78875], [3.04611, 36.78838], [3.0463, 36.78858], [3.04686, 36.78925], [3.04707, 36.78949], [3.04762, 36.79012], [3.04798, 36.79051], [3.04813, 36.79077], [3.04828, 36.79105], [3.04834, 36.79133], [3.0485, 36.79194], [3.04866, 36.79257], [3.04918, 36.79289], [3.04948, 36.79302], [3.05006, 36.79309], [3.05048, 36.79314], [3.05076, 36.79321], [3.05163, 36.79386], [3.052, 36.79416], [3.05233, 36.79443], [3.05268, 36.79416], [3.05292, 36.79398], [3.05313, 36.79379], [3.05339, 36.79358], [3.05366, 36.79342], [3.0541, 36.79323], [3.05476, 36.79294], [3.05426, 36.79316], [3.054, 36.79339], [3.05365, 36.79357], [3.0534, 36.79377], [3.0536, 36.79345], [3.0541, 36.79323], [3.05361, 36.79247], [3.05319, 36.7918], [3.0528, 36.79192], [3.05241, 36.79191], [3.05212, 36.79174], [3.05193, 36.79144], [3.05179, 36.7911], [3.05224, 36.79103], [3.05276, 36.79107], [3.05344, 36.79105], [3.05382, 36.79104], [3.05423, 36.79104], [3.05476, 36.79102], [3.05549, 36.79106], [3.05617, 36.79116], [3.05673, 36.7912], [3.05704, 36.79111], [3.0573, 36.791], [3.05753, 36.79131], [3.05769, 36.79154], [3.05786, 36.79178], [3.05813, 36.79167], [3.05842, 36.79152], [3.05895, 36.79127], [3.05948, 36.79101], [3.06055, 36.79055], [3.06113, 36.7903], [3.06148, 36.79015], [3.06188, 36.78989], [3.06184, 36.79024], [3.06181, 36.79052], [3.06142, 36.79069], [3.06085, 36.79095], [3.06055, 36.79055], [3.06113, 36.7903], [3.06148, 36.79015], [3.06188, 36.78989], [3.0625, 36.78934], [3.06262, 36.78912], [3.06276, 36.78865], [3.06284, 36.78829], [3.06301, 36.78755], [3.0631, 36.78712], [3.0632, 36.78666], [3.06325, 36.78641], [3.06334, 36.78591], [3.06315, 36.78563], [3.06279, 36.78526], [3.06276, 36.78495], [3.06286, 36.78468], [3.06292, 36.78446], [3.06284, 36.78416], [3.06275, 36.7839], [3.06261, 36.78345], [3.06245, 36.78298], [3.06235, 36.78264], [3.06224, 36.78232], [3.06215, 36.78203], [3.06204, 36.78171], [3.06187, 36.78118], [3.06177, 36.78096], [3.06163, 36.78064], [3.06152, 36.78038], [3.06181, 36.78089], [3.06192, 36.78116], [3.0621, 36.7817], [3.0622, 36.78201], [3.0623, 36.7823], [3.0624, 36.78262], [3.06261, 36.78328], [3.06274, 36.78363], [3.06285, 36.7839], [3.06294, 36.78414], [3.06303, 36.78435], [3.06334, 36.78458], [3.06334, 36.78484], [3.0633, 36.78507], [3.06343, 36.78547], [3.06349, 36.78569], [3.06341, 36.78616], [3.06323, 36.78713], [3.063, 36.78816], [3.06289, 36.78865], [3.06278, 36.78907], [3.06283, 36.78902]], "friday": false, "agent": "Alae", "title": "Tracé 08 · samedi 14/11", "km": 18.4, "n_panels": 17, "rows": true, "total_min": 179, "intro": "Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom. Hammamet → Raïs Hamidou → Bologhine → Oued Koreiche → Bab El Oued → Casbah. Kemmel commune 9bel ma tdkhol l'okhra.", "stops": [{"order": 1, "lat": 36.813, "lon": 2.990263, "svc": 5.5, "arrive_min": 0.0, "leave_min": 5.5, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>1. Hammamet</div><div class='m'>⟦0⟧ → ⟦28⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · okhroj men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> l Raïs Hamidou</div>", "panels": [{"ref": "08-01", "support": "sucette", "label": "(centre / sans lieu-dit) · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 2, "lat": 36.812762, "lon": 2.983654, "svc": 5.5, "arrive_min": 7.6, "leave_min": 13.1, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>1. Hammamet</div><div class='m'>⟦0⟧ → ⟦28⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · okhroj men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> l Raïs Hamidou</div>", "panels": [{"ref": "08-02", "support": "facade_mur", "label": "Hammamet · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 3, "lat": 36.813659, "lon": 2.974515, "svc": 5.5, "arrive_min": 15.9, "leave_min": 21.4, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>1. Hammamet</div><div class='m'>⟦0⟧ → ⟦28⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · okhroj men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> l Raïs Hamidou</div>", "panels": [{"ref": "08-03", "support": "facade_mur", "label": "Hammamet · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 4, "lat": 36.813741, "lon": 2.972235, "svc": 5.5, "arrive_min": 23.0, "leave_min": 28.5, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>1. Hammamet</div><div class='m'>⟦0⟧ → ⟦28⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · okhroj men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> l Raïs Hamidou</div>", "panels": [{"ref": "08-04", "support": "facade_mur", "label": "Hammamet · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 5, "lat": 36.8170501, "lon": 3.0085486, "svc": 0, "arrive_min": 34.7, "leave_min": 39.2, "note": "<b>Dour f</b> Avenue Ho Chi Minh, Boulevard Touati Saïd", "day": "<div class='c'>2. Raïs Hamidou</div><div class='m'>⟦35⟧ → ⟦55⟧ · 2 sûrs · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · okhroj men <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> l Bologhine</div>", "panels": [], "kind": "pass", "commune": "Raïs Hamidou"}, {"order": 6, "lat": 36.817478, "lon": 3.012214, "svc": 8.0, "arrive_min": 41.4, "leave_min": 49.4, "note": "<b>2 panneaux hna : 8 min, ma tzidch</b> · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>2. Raïs Hamidou</div><div class='m'>⟦35⟧ → ⟦55⟧ · 2 sûrs · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · okhroj men <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> l Bologhine</div>", "panels": [{"ref": "08-05", "support": "facade_mur", "label": "Raïs Hamidou · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "08-06", "support": "facade_mur", "label": "Raïs Hamidou · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Raïs Hamidou"}, {"order": 7, "lat": 36.81185522134938, "lon": 3.0274038677474486, "svc": 0, "arrive_min": 49.8, "leave_min": 55.3, "note": "<b>Dour f</b> Boulevard Touati Saïd", "day": "<div class='c'>2. Raïs Hamidou</div><div class='m'>⟦35⟧ → ⟦55⟧ · 2 sûrs · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · okhroj men <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> l Bologhine</div>", "panels": [], "kind": "pass", "commune": "Raïs Hamidou"}, {"order": 8, "lat": 36.8077047, "lon": 3.0406064, "svc": 0, "arrive_min": 56.3, "leave_min": 61.5, "note": "<b>Dour f</b> Boulevard Touati Saïd, Boulevard Émir Khaled", "day": "<div class='c'>3. Bologhine</div><div class='m'>⟦56⟧ → ⟦82⟧ · 1 sûr · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · okhroj men <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> l Bab El Oued</div>", "panels": [], "kind": "pass", "commune": "Bologhine"}, {"order": 9, "lat": 36.802089845045536, "lon": 3.046176665159264, "svc": 0, "arrive_min": 64.6, "leave_min": 70.4, "note": "<b>Dour f</b> Avenue Ziar Abdelkader, Boulevard Émir Khaled", "day": "<div class='c'>3. Bologhine</div><div class='m'>⟦56⟧ → ⟦82⟧ · 1 sûr · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · okhroj men <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> l Bab El Oued</div>", "panels": [], "kind": "pass", "commune": "Bologhine"}, {"order": 10, "lat": 36.80136847963387, "lon": 3.048760957950576, "svc": 0, "arrive_min": 72.2, "leave_min": 74.8, "note": "<b>Dour f</b> Rue Cdt Mira Abderahmane, Boulevard Émir Khaled", "day": "<div class='c'>3. Bologhine</div><div class='m'>⟦56⟧ → ⟦82⟧ · 1 sûr · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · okhroj men <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> l Bab El Oued</div>", "panels": [], "kind": "pass", "commune": "Bologhine"}, {"order": 11, "lat": 36.798904, "lon": 3.049574, "svc": 5.5, "arrive_min": 76.8, "leave_min": 82.3, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>3. Bologhine</div><div class='m'>⟦56⟧ → ⟦82⟧ · 1 sûr · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · okhroj men <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> l Bab El Oued</div>", "panels": [{"ref": "08-07", "support": "facade_mur", "label": "Village Marie · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bologhine"}, {"order": 12, "lat": 36.788305, "lon": 3.0459815, "svc": 5.5, "arrive_min": 87.2, "leave_min": 92.7, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>4. Oued Koreiche</div><div class='m'>⟦87⟧ → ⟦93⟧ · 1 sûr</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> · okhroj men <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> l Bab El Oued</div>", "panels": [{"ref": "08-08", "support": "facade_mur", "label": "Oued Koriche · relevé ta3ek 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Oued Koreiche"}, {"order": 13, "lat": 36.793525, "lon": 3.053423, "svc": 5.5, "arrive_min": 99.1, "leave_min": 104.6, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>5. Bab El Oued</div><div class='m'>⟦99⟧ → ⟦142⟧ · 5 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> l Casbah</div>", "panels": [{"ref": "08-09", "support": "abribus", "label": "Bab El Oued · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 14, "lat": 36.792974, "lon": 3.05478, "svc": 5.5, "arrive_min": 106.2, "leave_min": 111.7, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>5. Bab El Oued</div><div class='m'>⟦99⟧ → ⟦142⟧ · 5 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> l Casbah</div>", "panels": [{"ref": "08-10", "support": "facade_mur", "label": "Bab El Oued · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 15, "lat": 36.793391, "lon": 3.054003, "svc": 5.5, "arrive_min": 113.2, "leave_min": 118.7, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>5. Bab El Oued</div><div class='m'>⟦99⟧ → ⟦142⟧ · 5 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> l Casbah</div>", "panels": [{"ref": "08-11", "support": "abribus", "label": "Bab El Oued · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 16, "lat": 36.791948, "lon": 3.052708, "svc": 5.5, "arrive_min": 122.3, "leave_min": 127.8, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>5. Bab El Oued</div><div class='m'>⟦99⟧ → ⟦142⟧ · 5 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> l Casbah</div>", "panels": [{"ref": "08-12", "support": "abribus", "label": "Bab El Oued · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 17, "lat": 36.789868, "lon": 3.06185, "svc": 5.5, "arrive_min": 136.6, "leave_min": 142.1, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>5. Bab El Oued</div><div class='m'>⟦99⟧ → ⟦142⟧ · 5 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> l Casbah</div>", "panels": [{"ref": "08-13", "support": "panneau_4x3", "label": "El Kettani · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 18, "lat": 36.785676, "lon": 3.063083, "svc": 5.5, "arrive_min": 146.9, "leave_min": 152.4, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>6. Casbah</div><div class='m'>⟦147⟧ → ⟦179⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></div>", "panels": [{"ref": "08-14", "support": "abribus", "label": "Place des Martyrs · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 19, "lat": 36.780965, "lon": 3.061747, "svc": 5.5, "arrive_min": 155.7, "leave_min": 161.2, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>6. Casbah</div><div class='m'>⟦147⟧ → ⟦179⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></div>", "panels": [{"ref": "08-15", "support": "abribus", "label": "Bab Azzoun · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 20, "lat": 36.780614, "lon": 3.061593, "svc": 5.5, "arrive_min": 162.4, "leave_min": 167.9, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>6. Casbah</div><div class='m'>⟦147⟧ → ⟦179⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></div>", "panels": [{"ref": "08-16", "support": "panneau_4x3", "label": "Bab Azzoun · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 21, "lat": 36.789055, "lon": 3.06288, "svc": 5.5, "arrive_min": 173.3, "leave_min": 178.8, "note": "6 min hna · 5 d9aye9 w ma l9itouch → Introuvable", "day": "<div class='c'>6. Casbah</div><div class='m'>⟦147⟧ → ⟦179⟧ · 4 sûrs</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · okhroj men <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></div>", "panels": [{"ref": "08-17", "support": "terrasse", "label": "La Basse Casbah · relevé ta3ek 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}]};
+// Thème nhar / lil : choix mémorisé sur le téléphone, sinon celui du téléphone
+const THK = "dclick-theme";
+let theme = null; try { theme = localStorage.getItem(THK); } catch (e) {}
+if (!theme) theme = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "lil" : "nhar";
+document.documentElement.dataset.theme = theme;
 const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
   terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade" };
 const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pages : la clé distingue chaque tracé
 const CAP = R.total_min, CHUNK = 10, LATE = 15;
 const WA = "213770880535";                   // Zakaria
 
-let state = { done: [], absent: [], skipped: [], news: [], start: null, plan: 540, pauses: [], pauseOn: null, lastAct: null, sound: true, near: [], undone: [], lastSent: null, sentDone: [], finishedAt: null };
+let state = { done: [], absent: [], skipped: [], news: [], start: null, plan: 540, pauses: [], pauseOn: null, lastAct: null, sound: true, near: [], undone: [], lastSent: null, sentDone: [], finishedAt: null, remSeen: false };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
@@ -187,7 +250,7 @@ const base = () => { if (!state.start) return state.plan; const d = new Date(sta
 const T = m => { const x = Math.round(base() + m + pausedMin()); return Math.floor(x / 60) % 24 + " h " + String(x % 60).padStart(2, "0"); };
 const fill = s => String(s).replace(/⟦(\d+)⟧/g, (_, n) => T(Number(n)));
 const elapsed = () => Math.max(0, (Date.now() - state.start) / 60000 - pausedMin());
-const STARTS = R.friday ? [[540, "9 h"], [600, "10 h"], [840, "14 h, après la prière"]] : [[510, "8 h 30"], [540, "9 h"], [600, "10 h"], [840, "14 h"]];
+const STARTS = R.friday ? [[540, "9 h"], [600, "10 h"], [840, "14 h, ba3d salat"]] : [[510, "8 h 30"], [540, "9 h"], [600, "10 h"], [840, "14 h"]];
 
 // Sons discrets (Web Audio, volume bas) + courte vibration. Le navigateur exige un premier toucher pour les autoriser.
 let AC = null;
@@ -231,20 +294,29 @@ if (R.friday) document.getElementById("friday").hidden = false;
 
 function render() {
   document.getElementById("sub").textContent = fill(R.intro);
-  if (R.remarks) { const rb = document.getElementById("remarks"); rb.hidden = false; document.getElementById("remsum").textContent = R.remarks.title; document.getElementById("remtxt").innerHTML = R.remarks.html; }
-  const sb2 = document.getElementById("sound"); sb2.setAttribute("aria-pressed", String(state.sound)); sb2.textContent = state.sound ? "Sons discrets : activés" : "Sons : coupés";
+  document.getElementById("meta").innerHTML = [hm(CAP) + " khedma", String(R.km).replace(".", ",") + " km", R.n_panels + " sûrs", "tkemmel " + T(CAP)].map(x => `<span class="chip">${x}</span>`).join("");
+  document.getElementById("theme").textContent = document.documentElement.dataset.theme === "lil" ? "Nhar" : "Lil";
+  if (R.remarks) {
+    const rb = document.getElementById("remarks");
+    if (rb.hidden) { rb.hidden = false; rb.open = !state.remSeen; document.getElementById("remsum").textContent = R.remarks.title; document.getElementById("remtxt").innerHTML = R.remarks.html; }
+  }
+  const sb2 = document.getElementById("sound"); sb2.setAttribute("aria-pressed", String(state.sound)); sb2.textContent = state.sound ? "Son : ON" : "Son : OFF";
   const sp = document.getElementById("startpick");
-  sp.innerHTML = state.start ? `Départ réel : ${clockOf(state.start)}. Les heures suivent ton vrai départ.`
-    : "Je pars à : " + STARTS.map(([m, l]) => `<button type="button" data-start="${m}" aria-pressed="${state.plan === m}">${l}</button>`).join("");
+  sp.innerHTML = state.start ? `Bdit f ${clockOf(state.start)}.`
+    : "Nebda f : " + STARTS.map(([m, l]) => `<button type="button" data-start="${m}" aria-pressed="${state.plan === m}">${l}</button>`).join("");
   const pb = document.getElementById("pause"); pb.setAttribute("aria-pressed", !!state.pauseOn);
-  pb.textContent = state.pauseOn ? `Reprendre (pause depuis ${clockOf(state.pauseOn)})` : "Pause (prière, repas)";
+  pb.textContent = state.pauseOn ? `Kemmel · ${clockOf(state.pauseOn)}` : "Pause";
   const pending = R.stops.filter(s => !closed(s));
   const closedRows = R.stops.length - pending.length;
   const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
   const absPanels = R.stops.filter(isAbs).reduce((a, s) => a + s.panels.length, 0);
   document.getElementById("count").textContent = `${closedRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} sûrs` +
     (absPanels ? ` · ${absPanels} introuvable${absPanels > 1 ? "s" : ""}` : "") + (state.news.length ? ` · ${state.news.length} nouveau${state.news.length > 1 ? "x" : ""}` : "");
-  document.getElementById("meter").style.width = (100 * closedRows / R.stops.length) + "%";
+  const comms = [...new Set(R.stops.map(s => s.commune))], curC = (R.stops.find(s => !closed(s)) || {}).commune;
+  document.getElementById("ruban").innerHTML = comms.map(c => {
+    const all = R.stops.filter(s => s.commune === c), dn = all.filter(closed).length, w = Math.round(100 * dn / all.length);
+    return `<div class="seg ${dn === all.length ? "fin" : ""} ${c === curC ? "cur" : ""}" style="flex-grow:${all.length}"><div class="tr"><i style="width:${w}%"></i></div><span>${c}</span></div>`;
+  }).join("");
 
   const nav = document.getElementById("nav");
   if (pending.length) {
@@ -252,7 +324,7 @@ function render() {
     let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
     if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
     nav.href = url; nav.hidden = false;
-    nav.textContent = next.length > 1 ? `Naviguer : arrêts ${next[0].order} à ${last.order}` : `Naviguer : arrêt ${last.order}`;
+    nav.textContent = next.length > 1 ? `Roh · ${next[0].order} → ${last.order}` : `Roh · ${last.order}`;
   } else { nav.hidden = true; }
 
   // chrono, avance ou retard, distance au prochain arrêt
@@ -260,15 +332,15 @@ function render() {
   let delta = 0;
   if (state.start) {
     const el = elapsed();
-    clock.textContent = `${hm(Math.max(0, el))} sur ${hm(CAP)}`;
+    clock.textContent = `${hm(Math.max(0, el))} / ${hm(CAP)}`;
     const lastClosed = R.stops.filter(closed).pop();
     delta = lastClosed ? el - lastClosed.leave_min : 0;
-    const pace = Math.abs(delta) < 3 ? "dans les temps" : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>` : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
-    st.innerHTML = state.pauseOn ? `En pause depuis ${clockOf(state.pauseOn)} : le chrono est arrêté.`
-      : `Départ ${clockOf(state.start)}, fin prévue ${T(CAP)}. Tu es ${pace}.`;
+    const pace = Math.abs(delta) < 3 ? "rak f l'wa9t" : delta > 0 ? `<b class="late">rak m3attel b ${Math.round(delta)} min</b>` : `<b class="ahead">rak 9bel l'wa9t b ${Math.round(-delta)} min</b>`;
+    st.innerHTML = state.pauseOn ? `Pause men ${clockOf(state.pauseOn)} : l'chrono wa9ef.`
+      : `Bdit ${clockOf(state.start)} · tkemmel vers ${T(CAP)} · ${pace}.`;
   } else {
     clock.textContent = hm(CAP);
-    st.textContent = `Fin prévue vers ${T(CAP)}. Le chrono démarre quand tu touches « Fait » ou « Introuvable » au 1er arrêt.`;
+    st.textContent = `Tkemmel vers ${T(CAP)}. L'chrono yebda ki tdir « Fait » f l'awel arrêt.`;
   }
   // rappel discret : plus de 5 min au-delà du temps prévu depuis la dernière action
   if (state.start && !state.pauseOn && pending[0]) {
@@ -276,17 +348,17 @@ function render() {
     const since = (Date.now() - (state.lastAct || state.start)) / 60000;
     if (since > planned + 5 && Date.now() - lastNag > 5 * 60000) {
       lastNag = Date.now(); beep("nag");
-      toast(`Arrêt ${pending[0].order} : ${Math.round(since - planned)} min de plus que prévu. Rien trouvé ? Touche « Introuvable » et continue.`);
+      toast(`Arrêt ${pending[0].order} : fatek l'wa9t b ${Math.round(since - planned)} min. Ma l9itouch ? « Introuvable » w kemmel.`);
     }
   }
   if (me && pending[0]) {
     const nx = R.stops.find(s => !closed(s) && s.kind === "stop");
     if (nx && dist(me, nx) < 150 && !state.near.includes(nx.order)) {
       state.near.push(nx.order); save(); beep("near");
-      toast(`Panneau sûr à ${fmtD(dist(me, nx))} (arrêt ${nx.order}) : regarde autour de toi.`);
+      toast(`Panneau sûr 9rib : ${fmtD(dist(me, nx))} (arrêt ${nx.order}). Chouf.`);
     }
     const d = dist(me, pending[0]);
-    st.innerHTML += d < 60 ? ` <b class="ahead">Tu es à l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} à ${fmtD(d)}.`;
+    st.innerHTML += d < 60 ? ` <b class="ahead">Rak f l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} b3id ${fmtD(d)}.`;
   }
   // retard : proposer de sauter la fin du ratissage de la commune en cours
   const cur = pending[0];
@@ -295,32 +367,47 @@ function render() {
   if (!state.pauseOn && delta > LATE && restPass.length) {
     if (!lateBeeped) { lateBeeped = true; beep("late"); }
     late.classList.add("on");
-    late.innerHTML = `<b>${Math.round(delta)} min de retard.</b> Saute le ratissage restant de ${cur.commune} (${restPass.length} passe${restPass.length > 1 ? "s" : ""})` +
-      (nextC ? ` et passe à ${nextC.commune}, arrêt ${nextC.order}.` : ".") + ` Les panneaux sûrs restent à faire.<button type="button" id="skipnow">Sauter le ratissage de ${cur.commune}</button>`;
+    late.innerHTML = `<b>Rak m3attel b ${Math.round(delta)} min.</b> Khalli l'ratissage ta3 ${cur.commune}` +
+      (nextC ? ` w roh l ${nextC.commune} (arrêt ${nextC.order}).` : ".") + ` Les panneaux sûrs lazem.<button type="button" id="skipnow">Khalli l'ratissage ta3 ${cur.commune}</button>`;
   } else { late.classList.remove("on"); late.innerHTML = ""; }
 
   const firstPending = cur && cur.order;
+  const actsOf = s => {
+    const second = s.kind === "pass"
+      ? `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Khallit · rja3" : "Khalli"}</button>`
+      : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · rja3" : "Introuvable"}</button>`;
+    return `<div class="row3"><a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Plassatha fel maps</a>${second}<button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · rja3" : "Fait"}</button></div>`;
+  };
+  const panelsOf = s => s.panels.length ? `<div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>` : "";
+  const nowEl = document.getElementById("now");
+  if (cur) {
+    nowEl.className = "now" + (cur.kind === "pass" ? " pass" : "");
+    nowEl.innerHTML = `<div class="plaque"><small>ARRÊT</small>${cur.order}</div><div><div class="t">${cur.commune} · ${T(cur.arrive_min)}</div><div class="note">${cur.note}</div></div>${panelsOf(cur)}${actsOf(cur)}`;
+  } else {
+    nowEl.className = "now fin";
+    nowEl.innerHTML = `<div><div class="t">Kemmelt l'tracé, saha !</div><div class="note">Ab3at l'bilan f WhatsApp lta7t.</div></div>`;
+  }
   document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
     let head = "";
     if (s.day && (i === 0 || R.stops[i - 1].day !== s.day)) {
       const inC = R.stops.filter(x => x.day === s.day), dn = inC.filter(closed).length;
-      head = `<li class="dayh">${fill(s.day)}<br><small>${dn} / ${inC.length} étapes faites dans cette commune</small></li>`;
+      head = `<li class="dayh"><div class="dir">${fill(s.day)}<div class="k">${dn} / ${inC.length} kemmelt</div></div></li>`;
     }
     const cls = [isDone(s) ? "done" : "", isAbs(s) ? "absent" : "", isSkip(s) ? "skipped" : "", s.order === firstPending ? "next" : "", s.kind === "pass" ? "pass" : ""].join(" ");
     const tag = isAbs(s) ? `<span class="tag abs">introuvable</span>` : isSkip(s) ? `<span class="tag skp">sauté</span>` : "";
     const second = s.kind === "pass"
-      ? `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Sauté · annuler" : "Sauter"}</button>`
-      : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · annuler" : "Introuvable"}</button>`;
+      ? `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Khallit · rja3" : "Khalli"}</button>`
+      : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · rja3" : "Introuvable"}</button>`;
     return `${head}<li class="${cls}" id="s${s.order}">
       <div class="n">${s.order}</div>
       <div>
-        <div class="when">Vers ${T(s.arrive_min)} · ${s.note}${tag}</div>
+        <div class="when"><b>${T(s.arrive_min)}</b> · ${s.note}${tag}</div>
         <div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
       </div>
       <div class="acts">
-        <a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Y aller</a>
+        <a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Plassatha fel maps</a>
         ${second}
-        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
+        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · rja3" : "Fait"}</button>
       </div>
     </li>`;
   }).join("");
@@ -328,7 +415,7 @@ function render() {
   // nouveaux panneaux
   const nb = document.getElementById("newsbox");
   nb.hidden = !state.news.length;
-  document.getElementById("newssum").textContent = `Mes nouveaux panneaux (${state.news.length})`;
+  document.getElementById("newssum").textContent = `Les panneaux jdad (${state.news.length})`;
   document.getElementById("news").innerHTML = state.news.map((n, i) =>
     `<li><span>N${i + 1} · ${clockOf(n.t)} · ±${Math.round(n.acc)} m · <a href="https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)}" target="_blank" rel="noopener">voir</a></span><button type="button" data-del="${i}">Retirer</button></li>`).join("");
 
@@ -341,13 +428,13 @@ function render() {
   const undone = [...new Set(state.undone)].filter(o => !closed(R.stops.find(s => s.order === o)));
   const finished = left.length === 0;
   const lines = [`*${R.title} · ${R.agent} · ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}*`,
-    finished ? "✅ TRACÉ TERMINÉ" : `⏳ En cours : ${closedRows}/${R.stops.length} étapes`,
-    `✔️ Faits (${doneRefs.length}/${R.n_panels} panneaux sûrs) : ${doneRefs.join(", ") || "aucun"}` + (rows(s => isDone(s) && s.kind === "pass").length ? ` · ratissage : ${rows(s => isDone(s) && s.kind === "pass").length} passe${rows(s => isDone(s) && s.kind === "pass").length > 1 ? "s faites" : " faite"}` : ""),
-    `❌ Introuvables : ${absRefs.join(", ") || "aucun"}`,
-    `⏭️ Ratissage sauté : ${rows(isSkip).length} passe${rows(isSkip).length > 1 ? "s" : ""}`,
-    ...(undone.length ? [`↩️ Annulés (Fait retiré) : arrêts ${undone.join(", ")}`] : []),
-    ...(left.length ? [`🕒 Pas encore faits : ${leftSafe.length ? leftSafe.join(", ") + " · " : ""}arrêts ${left.map(s => s.order).join(", ")}`] : []),
-    `➕ Nouveaux : ${state.news.length}`,
+    finished ? "TRACÉ TERMINÉ" : `En cours : ${closedRows}/${R.stops.length} étapes`,
+    `Faits (${doneRefs.length}/${R.n_panels} panneaux sûrs) : ${doneRefs.join(", ") || "aucun"}` + (rows(s => isDone(s) && s.kind === "pass").length ? ` · ratissage : ${rows(s => isDone(s) && s.kind === "pass").length} passe${rows(s => isDone(s) && s.kind === "pass").length > 1 ? "s faites" : " faite"}` : ""),
+    `Introuvables : ${absRefs.join(", ") || "aucun"}`,
+    `Ratissage sauté : ${rows(isSkip).length} passe${rows(isSkip).length > 1 ? "s" : ""}`,
+    ...(undone.length ? [`Annulés (Fait retiré) : arrêts ${undone.join(", ")}`] : []),
+    ...(left.length ? [`Pas encore faits : ${leftSafe.length ? leftSafe.join(", ") + " · " : ""}arrêts ${left.map(s => s.order).join(", ")}`] : []),
+    `Nouveaux : ${state.news.length}`,
     ...state.news.map((n, i) => `N${i + 1} ${clockOf(n.t)} https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)} (±${Math.round(n.acc)} m)`),
     state.start ? `Départ ${clockOf(state.start)} · ${hm(elapsed())} de travail` + (pausedMin() >= 1 ? ` · ${hm(pausedMin())} de pause` : "") : `Pas encore démarré (départ prévu ${T(0)})`];
   const txt = encodeURIComponent(lines.join("\n"));
@@ -360,11 +447,11 @@ function render() {
   if (finished && state.start) {
     if (!state.finishedAt) { state.finishedAt = Date.now(); save(); beep("near"); }
     sn.className = "alert on fin";
-    sn.innerHTML = `<b>Tracé terminé, saha !</b> Envoie ton bilan maintenant : faits, introuvables et nouveaux.<a href="${link}" target="_blank" rel="noopener" data-sent="fin">Envoyer mon bilan final</a>`;
+    sn.innerHTML = `<b>Kemmelt l'tracé, saha !</b> Ab3at l'bilan daba.<a href="${link}" target="_blank" rel="noopener" data-sent="fin">Ab3at l'bilan</a>`;
   } else if (communeDone || hourly) {
     sn.className = "alert on";
-    sn.innerHTML = (communeDone ? `<b>${lastC.commune} terminée.</b> ` : "<b>Ça fait une heure.</b> ") +
-      `Envoie ton avancement sur WhatsApp, ça prend 5 secondes.<a href="${link}" target="_blank" rel="noopener" data-sent="${communeDone ? lastC.commune : "heure"}">Envoyer mon avancement</a>`;
+    sn.innerHTML = (communeDone ? `<b>Kemmelt ${lastC.commune}.</b> ` : "<b>Fatet sa3a.</b> ") +
+      `Ab3at l'avancement f WhatsApp.<a href="${link}" target="_blank" rel="noopener" data-sent="${communeDone ? lastC.commune : "heure"}">Ab3at l'avancement</a>`;
     if (render.nagKey !== (communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000))) {
       render.nagKey = communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000); beep("nag");
     }
@@ -385,13 +472,13 @@ document.addEventListener("click", e => {
   const c = e.target.closest("button[data-c]");
   if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`L'code ${c.dataset.c} tna9el : 7ottou f « Observations » f SensQuest.`), () => toast(c.dataset.c)); return; }
   const sb = e.target.closest("button[data-start]");
-  if (sb) { state.plan = Number(sb.dataset.start); save(); render(); toast(`Départ prévu à ${T(0)} : toutes les heures sont recalées.`); return; }
+  if (sb) { state.plan = Number(sb.dataset.start); save(); render(); toast(`Tebda f ${T(0)} : les heures tbeddlou.`); return; }
   const d = e.target.closest("button[data-del]");
   if (d) { if (confirm("Retirer ce nouveau panneau de ta liste ?")) { state.news.splice(Number(d.dataset.del), 1); save(); render(); } return; }
   if (e.target.id === "skipnow") {
     const cur = R.stops.find(s => !closed(s));
     R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass").forEach(s => state.skipped.push(s.order));
-    save(); render(); ping(); toast("Ratissage sauté. Continue avec l'arrêt suivant."); return;
+    save(); render(); ping(); toast("Khallit l'ratissage. Kemmel l'arrêt li morah."); return;
   }
   const b = e.target.closest("button[data-a]");
   if (!b) return;
@@ -406,10 +493,16 @@ document.addEventListener("click", e => {
   if (on && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
+document.getElementById("theme").addEventListener("click", () => {
+  const nt = document.documentElement.dataset.theme === "lil" ? "nhar" : "lil";
+  document.documentElement.dataset.theme = nt; try { localStorage.setItem(THK, nt); } catch (e) {}
+  render();
+});
+document.getElementById("remarks").addEventListener("toggle", e => { if (!e.target.open && !state.remSeen) { state.remSeen = true; save(); } });
 document.getElementById("sound").addEventListener("click", () => { state.sound = !state.sound; save(); render(); if (state.sound) beep("near"); });
 document.getElementById("pause").addEventListener("click", () => {
-  if (state.pauseOn) { state.pauses.push([state.pauseOn, Date.now()]); state.pauseOn = null; toast("Reprise : les heures sont décalées de ta pause."); }
-  else { state.pauseOn = Date.now(); toast("Pause : le chrono est arrêté, tu ne prends pas de retard."); }
+  if (state.pauseOn) { state.pauses.push([state.pauseOn, Date.now()]); state.pauseOn = null; toast("Rja3t : les heures tzad b la pause."); }
+  else { state.pauseOn = Date.now(); toast("Pause : l'chrono wa9ef."); }
   save(); render(); ping();
 });
 let lock = null;
@@ -419,13 +512,13 @@ async function wake(on) {
     if (on) { lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => { if (!document.hidden) b.setAttribute("aria-pressed", "false"); }); }
     else if (lock) { await lock.release(); lock = null; }
     b.setAttribute("aria-pressed", String(!!on));
-  } catch (e) { toast("Ce téléphone ne permet pas de garder l'écran allumé."); }
+  } catch (e) { toast("Had l'telephone ma ykhallich l'écran cha3el."); }
 }
 document.getElementById("wake").addEventListener("click", e => wake(e.currentTarget.getAttribute("aria-pressed") !== "true"));
 document.addEventListener("visibilitychange", () => { if (!document.hidden && document.getElementById("wake").getAttribute("aria-pressed") === "true") wake(true); });
 function locateOnce(cb) {
-  if (!navigator.geolocation) { toast("Ce téléphone ne donne pas sa position."); return; }
-  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("Position refusée : autorise la localisation pour ce site."),
+  if (!navigator.geolocation) { toast("Had l'telephone ma y3tich la position."); return; }
+  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("La position mamnou3a : 7ell la localisation l had l'site."),
     { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
 }
 function follow() {
@@ -433,11 +526,11 @@ function follow() {
   watchId = navigator.geolocation.watchPosition(p => { me = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy }; if (Date.now() - (follow.t || 0) > 15000) { follow.t = Date.now(); render(); } }, () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
 }
 document.getElementById("newbtn").addEventListener("click", () => {
-  toast("Je prends ta position…");
+  toast("Rani nakhod la position…");
   locateOnce(c => {
     state.news.push({ lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() });
     save(); follow(); render(); ping();
-    toast(`Repère N${state.news.length} noté (±${Math.round(c.accuracy)} m). Maintenant : photos et questionnaire dans SensQuest, avec NOUVEAU.`);
+    toast(`Repère N${state.news.length} tsajjel (±${Math.round(c.accuracy)} m). Daba : tsawer w questionnaire f SensQuest b NOUVEAU.`);
   });
 });
 
@@ -468,7 +561,7 @@ document.getElementById("mapbox").addEventListener("toggle", e => {
   if (typeof L !== "undefined") { initMap(); setTimeout(() => map.invalidateSize(), 50); return; }
   const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
   sc.onload = () => { initMap(); setTimeout(() => map.invalidateSize(), 50); };
-  sc.onerror = () => { document.getElementById("map").textContent = "Carte indisponible sans réseau. Utilise « Y aller »."; };
+  sc.onerror = () => { document.getElementById("map").textContent = "La carte ma temchich bla réseau. Khdem b « Plassatha fel maps »."; };
   document.head.appendChild(sc);
 });
 document.getElementById("locate").addEventListener("click", () => locateOnce(c => {
