@@ -39,6 +39,9 @@ h1 { margin: 2px 0 4px; font-size: 1.6rem; }
 .status b.ahead { color: var(--ok); }
 .alert { display: none; background: var(--warn-bg); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
 .alert.on { display: block; }
+#sendnag { background: var(--ok-bg); }
+#sendnag a { display: block; margin-top: 8px; text-align: center; font-weight: 700; padding: 10px; border-radius: 10px; background: var(--btn); color: var(--on-btn); text-decoration: none; }
+#sendnag.fin { border: 2px solid var(--ok); }
 .alert button { margin-top: 8px; width: 100%; font: 700 1rem system-ui, sans-serif; padding: 10px; border-radius: 10px; border: 2px solid var(--warn); color: var(--warn); background: transparent; cursor: pointer; }
 ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
 .stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
@@ -107,6 +110,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outlin
     <div class="tools"><button type="button" id="pause" aria-pressed="false">Pause (prière, repas)</button><button type="button" id="wake" aria-pressed="false">Garder l'écran allumé</button><button type="button" id="sound" aria-pressed="true">Sons discrets : activés</button></div>
     <div class="status" id="status"></div>
     <div class="alert" id="late"></div>
+    <div class="alert" id="sendnag"></div>
   </div>
 
   <details id="mapbox">
@@ -138,7 +142,7 @@ a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outlin
       <li><b>Sons discrets</b> (une petite note, une vibration) : panneau sûr à moins de 150 m, arrêt qui dure 5 min de plus que prévu, retard de plus de 15 min. Bouton pour les couper.</li>
       <li><b>Pause</b> pour la prière ou le repas : le chrono s'arrête, tu ne prends pas de retard.</li>
       <li>Plus de 15 minutes de retard : la page te propose de passer à la commune suivante. Les panneaux sûrs restent prioritaires.</li>
-      <li>À la fin, <b>Envoyer mon bilan</b> : faits, introuvables, nouveaux avec leur position.</li>
+      <li><b>Envoyer mon bilan</b> : faits, introuvables, annulés, sautés, ce qui reste et les nouveaux. La page te le rappelle à la fin de chaque commune, toutes les heures, et quand le tracé est terminé.</li>
     </ul>
   </details>
   <details>
@@ -162,7 +166,7 @@ const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pa
 const CAP = R.total_min, CHUNK = 10, LATE = 15;
 const WA = "213770880535";                   // Zakaria
 
-let state = { done: [], absent: [], skipped: [], news: [], start: null, plan: 540, pauses: [], pauseOn: null, lastAct: null, sound: true, near: [] };
+let state = { done: [], absent: [], skipped: [], news: [], start: null, plan: 540, pauses: [], pauseOn: null, lastAct: null, sound: true, near: [], undone: [], lastSent: null, sentDone: [], finishedAt: null };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
@@ -310,24 +314,56 @@ function render() {
   document.getElementById("news").innerHTML = state.news.map((n, i) =>
     `<li><span>N${i + 1} · ${clockOf(n.t)} · ±${Math.round(n.acc)} m · <a href="https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)}" target="_blank" rel="noopener">voir</a></span><button type="button" data-del="${i}">Retirer</button></li>`).join("");
 
-  // bilan WhatsApp
-  const codes = f => R.stops.filter(f).flatMap(s => s.panels.map(p => p.ref));
-  const abs = codes(isAbs);
-  const lines = [`*${R.title} · ${R.agent}*`,
-    `Étapes : ${closedRows}/${R.stops.length} · panneaux sûrs faits : ${donePanels}/${R.n_panels}`,
-    `Introuvables : ${abs.length ? abs.join(", ") : "aucun"}`,
-    `Passes de ratissage sautées : ${R.stops.filter(isSkip).length}`,
-    `Nouveaux panneaux notés : ${state.news.length}`,
+  // bilan WhatsApp : ce qui est fait, introuvable, annulé, sauté, et ce qui reste
+  const refs = f => R.stops.filter(f).flatMap(s => s.panels.length ? s.panels.map(p => p.ref) : []);
+  const rows = f => R.stops.filter(f).map(s => s.order);
+  const doneRefs = refs(isDone), absRefs = refs(isAbs);
+  const left = R.stops.filter(s => !closed(s));
+  const leftSafe = left.filter(s => s.kind === "stop").flatMap(s => s.panels.map(p => p.ref));
+  const undone = [...new Set(state.undone)].filter(o => !closed(R.stops.find(s => s.order === o)));
+  const finished = left.length === 0;
+  const lines = [`*${R.title} · ${R.agent} · ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}*`,
+    finished ? "✅ TRACÉ TERMINÉ" : `⏳ En cours : ${closedRows}/${R.stops.length} étapes`,
+    `✔️ Faits (${doneRefs.length}/${R.n_panels} panneaux sûrs) : ${doneRefs.join(", ") || "aucun"}` + (rows(s => isDone(s) && s.kind === "pass").length ? ` · ratissage : ${rows(s => isDone(s) && s.kind === "pass").length} passe${rows(s => isDone(s) && s.kind === "pass").length > 1 ? "s faites" : " faite"}` : ""),
+    `❌ Introuvables : ${absRefs.join(", ") || "aucun"}`,
+    `⏭️ Ratissage sauté : ${rows(isSkip).length} passe${rows(isSkip).length > 1 ? "s" : ""}`,
+    ...(undone.length ? [`↩️ Annulés (Fait retiré) : arrêts ${undone.join(", ")}`] : []),
+    ...(left.length ? [`🕒 Pas encore faits : ${leftSafe.length ? leftSafe.join(", ") + " · " : ""}arrêts ${left.map(s => s.order).join(", ")}`] : []),
+    `➕ Nouveaux : ${state.news.length}`,
     ...state.news.map((n, i) => `N${i + 1} ${clockOf(n.t)} https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)} (±${Math.round(n.acc)} m)`),
     state.start ? `Départ ${clockOf(state.start)} · ${hm(elapsed())} de travail` + (pausedMin() >= 1 ? ` · ${hm(pausedMin())} de pause` : "") : `Pas encore démarré (départ prévu ${T(0)})`];
   const txt = encodeURIComponent(lines.join("\n"));
   document.getElementById("send").href = `https://wa.me/${WA}?text=${txt}`;
   document.getElementById("sendany").href = `https://wa.me/?text=${txt}`;
+  const sn = document.getElementById("sendnag"), link = `https://wa.me/${WA}?text=${txt}`;
+  const lastC = R.stops.filter(closed).pop();
+  const communeDone = lastC && R.stops.filter(s => s.commune === lastC.commune).every(closed) && !state.sentDone.includes(lastC.commune);
+  const hourly = state.start && !state.pauseOn && (Date.now() - (state.lastSent || state.start)) > 60 * 60000;
+  if (finished && state.start) {
+    if (!state.finishedAt) { state.finishedAt = Date.now(); save(); beep("near"); }
+    sn.className = "alert on fin";
+    sn.innerHTML = `<b>Tracé terminé, saha !</b> Envoie ton bilan maintenant : faits, introuvables et nouveaux.<a href="${link}" target="_blank" rel="noopener" data-sent="fin">Envoyer mon bilan final</a>`;
+  } else if (communeDone || hourly) {
+    sn.className = "alert on";
+    sn.innerHTML = (communeDone ? `<b>${lastC.commune} terminée.</b> ` : "<b>Ça fait une heure.</b> ") +
+      `Envoie ton avancement sur WhatsApp, ça prend 5 secondes.<a href="${link}" target="_blank" rel="noopener" data-sent="${communeDone ? lastC.commune : "heure"}">Envoyer mon avancement</a>`;
+    if (render.nagKey !== (communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000))) {
+      render.nagKey = communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000); beep("nag");
+    }
+  } else { sn.className = "alert"; sn.innerHTML = ""; }
   if (map) drawDyn();
 }
 
 function startClock(o) { if (!state.start) { state.start = Date.now() - (R.stops.find(s => s.order === o).svc || 0) * 60000; follow(); } }
 document.addEventListener("click", e => {
+  const sent = e.target.closest("[data-sent], #send, #sendany");
+  if (sent) {
+    state.lastSent = Date.now();
+    const k = sent.dataset && sent.dataset.sent;
+    if (k && k !== "heure" && k !== "fin") state.sentDone.push(k);
+    if (!k || k === "fin") { const lc = R.stops.filter(closed).pop(); if (lc) state.sentDone.push(lc.commune); }
+    save(); setTimeout(render, 500); return;
+  }
   const c = e.target.closest("button[data-c]");
   if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`L'code ${c.dataset.c} tna9el : 7ottou f « Observations » f SensQuest.`), () => toast(c.dataset.c)); return; }
   const sb = e.target.closest("button[data-start]");
@@ -346,6 +382,7 @@ document.addEventListener("click", e => {
   const L = lists[a], on = !state[L].includes(o);
   for (const k of Object.values(lists)) state[k] = state[k].filter(x => x !== o);
   if (on) { state[L].push(o); startClock(o); state.lastAct = Date.now(); }
+  else { state.undone.push(o); }
   save(); render();
   const next = R.stops.find(s => !closed(s));
   if (on && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
