@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>D'click · Tracé 10</title>
+<title>D&#x27;click · Tracé 10</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-/* Palette Flasher (palettes-dusens-v12.html): orange = action, bleu = fait, magenta = alerte. */
+/* Palette Flasher : orange = action, bleu = fait, magenta = alerte. */
 :root {
   --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
   --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
-  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --pass: #8a8378;
 }
 @media (prefers-color-scheme: dark) { :root {
   --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
-  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --pass: #8d8d8d; } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
@@ -22,178 +23,307 @@ header { padding: 18px 0 10px; }
 .kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
 h1 { margin: 2px 0 4px; font-size: 1.6rem; }
 .sub { color: var(--muted); font-size: .92rem; margin: 0; }
-.bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
-.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--fg); font-size: .92rem; }
+.banner b { color: var(--warn); }
+.bar { position: sticky; top: 0; z-index: 500; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .92rem; }
 .meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.newbtn { font: 700 .95rem system-ui, sans-serif; border-radius: 10px; padding: 0 14px; border: 2px solid var(--accent); color: var(--accent); background: var(--panel); cursor: pointer; }
 .status { font-size: .9rem; color: var(--muted); }
 .status b.late { color: var(--warn); }
 .status b.ahead { color: var(--ok); }
-ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
-li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
-li.done { opacity: .55; }
-li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; }
-.when a { color: var(--accent); }
-li.next { border: 2px solid var(--accent); }
+.alert { display: none; background: var(--warn-bg); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+.alert.on { display: block; }
+.alert button { margin-top: 8px; width: 100%; font: 700 1rem system-ui, sans-serif; padding: 10px; border-radius: 10px; border: 2px solid var(--warn); color: var(--warn); background: transparent; cursor: pointer; }
+ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.stops > li.done, .stops > li.absent, .stops > li.skipped { opacity: .55; }
+.stops > li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; opacity: 1; }
+.dayh small { font-weight: 500; color: var(--muted); }
+.when a, .dayh a { color: var(--accent); }
+.stops > li.next { border: 2px solid var(--accent); }
 .n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+li.pass .n { color: var(--pass); }
 .when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.panels { display: grid; gap: 2px; }
-.ref { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
-.flag { display: inline-block; font-size: .8rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; }
-.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 8px; }
-.acts a, .acts button { font: 600 1rem system-ui, sans-serif; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; cursor: pointer; }
-.acts a { border: 1px solid var(--line); color: var(--fg); background: transparent; }
-.acts button { border: 2px solid var(--ok); color: var(--ok); background: transparent; }
-li.done .acts button { background: var(--ok-bg); }
-.send { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
-details { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.panels { display: grid; gap: 4px; margin-top: 2px; }
+.ref { font: 700 .95rem ui-monospace, Menlo, monospace; border: 1px dashed var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 1px 6px; cursor: copy; }
+.tag { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 6px; padding: 1px 7px; margin-left: 4px; }
+.tag.abs { color: var(--warn); background: var(--warn-bg); }
+.tag.skp { color: var(--muted); background: var(--line); }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 12px 6px; text-align: center; text-decoration: none; cursor: pointer; background: transparent; }
+.acts a { border: 1px solid var(--line); color: var(--fg); }
+.acts .abs { border: 1px solid var(--warn); color: var(--warn); }
+.acts .ok { border: 2px solid var(--ok); color: var(--ok); }
+li.done .acts .ok { background: var(--ok-bg); }
+li.absent .acts .abs { background: var(--warn-bg); }
+.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+.send.main { background: var(--btn); color: var(--on-btn); border: 0; }
+details { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 summary { font-weight: 700; cursor: pointer; }
-details ol { margin: 8px 0 0; display: block; padding-left: 20px; list-style: decimal; }
-details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+details ol, details ul { margin: 8px 0 0; padding-left: 20px; }
+details li { padding: 2px 0; }
+#map { height: 360px; border-radius: 10px; margin-top: 10px; }
+.maptools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.maptools button { font: 600 .9rem system-ui, sans-serif; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.news li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.news button { font: 600 .85rem system-ui, sans-serif; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: .92rem; max-width: 92vw; z-index: 1000; display: none; }
+.toast.on { display: block; }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-li .mallrules { display: block; list-style: decimal; margin: 8px 0 4px; padding: 8px 10px 8px 28px; background: var(--warn-bg); border-radius: 8px; color: var(--fg); font-size: .88rem; gap: 0; }
-li .mallrules li { display: list-item; background: none; border: 0; padding: 2px 0; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">D'click · Tracé 10 · jour 5</div>
+    <div class="kicker">D&#x27;click · Tracé 10 · jour 5</div>
     <h1>Zineddine</h1>
     <p class="sub" id="sub"></p>
+    <div class="banner" id="friday" hidden><b>Vendredi :</b> termine avant 12 h 30, avant la prière. Si tu es en retard, saute le ratissage, jamais un panneau sûr.</div>
   </header>
 
   <div class="bar">
     <div class="prog"><span id="count"></span><span id="clock"></span></div>
     <div class="meter"><i id="meter"></i></div>
-    <a class="nav" id="nav" target="_blank" rel="noopener"></a>
+    <div class="row2"><a class="nav" id="nav" target="_blank" rel="noopener"></a><button class="newbtn" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button></div>
     <div class="status" id="status"></div>
+    <div class="alert" id="late"></div>
   </div>
 
-  <ol id="stops"></ol>
+  <details id="mapbox">
+    <summary>Carte du tracé et ma position</summary>
+    <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
+    <div class="maptools"><button type="button" id="locate">Me localiser</button><button type="button" id="fit">Tout le tracé</button></div>
+  </details>
 
-  <a class="send" id="send" target="_blank" rel="noopener">Envoyer mon avancement sur WhatsApp</a>
+  <ol class="stops" id="stops"></ol>
+
+  <details id="newsbox" hidden>
+    <summary id="newssum">Mes nouveaux panneaux</summary>
+    <ol class="news" id="news"></ol>
+  </details>
+
+  <a class="send main" id="send" target="_blank" rel="noopener">Envoyer mon bilan sur WhatsApp</a>
+  <a class="send" id="sendany" target="_blank" rel="noopener">Envoyer le bilan à un autre contact</a>
   <a class="send" href="tel:+213770776695">Une question sur le terrain : appeler Assil</a>
 
   <details>
+    <summary>Mode d'emploi de la page</summary>
+    <ul>
+      <li><b>Y aller</b> ouvre Google Maps vers cet arrêt depuis ta position. <b>Naviguer</b> enchaîne les 10 prochains arrêts.</li>
+      <li>Touche le <b>code</b> d'un panneau (ex. 05-01) : il est copié, colle-le dans « Observations libres » de SensQuest.</li>
+      <li><b>Fait</b> : panneau photographié. <b>Introuvable</b> : rien au bout de 5 minutes, tu repars. Sur une ligne de ratissage, <b>Sauter</b> la passe.</li>
+      <li><b>+ Nouveau</b> : un panneau qui n'est pas dans ta liste. La page note ta position GPS ; fais aussi le questionnaire SensQuest avec NOUVEAU.</li>
+      <li>Plus de 15 minutes de retard : la page te propose de passer à la commune suivante. Les panneaux sûrs restent prioritaires.</li>
+      <li>À la fin, <b>Envoyer mon bilan</b> : faits, introuvables, nouveaux avec leur position.</li>
+    </ul>
+  </details>
+  <details>
     <summary>Rappels</summary>
     <ol>
-      <li><b>Panneau trouvé en route, pas dans ta liste :</b> prends-le en photo et remplis le questionnaire, avec NOUVEAU dans « Observations libres ».</li>
-      <li>Écris le code de l'arrêt (10-01, 10-02…) dans « Observations libres ».</li>
       <li>Moto à l'arrêt complet avant de sortir le téléphone.</li>
       <li>Le GPS de SensQuest est parfois imprécis : devant le panneau, attends moins de 10 m avant de valider.</li>
       <li>Deux photos : vue d'ensemble (25 à 40 m), puis chaque face, marque lisible.</li>
-      <li>Panneau introuvable : note « introuvable » ou dis-le sur WhatsApp, puis arrêt suivant.</li>
-      <li>Termine le tracé en entier, il est payé complet. À la fin, envoie ton avancement à Zakaria (0770 88 05 35).</li>
-      <li>Termine avant la nuit, vers 17 h.</li>
+      <li>Termine le tracé en entier, il est payé complet.</li>
     </ol>
   </details>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const R = {"key": "T10v9", "agent": "Zineddine", "title": "Tracé 10 · dimanche 15/11", "km": 29.3, "n_panels": 21, "rows": true, "total_min": 176, "intro": "Tactique B : ratissage complet. Tu entres dans la commune, tu suis les grands axes indiqués jusqu'à la sortie, et tu photographies TOUT panneau publicitaire que tu vois. Les panneaux sûrs de la commune sont dans la liste. Départ conseillé 9 h, fin prévue vers 11 h 56 (2 h 56 de travail, 29,3 km). Communes dans l'ordre : Chéraga → Ouled Fayet. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent. Les heures tiennent compte de la circulation réelle mesurée les 11 et 12/11. Plus de 15 min de retard sur l'heure indiquée : saute les points de ratissage restants et passe à la commune suivante.", "stops": [{"order": 1, "lat": 36.772497, "lon": 2.953261, "svc": 8.0, "arrive_min": 0.0, "leave_min": 8.0, "note": "Vers 9 h 00 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-01", "support": "panneau_4x3", "label": "Route de Ain Benian en face le showroom Brandt avant barrage de la gendarmerie -1", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-02", "support": "panneau_4x3", "label": "Route de Ain Benian en face le showroom Brandt avant barrage de la gendarmerie -2", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 2, "lat": 36.766778, "lon": 2.94925, "svc": 8.0, "arrive_min": 13.5, "leave_min": 21.5, "note": "Vers 9 h 14 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-03", "support": "panneau_4x3", "label": "Rond point, la direction générale CNEP en venant de la gare routière et centre ville de Chéraga", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-04", "support": "panneau_4x3", "label": "Rond point, la direction générale CNEP en allant de la gare routière et centre ville de Chéraga", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 3, "lat": 36.759062, "lon": 2.963603, "svc": 8.5, "arrive_min": 26.6, "leave_min": 35.1, "note": "Vers 9 h 27 · 8 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-05", "support": "ecran_led", "label": "Ecran Digital 4X3 – Al Qods, Cheraga", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 4, "lat": 36.755667, "lon": 2.951333, "svc": 8.0, "arrive_min": 39.2, "leave_min": 47.2, "note": "Vers 9 h 39 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-06", "support": "panneau_4x3", "label": "Rond point Ammara en face BNP PARIBAS", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-07", "support": "panneau_4x3", "label": "Rond point Ammara en face maison Ford", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 5, "lat": 36.749736, "lon": 2.935417, "svc": 8.0, "arrive_min": 52.9, "leave_min": 60.9, "note": "Vers 9 h 53 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-08", "support": "unipole", "label": "Route vers Zeralda, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-09", "support": "unipole", "label": "Route de Chéraga vers Ben Aknoun, Hydra,Alger, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 6, "lat": 36.749519, "lon": 2.932028, "svc": 8.0, "arrive_min": 62.5, "leave_min": 70.5, "note": "Vers 10 h 02 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-10", "support": "unipole", "label": "Route de Chéraga vers Ben Aknoun, Hydra,Alger, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-11", "support": "unipole", "label": "Route vers Zeralda, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 7, "lat": 36.746361, "lon": 2.925111, "svc": 8.0, "arrive_min": 72.9, "leave_min": 80.9, "note": "Vers 10 h 13 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-12", "support": "unipole", "label": "Route vers Zeralda, en face la maison SOVAC avant l’entrée de Bouchaoui", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-13", "support": "unipole", "label": "Route en venant de Zeralda en face la maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 8, "lat": 36.745448, "lon": 2.923858, "svc": 8.0, "arrive_min": 82.1, "leave_min": 90.1, "note": "Vers 10 h 22 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-14", "support": "unipole", "label": "Rocade sud - entrée club des pins", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-15", "support": "unipole", "label": "Rocade sud - entrée club des pins", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 9, "lat": 36.740731, "lon": 2.906781, "svc": 8.0, "arrive_min": 94.2, "leave_min": 102.2, "note": "Vers 10 h 34 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-16", "support": "unipole", "label": "Autoroute entre l'entrée de deux stations balnéaires , Club des Pins et  Sidi Fredj, vers Tipaza", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-17", "support": "unipole", "label": "Autoroute entre l'entrée de deux stations balnéaires  Sidi Fredj et Club des Pins, vers Alger centre", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 10, "lat": 36.747083, "lon": 2.919917, "svc": 5.5, "arrive_min": 115.7, "leave_min": 121.2, "note": "Vers 10 h 56 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-18", "support": "panneau_4x3", "label": "Entrée de Chéraga, Rond Point sortie Autoroute (Rocade Sud) vers le centre ville de Bouchaoui", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 11, "lat": 36.749229, "lon": 2.933159, "svc": 5.5, "arrive_min": 127.7, "leave_min": 133.2, "note": "Vers 11 h 08 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-19", "support": "unipole", "label": "(centre / sans lieu-dit) · ton relevé du 02/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 12, "lat": 36.749211, "lon": 2.935469, "svc": 8.0, "arrive_min": 134.7, "leave_min": 142.7, "note": "Vers 11 h 15 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-20", "support": "unipole", "label": "Route vers Ben Aknoun, Hydra, Alger juste après la maison SOVAC, venant de Zeralda et Club des pins", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-21", "support": "unipole", "label": "Route de Bouchaoui à côté de la maison Sovac, vers Club des pins et  Zéralda", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 13, "lat": 36.71578279290441, "lon": 2.9319813384426263, "svc": 0, "arrive_min": 158.9, "leave_min": 164.0, "note": "Vers 11 h 39 · <b>Ratissage</b> : suis Chemin Mohamed Ameziane Meziani. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Ouled Fayet · 11 h 39 → 11 h 56 · ratissage jusqu'à 11 h 56<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.734930,2.938398\" target=\"_blank\" rel=\"noopener\">1</a> <a href=\"https://maps.google.com/?q=36.735078,2.944764\" target=\"_blank\" rel=\"noopener\">2</a> <a href=\"https://maps.google.com/?q=36.733919,2.934435\" target=\"_blank\" rel=\"noopener\">3</a></small>", "panels": []}, {"order": 14, "lat": 36.7246048, "lon": 2.9520202, "svc": 0, "arrive_min": 165.7, "leave_min": 172.5, "note": "Vers 11 h 46 · <b>Ratissage</b> : suis Chemin Mohamed Ameziane Meziani. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Ouled Fayet · 11 h 39 → 11 h 56 · ratissage jusqu'à 11 h 56<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.734930,2.938398\" target=\"_blank\" rel=\"noopener\">1</a> <a href=\"https://maps.google.com/?q=36.735078,2.944764\" target=\"_blank\" rel=\"noopener\">2</a> <a href=\"https://maps.google.com/?q=36.733919,2.934435\" target=\"_blank\" rel=\"noopener\">3</a></small>", "panels": []}, {"order": 15, "lat": 36.725268, "lon": 2.9547132, "svc": 0, "arrive_min": 175.6, "leave_min": 175.6, "note": "Vers 11 h 56 · <b>Ratissage</b> : suis CW 142. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Ouled Fayet · 11 h 39 → 11 h 56 · ratissage jusqu'à 11 h 56<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.734930,2.938398\" target=\"_blank\" rel=\"noopener\">1</a> <a href=\"https://maps.google.com/?q=36.735078,2.944764\" target=\"_blank\" rel=\"noopener\">2</a> <a href=\"https://maps.google.com/?q=36.733919,2.934435\" target=\"_blank\" rel=\"noopener\">3</a></small>", "panels": []}]};
+const R = {"key": "T10v11", "geom": [[2.95319, 36.77249], [2.95308, 36.77366], [2.95297, 36.77475], [2.95293, 36.77504], [2.95309, 36.77264], [2.95317, 36.77171], [2.9532, 36.77149], [2.95316, 36.77124], [2.95165, 36.77102], [2.95137, 36.77097], [2.95102, 36.77091], [2.95071, 36.77083], [2.95044, 36.77069], [2.94977, 36.77049], [2.94944, 36.77039], [2.94911, 36.77028], [2.9488, 36.77016], [2.94848, 36.77004], [2.94803, 36.76985], [2.9476, 36.76964], [2.94733, 36.76951], [2.94708, 36.76937], [2.94682, 36.76922], [2.94584, 36.7686], [2.94547, 36.7683], [2.94503, 36.76807], [2.94396, 36.76724], [2.94387, 36.76702], [2.94413, 36.76694], [2.94448, 36.76693], [2.94488, 36.76694], [2.94539, 36.76693], [2.94601, 36.76691], [2.94632, 36.7669], [2.94682, 36.76688], [2.94784, 36.76683], [2.94876, 36.76677], [2.94925, 36.76674], [2.94958, 36.76671], [2.95031, 36.76663], [2.95174, 36.76654], [2.95359, 36.76642], [2.9541, 36.76639], [2.95559, 36.76626], [2.956, 36.76631], [2.95677, 36.7666], [2.9576, 36.76692], [2.95789, 36.76697], [2.95838, 36.76697], [2.96014, 36.76696], [2.96025, 36.76669], [2.96025, 36.76627], [2.96024, 36.76597], [2.96021, 36.76562], [2.96016, 36.76503], [2.96013, 36.76476], [2.96007, 36.76422], [2.96011, 36.76398], [2.96047, 36.76365], [2.96069, 36.76333], [2.96122, 36.76239], [2.96157, 36.7618], [2.96187, 36.7614], [2.96206, 36.76114], [2.96225, 36.76084], [2.96297, 36.75988], [2.96311, 36.75961], [2.96327, 36.75939], [2.96334, 36.75917], [2.96355, 36.759], [2.96341, 36.7592], [2.96318, 36.75906], [2.96283, 36.75894], [2.96189, 36.75878], [2.96117, 36.75863], [2.96025, 36.75843], [2.95996, 36.7585], [2.95941, 36.75831], [2.9588, 36.75816], [2.95833, 36.75807], [2.95769, 36.75795], [2.95695, 36.75782], [2.95653, 36.75775], [2.95537, 36.75754], [2.95493, 36.75744], [2.95404, 36.75724], [2.95363, 36.75717], [2.95326, 36.75718], [2.95304, 36.75701], [2.95283, 36.75684], [2.95211, 36.75629], [2.95183, 36.75604], [2.95154, 36.75587], [2.95127, 36.75573], [2.95099, 36.7555], [2.95077, 36.75534], [2.9503, 36.75502], [2.94998, 36.75481], [2.94967, 36.75462], [2.94939, 36.75447], [2.94902, 36.75429], [2.94865, 36.75414], [2.94828, 36.75403], [2.94792, 36.75392], [2.94761, 36.75386], [2.94732, 36.7538], [2.94692, 36.75375], [2.94596, 36.75363], [2.94531, 36.75354], [2.94495, 36.75348], [2.94462, 36.75341], [2.94428, 36.75336], [2.94395, 36.75336], [2.94361, 36.75344], [2.94272, 36.75346], [2.94205, 36.75346], [2.94119, 36.75346], [2.9407, 36.75348], [2.9404, 36.75352], [2.93994, 36.7536], [2.93955, 36.75371], [2.93929, 36.75384], [2.93907, 36.75352], [2.939, 36.75305], [2.93892, 36.75268], [2.93885, 36.75226], [2.93877, 36.75182], [2.93866, 36.75127], [2.93859, 36.75106], [2.93844, 36.75081], [2.93816, 36.7506], [2.93786, 36.75053], [2.93756, 36.75043], [2.93716, 36.7501], [2.93689, 36.74991], [2.93649, 36.74971], [2.93605, 36.74965], [2.93542, 36.74964], [2.93474, 36.74961], [2.93413, 36.74957], [2.93377, 36.74953], [2.93325, 36.74946], [2.93275, 36.7494], [2.93231, 36.74933], [2.93135, 36.74912], [2.93063, 36.74893], [2.9297, 36.7486], [2.92882, 36.74826], [2.92784, 36.74779], [2.92682, 36.74721], [2.92555, 36.74639], [2.92528, 36.7462], [2.92419, 36.74544], [2.92396, 36.74528], [2.92324, 36.74482], [2.92256, 36.74441], [2.9218, 36.74399], [2.92134, 36.74373], [2.92103, 36.74358], [2.92021, 36.74318], [2.91922, 36.74276], [2.91804, 36.74233], [2.91718, 36.74205], [2.91633, 36.74181], [2.91547, 36.74159], [2.91507, 36.7415], [2.91466, 36.74142], [2.91367, 36.74123], [2.91317, 36.74115], [2.91264, 36.74108], [2.91183, 36.74097], [2.91059, 36.74084], [2.90944, 36.74072], [2.90801, 36.74056], [2.9071, 36.74046], [2.90577, 36.74032], [2.90396, 36.74008], [2.90229, 36.73981], [2.90049, 36.73954], [2.89889, 36.73932], [2.89769, 36.73916], [2.89578, 36.73892], [2.89455, 36.73883], [2.89306, 36.73872], [2.89227, 36.73866], [2.89178, 36.73864], [2.89145, 36.73862], [2.89099, 36.73864], [2.89041, 36.73869], [2.8899, 36.73876], [2.8894, 36.73886], [2.88879, 36.73902], [2.88794, 36.73932], [2.88732, 36.73952], [2.887, 36.73962], [2.88713, 36.73982], [2.8875, 36.73988], [2.88781, 36.73991], [2.88906, 36.7401], [2.89173, 36.74055], [2.89244, 36.74066], [2.89387, 36.74093], [2.89558, 36.7411], [2.89618, 36.74117], [2.89661, 36.74121], [2.89696, 36.74124], [2.89811, 36.74116], [2.89863, 36.74113], [2.89922, 36.7411], [2.89963, 36.7411], [2.90005, 36.7412], [2.90083, 36.74138], [2.90242, 36.7418], [2.90307, 36.74197], [2.90428, 36.74229], [2.90615, 36.74252], [2.90682, 36.7426], [2.90723, 36.74265], [2.908, 36.74276], [2.90982, 36.74298], [2.91067, 36.74307], [2.91104, 36.74313], [2.91158, 36.7433], [2.91199, 36.74345], [2.91231, 36.74359], [2.91313, 36.74397], [2.91402, 36.7444], [2.91429, 36.74449], [2.91511, 36.74484], [2.91617, 36.74529], [2.91682, 36.74558], [2.91709, 36.7457], [2.91744, 36.74589], [2.91795, 36.74615], [2.91935, 36.74689], [2.91962, 36.74702], [2.91988, 36.74714], [2.9201, 36.74728], [2.91963, 36.7471], [2.91929, 36.74691], [2.91844, 36.74646], [2.9181, 36.74646], [2.91774, 36.74679], [2.91761, 36.74702], [2.91767, 36.74728], [2.91789, 36.74744], [2.91817, 36.74748], [2.91853, 36.74735], [2.91892, 36.74705], [2.91933, 36.74663], [2.91957, 36.74635], [2.91988, 36.74593], [2.9202, 36.74546], [2.92046, 36.74509], [2.92085, 36.74452], [2.92104, 36.74428], [2.9214, 36.74394], [2.92199, 36.74361], [2.9223, 36.74339], [2.92243, 36.74308], [2.92227, 36.74277], [2.92178, 36.74264], [2.9215, 36.74271], [2.92126, 36.74297], [2.92127, 36.7433], [2.92158, 36.74366], [2.92312, 36.74453], [2.92533, 36.74606], [2.92656, 36.74687], [2.92763, 36.74749], [2.92839, 36.74792], [2.92936, 36.74831], [2.92978, 36.74846], [2.93016, 36.7486], [2.93049, 36.74871], [2.93095, 36.74884], [2.93145, 36.74897], [2.9318, 36.74905], [2.93224, 36.74914], [2.93261, 36.7492], [2.93315, 36.74929], [2.93355, 36.74935], [2.93405, 36.7494], [2.9345, 36.74943], [2.93502, 36.74942], [2.9355, 36.74939], [2.93598, 36.7493], [2.93626, 36.7492], [2.93664, 36.74895], [2.93682, 36.74872], [2.93701, 36.74845], [2.93729, 36.7482], [2.93744, 36.74796], [2.93746, 36.74766], [2.93696, 36.74703], [2.93664, 36.74664], [2.93619, 36.74606], [2.936, 36.74583], [2.93579, 36.74554], [2.93553, 36.74512], [2.93537, 36.74488], [2.93511, 36.74443], [2.93499, 36.7442], [2.93484, 36.74392], [2.93474, 36.7437], [2.93461, 36.74341], [2.93449, 36.74315], [2.93439, 36.74291], [2.9343, 36.74264], [2.93419, 36.74222], [2.93412, 36.74193], [2.93406, 36.74167], [2.93401, 36.74141], [2.93398, 36.74117], [2.93393, 36.74093], [2.9339, 36.7407], [2.93375, 36.73878], [2.9336, 36.73701], [2.93355, 36.73644], [2.93353, 36.73614], [2.93351, 36.73574], [2.93351, 36.73538], [2.93354, 36.73492], [2.93358, 36.73461], [2.93364, 36.73422], [2.93382, 36.73362], [2.9346, 36.73147], [2.93477, 36.73101], [2.93497, 36.73052], [2.9352, 36.72992], [2.93531, 36.72967], [2.93547, 36.72934], [2.93571, 36.72898], [2.9366, 36.72772], [2.93731, 36.72668], [2.93768, 36.72617], [2.93793, 36.72587], [2.93824, 36.72562], [2.93867, 36.72537], [2.93937, 36.72508], [2.94038, 36.72467], [2.94282, 36.72368], [2.94355, 36.72337], [2.94398, 36.72323], [2.94441, 36.72314], [2.94476, 36.7231], [2.94513, 36.7231], [2.94555, 36.72315], [2.9459, 36.72323], [2.94635, 36.72338], [2.94665, 36.7235], [2.94723, 36.72372], [2.94799, 36.724], [2.94863, 36.72425], [2.94911, 36.7244], [2.9494, 36.72447], [2.94983, 36.72442], [2.95078, 36.72374], [2.95095, 36.72336], [2.95088, 36.72303], [2.95054, 36.72264], [2.95028, 36.72237], [2.94985, 36.722], [2.94941, 36.72163], [2.94869, 36.72101], [2.9483, 36.72075], [2.94663, 36.71996], [2.94622, 36.71976], [2.94577, 36.71956], [2.94484, 36.71926], [2.94374, 36.71892], [2.94276, 36.71862], [2.94236, 36.71854], [2.94182, 36.71852], [2.94141, 36.71848], [2.94097, 36.71839], [2.93893, 36.71741], [2.93762, 36.71681], [2.93734, 36.71668], [2.93672, 36.7165], [2.93641, 36.71643], [2.93604, 36.7164], [2.93572, 36.71642], [2.93541, 36.71644], [2.935, 36.71641], [2.93452, 36.71636], [2.93396, 36.71627], [2.93355, 36.71618], [2.93248, 36.7159], [2.93202, 36.71579], [2.93142, 36.71575], [2.93061, 36.71583], [2.93007, 36.71592], [2.92971, 36.71592], [2.92906, 36.71574], [2.92877, 36.71567], [2.92837, 36.71572], [2.92789, 36.71592], [2.92758, 36.71608], [2.92734, 36.71619], [2.92699, 36.71625], [2.92659, 36.71609], [2.92632, 36.71592], [2.92596, 36.71583], [2.92556, 36.71594], [2.92528, 36.71604], [2.92376, 36.71642], [2.92261, 36.7167], [2.92074, 36.71702], [2.92022, 36.71707], [2.91869, 36.71701], [2.91821, 36.71684], [2.91848, 36.71695], [2.92022, 36.71707], [2.92051, 36.71706], [2.92261, 36.7167], [2.92288, 36.71664], [2.92376, 36.71642], [2.92513, 36.71609], [2.92541, 36.716], [2.92578, 36.71587], [2.92615, 36.71586], [2.92642, 36.71599], [2.92677, 36.7162], [2.92717, 36.71625], [2.92758, 36.71608], [2.92789, 36.71592], [2.92837, 36.71572], [2.92877, 36.71567], [2.92906, 36.71574], [2.92971, 36.71592], [2.93007, 36.71592], [2.93038, 36.71586], [2.93142, 36.71575], [2.93176, 36.71576], [2.93248, 36.7159], [2.93355, 36.71618], [2.93396, 36.71627], [2.93452, 36.71636], [2.935, 36.71641], [2.93541, 36.71644], [2.93572, 36.71642], [2.93604, 36.7164], [2.93641, 36.71643], [2.93672, 36.7165], [2.93722, 36.71664], [2.93762, 36.71681], [2.93893, 36.71741], [2.94097, 36.71839], [2.94141, 36.71848], [2.94182, 36.71852], [2.94236, 36.71854], [2.94276, 36.71862], [2.94374, 36.71892], [2.94484, 36.71926], [2.94577, 36.71956], [2.94622, 36.71976], [2.94663, 36.71996], [2.9483, 36.72075], [2.94858, 36.72078], [2.94877, 36.72096], [2.94904, 36.7212], [2.94971, 36.72174], [2.9501, 36.72208], [2.9504, 36.72237], [2.95082, 36.72282], [2.95108, 36.72317], [2.95139, 36.72358], [2.95158, 36.72385], [2.95202, 36.7246], [2.95222, 36.72498], [2.95238, 36.72534], [2.95256, 36.72565], [2.95273, 36.72593], [2.95293, 36.72621], [2.95317, 36.72648], [2.95348, 36.72683], [2.95392, 36.72732], [2.95424, 36.72769], [2.95443, 36.72787], [2.95475, 36.72665], [2.95477, 36.72621], [2.95477, 36.72586], [2.95471, 36.72527], [2.95471, 36.72527]], "friday": false, "agent": "Zineddine", "title": "Tracé 10 · dimanche 15/11", "km": 29.3, "n_panels": 21, "rows": true, "total_min": 176, "intro": "Tactique B : ratissage complet. Tu entres dans la commune, tu suis les grands axes indiqués jusqu'à la sortie, et tu photographies TOUT panneau publicitaire que tu vois. Les panneaux sûrs de la commune sont dans la liste. Départ conseillé 9 h, fin prévue vers 11 h 56 (2 h 56 de travail, 29,3 km). Communes dans l'ordre : Chéraga → Ouled Fayet. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent. Les heures tiennent compte de la circulation réelle mesurée les 11 et 12/11. Plus de 15 min de retard sur l'heure indiquée : saute les points de ratissage restants et passe à la commune suivante.", "stops": [{"order": 1, "lat": 36.772497, "lon": 2.953261, "svc": 8.0, "arrive_min": 0.0, "leave_min": 8.0, "note": "Vers 9 h 00 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-01", "support": "panneau_4x3", "label": "Route de Ain Benian en face le showroom Brandt avant barrage de la gendarmerie -1", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-02", "support": "panneau_4x3", "label": "Route de Ain Benian en face le showroom Brandt avant barrage de la gendarmerie -2", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 2, "lat": 36.766778, "lon": 2.94925, "svc": 8.0, "arrive_min": 13.5, "leave_min": 21.5, "note": "Vers 9 h 14 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-03", "support": "panneau_4x3", "label": "Rond point, la direction générale CNEP en venant de la gare routière et centre ville de Chéraga", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-04", "support": "panneau_4x3", "label": "Rond point, la direction générale CNEP en allant de la gare routière et centre ville de Chéraga", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 3, "lat": 36.759062, "lon": 2.963603, "svc": 8.5, "arrive_min": 26.6, "leave_min": 35.1, "note": "Vers 9 h 27 · 8 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-05", "support": "ecran_led", "label": "Ecran Digital 4X3 – Al Qods, Cheraga", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 4, "lat": 36.755667, "lon": 2.951333, "svc": 8.0, "arrive_min": 39.2, "leave_min": 47.2, "note": "Vers 9 h 39 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-06", "support": "panneau_4x3", "label": "Rond point Ammara en face BNP PARIBAS", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-07", "support": "panneau_4x3", "label": "Rond point Ammara en face maison Ford", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 5, "lat": 36.749736, "lon": 2.935417, "svc": 8.0, "arrive_min": 52.9, "leave_min": 60.9, "note": "Vers 9 h 53 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-08", "support": "unipole", "label": "Route vers Zeralda, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-09", "support": "unipole", "label": "Route de Chéraga vers Ben Aknoun, Hydra,Alger, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 6, "lat": 36.749519, "lon": 2.932028, "svc": 8.0, "arrive_min": 62.5, "leave_min": 70.5, "note": "Vers 10 h 02 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-10", "support": "unipole", "label": "Route de Chéraga vers Ben Aknoun, Hydra,Alger, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-11", "support": "unipole", "label": "Route vers Zeralda, en face maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 7, "lat": 36.746361, "lon": 2.925111, "svc": 8.0, "arrive_min": 72.9, "leave_min": 80.9, "note": "Vers 10 h 13 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-12", "support": "unipole", "label": "Route vers Zeralda, en face la maison SOVAC avant l’entrée de Bouchaoui", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-13", "support": "unipole", "label": "Route en venant de Zeralda en face la maison SOVAC", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 8, "lat": 36.745448, "lon": 2.923858, "svc": 8.0, "arrive_min": 82.1, "leave_min": 90.1, "note": "Vers 10 h 22 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-14", "support": "unipole", "label": "Rocade sud - entrée club des pins", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-15", "support": "unipole", "label": "Rocade sud - entrée club des pins", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 9, "lat": 36.740731, "lon": 2.906781, "svc": 8.0, "arrive_min": 94.2, "leave_min": 102.2, "note": "Vers 10 h 34 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-16", "support": "unipole", "label": "Autoroute entre l'entrée de deux stations balnéaires , Club des Pins et  Sidi Fredj, vers Tipaza", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-17", "support": "unipole", "label": "Autoroute entre l'entrée de deux stations balnéaires  Sidi Fredj et Club des Pins, vers Alger centre", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 10, "lat": 36.747083, "lon": 2.919917, "svc": 5.5, "arrive_min": 115.7, "leave_min": 121.2, "note": "Vers 10 h 56 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-18", "support": "panneau_4x3", "label": "Entrée de Chéraga, Rond Point sortie Autoroute (Rocade Sud) vers le centre ville de Bouchaoui", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 11, "lat": 36.749229, "lon": 2.933159, "svc": 5.5, "arrive_min": 127.7, "leave_min": 133.2, "note": "Vers 11 h 08 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-19", "support": "unipole", "label": "(centre / sans lieu-dit) · ton relevé du 02/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 12, "lat": 36.749211, "lon": 2.935469, "svc": 8.0, "arrive_min": 134.7, "leave_min": 142.7, "note": "Vers 11 h 15 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Chéraga · 9 h 00 → 11 h 23 · 21 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> vers Ouled Fayet</small>", "panels": [{"ref": "10-20", "support": "unipole", "label": "Route vers Ben Aknoun, Hydra, Alger juste après la maison SOVAC, venant de Zeralda et Club des pins", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "10-21", "support": "unipole", "label": "Route de Bouchaoui à côté de la maison Sovac, vers Club des pins et  Zéralda", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Chéraga"}, {"order": 13, "lat": 36.71578279290441, "lon": 2.9319813384426263, "svc": 0, "arrive_min": 158.9, "leave_min": 164.0, "note": "Vers 11 h 39 · <b>Ratissage</b> : suis Chemin Mohamed Ameziane Meziani. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Ouled Fayet · 11 h 39 → 11 h 56 · ratissage jusqu'à 11 h 56<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.734930,2.938398\" target=\"_blank\" rel=\"noopener\">1</a> <a href=\"https://maps.google.com/?q=36.735078,2.944764\" target=\"_blank\" rel=\"noopener\">2</a> <a href=\"https://maps.google.com/?q=36.733919,2.934435\" target=\"_blank\" rel=\"noopener\">3</a></small>", "panels": [], "kind": "pass", "commune": "Ouled Fayet"}, {"order": 14, "lat": 36.7246048, "lon": 2.9520202, "svc": 0, "arrive_min": 165.7, "leave_min": 172.5, "note": "Vers 11 h 46 · <b>Ratissage</b> : suis Chemin Mohamed Ameziane Meziani. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Ouled Fayet · 11 h 39 → 11 h 56 · ratissage jusqu'à 11 h 56<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.734930,2.938398\" target=\"_blank\" rel=\"noopener\">1</a> <a href=\"https://maps.google.com/?q=36.735078,2.944764\" target=\"_blank\" rel=\"noopener\">2</a> <a href=\"https://maps.google.com/?q=36.733919,2.934435\" target=\"_blank\" rel=\"noopener\">3</a></small>", "panels": [], "kind": "pass", "commune": "Ouled Fayet"}, {"order": 15, "lat": 36.725268, "lon": 2.9547132, "svc": 0, "arrive_min": 175.6, "leave_min": 175.6, "note": "Vers 11 h 56 · <b>Ratissage</b> : suis CW 142. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Ouled Fayet · 11 h 39 → 11 h 56 · ratissage jusqu'à 11 h 56<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a> · sortie par <a href=\"https://maps.google.com/?q=36.747606,2.937427\" target=\"_blank\" rel=\"noopener\">autoroute</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.734930,2.938398\" target=\"_blank\" rel=\"noopener\">1</a> <a href=\"https://maps.google.com/?q=36.735078,2.944764\" target=\"_blank\" rel=\"noopener\">2</a> <a href=\"https://maps.google.com/?q=36.733919,2.934435\" target=\"_blank\" rel=\"noopener\">3</a></small>", "panels": [], "kind": "pass", "commune": "Ouled Fayet"}]};
 const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
-  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade",
-  grand_panneau: "Grand panneau", pionnier: "Pionnier", face_2m2_mall: "Face 2 m² (centre commercial)" };
-// Même origine (github.io) pour toutes les pages: la clé doit distinguer chaque page.
-const KEY = "dclick-v6-" + R.key;
-const CAP = R.total_min, CHUNK = 10;
+  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade" };
+const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pages : la clé distingue chaque tracé
+const CAP = R.total_min, CHUNK = 10, LATE = 15;
+const WA = "213770880535";                   // Zakaria
 
-let state = { done: [], start: null };
+let state = { done: [], absent: [], skipped: [], news: [], start: null };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
 const pt = s => s.lat.toFixed(6) + "," + s.lon.toFixed(6);
 const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
 const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const isDone = s => state.done.includes(s.order);
+const isDone = s => state.done.includes(s.order), isAbs = s => state.absent.includes(s.order), isSkip = s => state.skipped.includes(s.order);
+const closed = s => isDone(s) || isAbs(s) || isSkip(s);
+const dist = (a, b) => { const k = Math.PI / 180, x = (b.lon - a.lon) * k * Math.cos((a.lat + b.lat) * k / 2), y = (b.lat - a.lat) * k; return 6371000 * Math.hypot(x, y); };
+const fmtD = m => m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km";
+let me = null, watchId = null;
 
-document.getElementById("sub").textContent = R.intro ||
-  `${R.n_panels} panneaux, ${R.stops.length} arrêts, ${String(R.km).replace(".", ",")} km à moto. ` +
-  `Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.`;
+function toast(t) { const el = document.getElementById("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 3500); }
+document.getElementById("sub").textContent = R.intro;
+if (R.friday) document.getElementById("friday").hidden = false;
 
 function render() {
-  const pending = R.stops.filter(s => !isDone(s));
+  const pending = R.stops.filter(s => !closed(s));
+  const closedRows = R.stops.length - pending.length;
   const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
-  const doneRows = R.stops.filter(isDone).length;
-  document.getElementById("count").textContent = R.rows ? `${doneRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} panneaux sûrs` : `${donePanels} / ${R.n_panels} panneaux`;
-  document.getElementById("meter").style.width = (R.rows ? 100 * doneRows / R.stops.length : 100 * donePanels / R.n_panels) + "%";
+  const absPanels = R.stops.filter(isAbs).reduce((a, s) => a + s.panels.length, 0);
+  document.getElementById("count").textContent = `${closedRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} sûrs` +
+    (absPanels ? ` · ${absPanels} introuvable${absPanels > 1 ? "s" : ""}` : "") + (state.news.length ? ` · ${state.news.length} nouveau${state.news.length > 1 ? "x" : ""}` : "");
+  document.getElementById("meter").style.width = (100 * closedRows / R.stops.length) + "%";
 
   const nav = document.getElementById("nav");
   if (pending.length) {
-    // Les 10 prochains arrêts non faits, dans l'ordre: Google Maps part de la position du téléphone.
     const next = pending.slice(0, CHUNK), last = next[next.length - 1];
     let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
     if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
-    nav.href = url;
+    nav.href = url; nav.hidden = false;
     nav.textContent = next.length > 1 ? `Naviguer : arrêts ${next[0].order} à ${last.order}` : `Naviguer : arrêt ${last.order}`;
-    nav.hidden = false;
-  } else {
-    nav.hidden = true;
-  }
+  } else { nav.hidden = true; }
 
-  const st = document.getElementById("status"), clock = document.getElementById("clock");
-  if (R.reloc) {
-    clock.textContent = "";
-    st.textContent = "Pas de chrono : avance à ton rythme, journée par journée.";
-  } else if (state.start) {
+  // chrono, avance ou retard, distance au prochain arrêt
+  const st = document.getElementById("status"), clock = document.getElementById("clock"), late = document.getElementById("late");
+  let delta = 0;
+  if (state.start) {
     const el = (Date.now() - state.start) / 60000;
     clock.textContent = `${hm(Math.max(0, el))} sur ${hm(CAP)}`;
-    const lastDone = R.stops.filter(isDone).pop();
-    const delta = lastDone ? el - lastDone.leave_min : 0;
-    const pace = Math.abs(delta) < 3 ? "dans les temps"
-      : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>`
-      : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
-    st.innerHTML = `Chrono lancé à ${clockOf(state.start)}, fin à ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
+    const lastClosed = R.stops.filter(closed).pop();
+    delta = lastClosed ? el - lastClosed.leave_min : 0;
+    const pace = Math.abs(delta) < 3 ? "dans les temps" : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>` : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
+    st.innerHTML = `Départ ${clockOf(state.start)}, fin prévue ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
   } else {
     clock.textContent = hm(CAP);
-    st.textContent = "Le chrono démarre quand tu touches « Fait » au 1er arrêt.";
+    st.textContent = "Le chrono démarre quand tu touches « Fait » ou « Introuvable » au 1er arrêt.";
   }
+  if (me && pending[0]) {
+    const d = dist(me, pending[0]);
+    st.innerHTML += d < 60 ? ` <b class="ahead">Tu es à l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} à ${fmtD(d)}.`;
+  }
+  // retard : proposer de sauter la fin du ratissage de la commune en cours
+  const cur = pending[0];
+  const restPass = cur ? R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass") : [];
+  const nextC = cur ? R.stops.find(s => s.order > cur.order && s.commune !== cur.commune && !closed(s)) : null;
+  if (delta > LATE && restPass.length) {
+    late.classList.add("on");
+    late.innerHTML = `<b>${Math.round(delta)} min de retard.</b> Saute le ratissage restant de ${cur.commune} (${restPass.length} passe${restPass.length > 1 ? "s" : ""})` +
+      (nextC ? ` et passe à ${nextC.commune}, arrêt ${nextC.order}.` : ".") + ` Les panneaux sûrs restent à faire.<button type="button" id="skipnow">Sauter le ratissage de ${cur.commune}</button>`;
+  } else { late.classList.remove("on"); late.innerHTML = ""; }
 
-  const firstPending = pending[0] && pending[0].order;
+  const firstPending = cur && cur.order;
   document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
     const head = s.day && (i === 0 || R.stops[i - 1].day !== s.day) ? `<li class="dayh">${s.day}</li>` : "";
-    const flags = [];
-    if (s.panels.some(p => p.gps_doubt)) flags.push("GPS douteux : cherche 5 minutes autour. Rien ? Note « introuvable » ou dis-le sur WhatsApp.");
-    else if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
-    if (s.panels.some(p => p.near_photo)) flags.push("Peut-être déjà photographié au jour 1 : vérifier");
-    return `${head}<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
+    const cls = [isDone(s) ? "done" : "", isAbs(s) ? "absent" : "", isSkip(s) ? "skipped" : "", s.order === firstPending ? "next" : "", s.kind === "pass" ? "pass" : ""].join(" ");
+    const tag = isAbs(s) ? `<span class="tag abs">introuvable</span>` : isSkip(s) ? `<span class="tag skp">sauté</span>` : "";
+    const second = s.kind === "pass"
+      ? `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Sauté · annuler" : "Sauter"}</button>`
+      : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · annuler" : "Introuvable"}</button>`;
+    return `${head}<li class="${cls}" id="s${s.order}">
       <div class="n">${s.order}</div>
       <div>
-        <div class="when">${s.note || `Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}`}</div>
-        <div class="panels">${s.panels.map(p => `<div><span class="ref">${p.ref}</span> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
-        ${flags.map(f => `<div class="flag">${f}</div>`).join("")}
+        <div class="when">${s.note}${tag}</div>
+        <div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
       </div>
       <div class="acts">
-        <a href="https://maps.google.com/?q=${pt(s)}" target="_blank" rel="noopener">Carte</a>
-        <button type="button" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
+        <a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Y aller</a>
+        ${second}
+        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
       </div>
     </li>`;
   }).join("");
 
-  const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
-  const msg = `${R.title || "Vague 5"} · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
-    (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
-  document.getElementById("send").href = "https://wa.me/213770880535?text=" + encodeURIComponent(msg);
+  // nouveaux panneaux
+  const nb = document.getElementById("newsbox");
+  nb.hidden = !state.news.length;
+  document.getElementById("newssum").textContent = `Mes nouveaux panneaux (${state.news.length})`;
+  document.getElementById("news").innerHTML = state.news.map((n, i) =>
+    `<li><span>N${i + 1} · ${clockOf(n.t)} · ±${Math.round(n.acc)} m · <a href="https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)}" target="_blank" rel="noopener">voir</a></span><button type="button" data-del="${i}">Retirer</button></li>`).join("");
+
+  // bilan WhatsApp
+  const codes = f => R.stops.filter(f).flatMap(s => s.panels.map(p => p.ref));
+  const abs = codes(isAbs);
+  const lines = [`*${R.title} · ${R.agent}*`,
+    `Étapes : ${closedRows}/${R.stops.length} · panneaux sûrs faits : ${donePanels}/${R.n_panels}`,
+    `Introuvables : ${abs.length ? abs.join(", ") : "aucun"}`,
+    `Passes de ratissage sautées : ${R.stops.filter(isSkip).length}`,
+    `Nouveaux panneaux notés : ${state.news.length}`,
+    ...state.news.map((n, i) => `N${i + 1} ${clockOf(n.t)} https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)} (±${Math.round(n.acc)} m)`),
+    state.start ? `Départ ${clockOf(state.start)} · ${hm((Date.now() - state.start) / 60000)} écoulées` : "Pas encore démarré"];
+  const txt = encodeURIComponent(lines.join("\n"));
+  document.getElementById("send").href = `https://wa.me/${WA}?text=${txt}`;
+  document.getElementById("sendany").href = `https://wa.me/?text=${txt}`;
+  if (map) drawDyn();
 }
 
-document.getElementById("stops").addEventListener("click", e => {
-  const b = e.target.closest("button[data-o]");
-  if (!b) return;
-  const o = Number(b.dataset.o), marked = !state.done.includes(o);
-  if (marked) {
-    state.done.push(o);
-    // Le chrono part à l'arrivée au 1er panneau: on retire le temps passé sur cet arrêt.
-    if (!state.start) state.start = Date.now() - R.stops.find(s => s.order === o).svc * 60000;
-  } else {
-    state.done = state.done.filter(x => x !== o);
+function startClock(o) { if (!state.start) state.start = Date.now() - (R.stops.find(s => s.order === o).svc || 0) * 60000; }
+document.addEventListener("click", e => {
+  const c = e.target.closest("button[data-c]");
+  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`Code ${c.dataset.c} copié : colle-le dans « Observations libres ».`), () => toast(c.dataset.c)); return; }
+  const d = e.target.closest("button[data-del]");
+  if (d) { if (confirm("Retirer ce nouveau panneau de ta liste ?")) { state.news.splice(Number(d.dataset.del), 1); save(); render(); } return; }
+  if (e.target.id === "skipnow") {
+    const cur = R.stops.find(s => !closed(s));
+    R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass").forEach(s => state.skipped.push(s.order));
+    save(); render(); toast("Ratissage sauté. Continue avec l'arrêt suivant."); return;
   }
-  save();
-  render();
-  const next = R.stops.find(s => !isDone(s));
-  if (marked && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
+  const b = e.target.closest("button[data-a]");
+  if (!b) return;
+  const o = Number(b.dataset.o), a = b.dataset.a;
+  const lists = { done: "done", abs: "absent", skip: "skipped" };
+  const L = lists[a], on = !state[L].includes(o);
+  for (const k of Object.values(lists)) state[k] = state[k].filter(x => x !== o);
+  if (on) { state[L].push(o); startClock(o); }
+  save(); render();
+  const next = R.stops.find(s => !closed(s));
+  if (on && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
 });
+
+function locateOnce(cb) {
+  if (!navigator.geolocation) { toast("Ce téléphone ne donne pas sa position."); return; }
+  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("Position refusée : autorise la localisation pour ce site."),
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+}
+function follow() {
+  if (watchId !== null || !navigator.geolocation) return;
+  watchId = navigator.geolocation.watchPosition(p => { me = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy }; if (Date.now() - (follow.t || 0) > 15000) { follow.t = Date.now(); render(); } }, () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
+}
+document.getElementById("newbtn").addEventListener("click", () => {
+  toast("Je prends ta position…");
+  locateOnce(c => {
+    state.news.push({ lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() });
+    save(); follow(); render();
+    toast(`Nouveau panneau N${state.news.length} noté (±${Math.round(c.accuracy)} m). Fais aussi le questionnaire SensQuest avec NOUVEAU.`);
+  });
+});
+
+// carte : chargée seulement quand on l'ouvre (page légère sur le réseau mobile)
+let map = null, dyn = null, meMark = null;
+function drawDyn() {
+  dyn.clearLayers();
+  R.stops.forEach(s => {
+    const col = isDone(s) ? "#1c4452" : isAbs(s) ? "#a21d4f" : isSkip(s) ? "#8a8378" : s.kind === "pass" ? "#8a8378" : "#d93813";
+    L.circleMarker([s.lat, s.lon], { radius: s.kind === "pass" ? 5 : 9, color: "#fff", weight: 2, fillColor: col, fillOpacity: 1 })
+      .bindTooltip(String(s.order), { permanent: s.kind !== "pass", direction: "center", className: "" }).addTo(dyn);
+  });
+  state.news.forEach((n, i) => L.circleMarker([n.lat, n.lon], { radius: 7, color: "#1c4452", weight: 3, fillColor: "#fff", fillOpacity: 1 }).bindTooltip("N" + (i + 1)).addTo(dyn));
+  if (me) { if (meMark) meMark.remove(); meMark = L.circleMarker([me.lat, me.lon], { radius: 8, color: "#fff", weight: 3, fillColor: "#2a7de1", fillOpacity: 1 }).addTo(map); }
+}
+function initMap() {
+  if (map || typeof L === "undefined") return !!map;
+  map = L.map("map", { zoomControl: true });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+  const line = L.polyline(R.geom.map(p => [p[1], p[0]]), { color: "#d93813", weight: 4, opacity: .8 }).addTo(map);
+  dyn = L.layerGroup().addTo(map); drawDyn();
+  map.fitBounds(line.getBounds(), { padding: [20, 20] });
+  document.getElementById("fit").onclick = () => map.fitBounds(line.getBounds(), { padding: [20, 20] });
+  return true;
+}
+document.getElementById("mapbox").addEventListener("toggle", e => {
+  if (!e.target.open) return;
+  if (typeof L !== "undefined") { initMap(); setTimeout(() => map.invalidateSize(), 50); return; }
+  const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  sc.onload = () => { initMap(); setTimeout(() => map.invalidateSize(), 50); };
+  sc.onerror = () => { document.getElementById("map").textContent = "Carte indisponible sans réseau. Utilise « Y aller »."; };
+  document.head.appendChild(sc);
+});
+document.getElementById("locate").addEventListener("click", () => locateOnce(c => {
+  me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy }; follow(); render();
+  if (map) map.setView([me.lat, me.lon], 16);
+}));
 
 render();
 setInterval(render, 30000);

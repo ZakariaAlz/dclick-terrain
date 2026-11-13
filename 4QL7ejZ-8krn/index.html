@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>D'click · Tracé 08</title>
+<title>D&#x27;click · Tracé 08</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-/* Palette Flasher (palettes-dusens-v12.html): orange = action, bleu = fait, magenta = alerte. */
+/* Palette Flasher : orange = action, bleu = fait, magenta = alerte. */
 :root {
   --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
   --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
-  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --pass: #8a8378;
 }
 @media (prefers-color-scheme: dark) { :root {
   --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
-  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --pass: #8d8d8d; } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
@@ -22,178 +23,307 @@ header { padding: 18px 0 10px; }
 .kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
 h1 { margin: 2px 0 4px; font-size: 1.6rem; }
 .sub { color: var(--muted); font-size: .92rem; margin: 0; }
-.bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
-.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--fg); font-size: .92rem; }
+.banner b { color: var(--warn); }
+.bar { position: sticky; top: 0; z-index: 500; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .92rem; }
 .meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.newbtn { font: 700 .95rem system-ui, sans-serif; border-radius: 10px; padding: 0 14px; border: 2px solid var(--accent); color: var(--accent); background: var(--panel); cursor: pointer; }
 .status { font-size: .9rem; color: var(--muted); }
 .status b.late { color: var(--warn); }
 .status b.ahead { color: var(--ok); }
-ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
-li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
-li.done { opacity: .55; }
-li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; }
-.when a { color: var(--accent); }
-li.next { border: 2px solid var(--accent); }
+.alert { display: none; background: var(--warn-bg); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+.alert.on { display: block; }
+.alert button { margin-top: 8px; width: 100%; font: 700 1rem system-ui, sans-serif; padding: 10px; border-radius: 10px; border: 2px solid var(--warn); color: var(--warn); background: transparent; cursor: pointer; }
+ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.stops > li.done, .stops > li.absent, .stops > li.skipped { opacity: .55; }
+.stops > li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; opacity: 1; }
+.dayh small { font-weight: 500; color: var(--muted); }
+.when a, .dayh a { color: var(--accent); }
+.stops > li.next { border: 2px solid var(--accent); }
 .n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+li.pass .n { color: var(--pass); }
 .when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.panels { display: grid; gap: 2px; }
-.ref { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
-.flag { display: inline-block; font-size: .8rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; }
-.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 8px; }
-.acts a, .acts button { font: 600 1rem system-ui, sans-serif; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; cursor: pointer; }
-.acts a { border: 1px solid var(--line); color: var(--fg); background: transparent; }
-.acts button { border: 2px solid var(--ok); color: var(--ok); background: transparent; }
-li.done .acts button { background: var(--ok-bg); }
-.send { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
-details { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.panels { display: grid; gap: 4px; margin-top: 2px; }
+.ref { font: 700 .95rem ui-monospace, Menlo, monospace; border: 1px dashed var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 1px 6px; cursor: copy; }
+.tag { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 6px; padding: 1px 7px; margin-left: 4px; }
+.tag.abs { color: var(--warn); background: var(--warn-bg); }
+.tag.skp { color: var(--muted); background: var(--line); }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 12px 6px; text-align: center; text-decoration: none; cursor: pointer; background: transparent; }
+.acts a { border: 1px solid var(--line); color: var(--fg); }
+.acts .abs { border: 1px solid var(--warn); color: var(--warn); }
+.acts .ok { border: 2px solid var(--ok); color: var(--ok); }
+li.done .acts .ok { background: var(--ok-bg); }
+li.absent .acts .abs { background: var(--warn-bg); }
+.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+.send.main { background: var(--btn); color: var(--on-btn); border: 0; }
+details { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 summary { font-weight: 700; cursor: pointer; }
-details ol { margin: 8px 0 0; display: block; padding-left: 20px; list-style: decimal; }
-details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+details ol, details ul { margin: 8px 0 0; padding-left: 20px; }
+details li { padding: 2px 0; }
+#map { height: 360px; border-radius: 10px; margin-top: 10px; }
+.maptools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.maptools button { font: 600 .9rem system-ui, sans-serif; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.news li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.news button { font: 600 .85rem system-ui, sans-serif; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: .92rem; max-width: 92vw; z-index: 1000; display: none; }
+.toast.on { display: block; }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-li .mallrules { display: block; list-style: decimal; margin: 8px 0 4px; padding: 8px 10px 8px 28px; background: var(--warn-bg); border-radius: 8px; color: var(--fg); font-size: .88rem; gap: 0; }
-li .mallrules li { display: list-item; background: none; border: 0; padding: 2px 0; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">D'click · Tracé 08 · jour 4</div>
+    <div class="kicker">D&#x27;click · Tracé 08 · jour 4</div>
     <h1>Alae</h1>
     <p class="sub" id="sub"></p>
+    <div class="banner" id="friday" hidden><b>Vendredi :</b> termine avant 12 h 30, avant la prière. Si tu es en retard, saute le ratissage, jamais un panneau sûr.</div>
   </header>
 
   <div class="bar">
     <div class="prog"><span id="count"></span><span id="clock"></span></div>
     <div class="meter"><i id="meter"></i></div>
-    <a class="nav" id="nav" target="_blank" rel="noopener"></a>
+    <div class="row2"><a class="nav" id="nav" target="_blank" rel="noopener"></a><button class="newbtn" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button></div>
     <div class="status" id="status"></div>
+    <div class="alert" id="late"></div>
   </div>
 
-  <ol id="stops"></ol>
+  <details id="mapbox">
+    <summary>Carte du tracé et ma position</summary>
+    <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
+    <div class="maptools"><button type="button" id="locate">Me localiser</button><button type="button" id="fit">Tout le tracé</button></div>
+  </details>
 
-  <a class="send" id="send" target="_blank" rel="noopener">Envoyer mon avancement sur WhatsApp</a>
+  <ol class="stops" id="stops"></ol>
+
+  <details id="newsbox" hidden>
+    <summary id="newssum">Mes nouveaux panneaux</summary>
+    <ol class="news" id="news"></ol>
+  </details>
+
+  <a class="send main" id="send" target="_blank" rel="noopener">Envoyer mon bilan sur WhatsApp</a>
+  <a class="send" id="sendany" target="_blank" rel="noopener">Envoyer le bilan à un autre contact</a>
   <a class="send" href="tel:+213770776695">Une question sur le terrain : appeler Assil</a>
 
   <details>
+    <summary>Mode d'emploi de la page</summary>
+    <ul>
+      <li><b>Y aller</b> ouvre Google Maps vers cet arrêt depuis ta position. <b>Naviguer</b> enchaîne les 10 prochains arrêts.</li>
+      <li>Touche le <b>code</b> d'un panneau (ex. 05-01) : il est copié, colle-le dans « Observations libres » de SensQuest.</li>
+      <li><b>Fait</b> : panneau photographié. <b>Introuvable</b> : rien au bout de 5 minutes, tu repars. Sur une ligne de ratissage, <b>Sauter</b> la passe.</li>
+      <li><b>+ Nouveau</b> : un panneau qui n'est pas dans ta liste. La page note ta position GPS ; fais aussi le questionnaire SensQuest avec NOUVEAU.</li>
+      <li>Plus de 15 minutes de retard : la page te propose de passer à la commune suivante. Les panneaux sûrs restent prioritaires.</li>
+      <li>À la fin, <b>Envoyer mon bilan</b> : faits, introuvables, nouveaux avec leur position.</li>
+    </ul>
+  </details>
+  <details>
     <summary>Rappels</summary>
     <ol>
-      <li><b>Panneau trouvé en route, pas dans ta liste :</b> prends-le en photo et remplis le questionnaire, avec NOUVEAU dans « Observations libres ».</li>
-      <li>Écris le code de l'arrêt (08-01, 08-02…) dans « Observations libres ».</li>
       <li>Moto à l'arrêt complet avant de sortir le téléphone.</li>
       <li>Le GPS de SensQuest est parfois imprécis : devant le panneau, attends moins de 10 m avant de valider.</li>
       <li>Deux photos : vue d'ensemble (25 à 40 m), puis chaque face, marque lisible.</li>
-      <li>Panneau introuvable : note « introuvable » ou dis-le sur WhatsApp, puis arrêt suivant.</li>
-      <li>Termine le tracé en entier, il est payé complet. À la fin, envoie ton avancement à Zakaria (0770 88 05 35).</li>
-      <li>Termine avant la nuit, vers 17 h.</li>
+      <li>Termine le tracé en entier, il est payé complet.</li>
     </ol>
   </details>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const R = {"key": "T08v9", "agent": "Alae", "title": "Tracé 08 · samedi 14/11", "km": 17.5, "n_panels": 20, "rows": true, "total_min": 174, "intro": "Tactique B : ratissage complet. Tu entres dans la commune, tu suis les grands axes indiqués jusqu'à la sortie, et tu photographies TOUT panneau publicitaire que tu vois. Les panneaux sûrs de la commune sont dans la liste. Départ conseillé 9 h, fin prévue vers 11 h 54 (2 h 54 de travail, 17,5 km). Communes dans l'ordre : Hammamet → Raïs Hamidou → Bologhine → Oued Koreiche → Bab El Oued → Casbah. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent. Les heures tiennent compte de la circulation réelle mesurée les 11 et 12/11. Plus de 15 min de retard sur l'heure indiquée : saute les points de ratissage restants et passe à la commune suivante.", "stops": [{"order": 1, "lat": 36.813, "lon": 2.990263, "svc": 5.5, "arrive_min": 0.0, "leave_min": 5.5, "note": "Vers 9 h 00 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-01", "support": "sucette", "label": "(centre / sans lieu-dit) · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 2, "lat": 36.812762, "lon": 2.983654, "svc": 5.5, "arrive_min": 7.6, "leave_min": 13.1, "note": "Vers 9 h 08 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-02", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 3, "lat": 36.813659, "lon": 2.974515, "svc": 5.5, "arrive_min": 15.7, "leave_min": 21.2, "note": "Vers 9 h 16 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-03", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 4, "lat": 36.813741, "lon": 2.972235, "svc": 5.5, "arrive_min": 22.6, "leave_min": 28.1, "note": "Vers 9 h 23 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-04", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 5, "lat": 36.8170501, "lon": 3.0085486, "svc": 0, "arrive_min": 33.1, "leave_min": 37.5, "note": "Vers 9 h 33 · <b>Ratissage</b> : suis Avenue Ho Chi Minh, Boulevard Touati Saïd. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Raïs Hamidou · 9 h 33 → 9 h 54 · 2 panneaux sûrs · ratissage jusqu'à 9 h 54<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": []}, {"order": 6, "lat": 36.817478, "lon": 3.012214, "svc": 8.0, "arrive_min": 39.8, "leave_min": 47.8, "note": "Vers 9 h 40 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "2. Raïs Hamidou · 9 h 33 → 9 h 54 · 2 panneaux sûrs · ratissage jusqu'à 9 h 54<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": [{"ref": "08-05", "support": "facade_mur", "label": "Raïs Hamidou · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "08-06", "support": "facade_mur", "label": "Raïs Hamidou · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 7, "lat": 36.81185522134938, "lon": 3.0274038677474486, "svc": 0, "arrive_min": 48.2, "leave_min": 53.7, "note": "Vers 9 h 48 · <b>Ratissage</b> : suis Boulevard Touati Saïd. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Raïs Hamidou · 9 h 33 → 9 h 54 · 2 panneaux sûrs · ratissage jusqu'à 9 h 54<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": []}, {"order": 8, "lat": 36.798904, "lon": 3.049574, "svc": 5.5, "arrive_min": 59.8, "leave_min": 65.3, "note": "Vers 10 h 00 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "3. Bologhine · 10 h 00 → 10 h 05 · 1 panneau sûr<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · sortie par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> vers Bab El Oued</small>", "panels": [{"ref": "08-07", "support": "facade_mur", "label": "Village Marie · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 9, "lat": 36.788305, "lon": 3.0459815, "svc": 8.0, "arrive_min": 70.2, "leave_min": 78.2, "note": "Vers 10 h 10 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : note « introuvable » et repars.", "day": "4. Oued Koreiche · 10 h 10 → 10 h 18 · 2 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> · sortie par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> vers Bab El Oued</small>", "panels": [{"ref": "08-08", "support": "panneau_4x3", "label": "Oued Koriche · ton relevé du 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "08-09", "support": "facade_mur", "label": "Oued Koriche · ton relevé du 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 10, "lat": 36.790173, "lon": 3.04762, "svc": 5.5, "arrive_min": 80.0, "leave_min": 85.5, "note": "Vers 10 h 20 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "5. Bab El Oued · 10 h 20 → 11 h 17 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-10", "support": "panneau_4x3", "label": "Droudj el Rounda · ton relevé du 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 11, "lat": 36.794603, "lon": 3.053191, "svc": 5.5, "arrive_min": 88.5, "leave_min": 94.0, "note": "Vers 10 h 28 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "5. Bab El Oued · 10 h 20 → 11 h 17 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-11", "support": "abribus", "label": "الساعات الثلاث · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 12, "lat": 36.793525, "lon": 3.053423, "svc": 5.5, "arrive_min": 97.6, "leave_min": 103.1, "note": "Vers 10 h 38 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "5. Bab El Oued · 10 h 20 → 11 h 17 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-12", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 13, "lat": 36.792974, "lon": 3.05478, "svc": 5.5, "arrive_min": 104.6, "leave_min": 110.1, "note": "Vers 10 h 45 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "5. Bab El Oued · 10 h 20 → 11 h 17 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-13", "support": "facade_mur", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 14, "lat": 36.793391, "lon": 3.054003, "svc": 5.5, "arrive_min": 111.6, "leave_min": 117.1, "note": "Vers 10 h 52 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "5. Bab El Oued · 10 h 20 → 11 h 17 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-14", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 15, "lat": 36.791948, "lon": 3.052708, "svc": 5.5, "arrive_min": 120.7, "leave_min": 126.2, "note": "Vers 11 h 01 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "5. Bab El Oued · 10 h 20 → 11 h 17 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-15", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 16, "lat": 36.789868, "lon": 3.06185, "svc": 5.5, "arrive_min": 131.6, "leave_min": 137.1, "note": "Vers 11 h 12 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "5. Bab El Oued · 10 h 20 → 11 h 17 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-16", "support": "panneau_4x3", "label": "El Kettani · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 17, "lat": 36.785676, "lon": 3.063083, "svc": 5.5, "arrive_min": 141.9, "leave_min": 147.4, "note": "Vers 11 h 22 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "6. Casbah · 11 h 22 → 11 h 54 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-17", "support": "abribus", "label": "Place des Martyrs · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 18, "lat": 36.780965, "lon": 3.061747, "svc": 5.5, "arrive_min": 150.7, "leave_min": 156.2, "note": "Vers 11 h 31 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "6. Casbah · 11 h 22 → 11 h 54 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-18", "support": "abribus", "label": "Bab Azzoun · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 19, "lat": 36.780614, "lon": 3.061593, "svc": 5.5, "arrive_min": 157.4, "leave_min": 162.9, "note": "Vers 11 h 37 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "6. Casbah · 11 h 22 → 11 h 54 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-19", "support": "panneau_4x3", "label": "Bab Azzoun · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}, {"order": 20, "lat": 36.789055, "lon": 3.06288, "svc": 5.5, "arrive_min": 168.3, "leave_min": 173.8, "note": "Vers 11 h 48 · 6 min sur place. Rien au bout de 5 min : note « introuvable » et repars.", "day": "6. Casbah · 11 h 22 → 11 h 54 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-20", "support": "terrasse", "label": "La Basse Casbah · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}]}]};
+const R = {"key": "T08v11", "geom": [[2.99024, 36.81303], [2.9898, 36.81282], [2.98937, 36.81265], [2.98809, 36.81232], [2.98763, 36.81231], [2.98504, 36.81293], [2.98474, 36.81294], [2.98431, 36.81298], [2.98397, 36.8129], [2.98363, 36.81282], [2.98328, 36.81273], [2.98296, 36.81266], [2.98253, 36.81264], [2.98223, 36.81269], [2.98159, 36.81285], [2.98122, 36.81297], [2.98027, 36.81323], [2.97989, 36.81334], [2.97927, 36.81352], [2.97885, 36.81363], [2.97815, 36.81383], [2.97783, 36.81391], [2.97756, 36.81398], [2.97724, 36.81403], [2.97681, 36.81403], [2.97636, 36.8139], [2.97586, 36.81376], [2.9754, 36.81363], [2.9751, 36.81363], [2.97472, 36.81364], [2.97316, 36.81367], [2.97272, 36.81369], [2.97232, 36.81371], [2.97272, 36.81369], [2.97307, 36.81368], [2.97472, 36.81364], [2.97503, 36.81363], [2.9754, 36.81363], [2.97586, 36.81376], [2.97629, 36.81388], [2.97681, 36.81403], [2.97724, 36.81403], [2.97756, 36.81398], [2.97783, 36.81391], [2.97815, 36.81383], [2.97885, 36.81363], [2.97917, 36.81355], [2.9798, 36.81337], [2.98027, 36.81323], [2.98122, 36.81297], [2.98159, 36.81285], [2.98196, 36.81274], [2.98253, 36.81264], [2.98296, 36.81266], [2.98328, 36.81273], [2.98358, 36.8128], [2.98397, 36.8129], [2.98431, 36.81298], [2.98474, 36.81294], [2.98504, 36.81293], [2.98755, 36.81234], [2.98788, 36.8123], [2.98937, 36.81265], [2.9898, 36.81282], [2.99018, 36.813], [2.99099, 36.81337], [2.99125, 36.8135], [2.99152, 36.81364], [2.99257, 36.81417], [2.99304, 36.8144], [2.99336, 36.81456], [2.9936, 36.81468], [2.9941, 36.81486], [2.99453, 36.81492], [2.99494, 36.81493], [2.99539, 36.81486], [2.9959, 36.81477], [2.99625, 36.81472], [2.99658, 36.8147], [2.99687, 36.81473], [2.99764, 36.81494], [2.9994, 36.81537], [2.99984, 36.81548], [3.00065, 36.81568], [3.00108, 36.81576], [3.0014, 36.81579], [3.00181, 36.81581], [3.00255, 36.81581], [3.00302, 36.81581], [3.00339, 36.81581], [3.00371, 36.81582], [3.00417, 36.81582], [3.00462, 36.81587], [3.00513, 36.81596], [3.00557, 36.81602], [3.00602, 36.81614], [3.00649, 36.81632], [3.00685, 36.81647], [3.00719, 36.8166], [3.00754, 36.81674], [3.00795, 36.8169], [3.00855, 36.81705], [3.00903, 36.81714], [3.00944, 36.81719], [3.01027, 36.81729], [3.01069, 36.81735], [3.01102, 36.81739], [3.01146, 36.81744], [3.01191, 36.81747], [3.01221, 36.81746], [3.01316, 36.8172], [3.01391, 36.81693], [3.01419, 36.81684], [3.01451, 36.81674], [3.01484, 36.81663], [3.01533, 36.81652], [3.01569, 36.8165], [3.01606, 36.81649], [3.01639, 36.81648], [3.01673, 36.81644], [3.01707, 36.81636], [3.01739, 36.81621], [3.01778, 36.81595], [3.01803, 36.81575], [3.01824, 36.81555], [3.01848, 36.81524], [3.01863, 36.81478], [3.01868, 36.81433], [3.01886, 36.81398], [3.01909, 36.81374], [3.01955, 36.81353], [3.02004, 36.81343], [3.02041, 36.81333], [3.02086, 36.8132], [3.02112, 36.81307], [3.02138, 36.81282], [3.02154, 36.81264], [3.02179, 36.81236], [3.02197, 36.81219], [3.0222, 36.81206], [3.0225, 36.81196], [3.02299, 36.8118], [3.02376, 36.81165], [3.02419, 36.8115], [3.0245, 36.81141], [3.02486, 36.81141], [3.0252, 36.81142], [3.02573, 36.81143], [3.02619, 36.81146], [3.02659, 36.81162], [3.02719, 36.81181], [3.02755, 36.81189], [3.02786, 36.81188], [3.0282, 36.81181], [3.02846, 36.81172], [3.02877, 36.81162], [3.0291, 36.8115], [3.02962, 36.81126], [3.03004, 36.81103], [3.03055, 36.81073], [3.03088, 36.8105], [3.03112, 36.81035], [3.03196, 36.80978], [3.03226, 36.80961], [3.0328, 36.80949], [3.03308, 36.80946], [3.03336, 36.80944], [3.03367, 36.80947], [3.03395, 36.80955], [3.03444, 36.80967], [3.03496, 36.80966], [3.03522, 36.80957], [3.03552, 36.80941], [3.03586, 36.8092], [3.03619, 36.80903], [3.03668, 36.80893], [3.03713, 36.80899], [3.03755, 36.80911], [3.03808, 36.80936], [3.03849, 36.80944], [3.039, 36.80948], [3.03938, 36.80932], [3.03994, 36.80899], [3.04032, 36.80863], [3.0405, 36.80815], [3.04061, 36.8077], [3.04071, 36.80748], [3.04088, 36.80725], [3.04118, 36.80705], [3.04165, 36.80676], [3.04297, 36.80602], [3.04334, 36.80583], [3.04377, 36.80559], [3.04423, 36.80531], [3.04459, 36.80517], [3.04488, 36.8051], [3.04521, 36.80502], [3.0456, 36.80488], [3.04586, 36.80464], [3.046, 36.80436], [3.04623, 36.80382], [3.04644, 36.80353], [3.04678, 36.80333], [3.0473, 36.80307], [3.04755, 36.80291], [3.04794, 36.80247], [3.04815, 36.80219], [3.04837, 36.8019], [3.04879, 36.80133], [3.04899, 36.801], [3.04902, 36.80072], [3.04899, 36.80044], [3.04895, 36.80004], [3.049, 36.79974], [3.04908, 36.79952], [3.04932, 36.79917], [3.04956, 36.7989], [3.04983, 36.79869], [3.05011, 36.79848], [3.05038, 36.79828], [3.05107, 36.7978], [3.05131, 36.79758], [3.05148, 36.79717], [3.05144, 36.79684], [3.05139, 36.79659], [3.05128, 36.79614], [3.05124, 36.79573], [3.05167, 36.79501], [3.05194, 36.79477], [3.05217, 36.79458], [3.05086, 36.79339], [3.05062, 36.79326], [3.04998, 36.79316], [3.04948, 36.7931], [3.04874, 36.79273], [3.0485, 36.79194], [3.04834, 36.79133], [3.04831, 36.7911], [3.04818, 36.79089], [3.04804, 36.79057], [3.04776, 36.79028], [3.04707, 36.78949], [3.04686, 36.78925], [3.04644, 36.78875], [3.04611, 36.78838], [3.0463, 36.78858], [3.04686, 36.78925], [3.04707, 36.78949], [3.04762, 36.79012], [3.04798, 36.79051], [3.04813, 36.79077], [3.04828, 36.79105], [3.04834, 36.79133], [3.0485, 36.79194], [3.04866, 36.79257], [3.04918, 36.79289], [3.04948, 36.79302], [3.05006, 36.79309], [3.05048, 36.79314], [3.05076, 36.79321], [3.05163, 36.79386], [3.052, 36.79416], [3.05233, 36.79443], [3.05268, 36.79416], [3.05306, 36.79419], [3.05314, 36.79443], [3.05339, 36.795], [3.05354, 36.7954], [3.05344, 36.79574], [3.05276, 36.79634], [3.05225, 36.79669], [3.05188, 36.79679], [3.05144, 36.79684], [3.05139, 36.79659], [3.05128, 36.79614], [3.05124, 36.79573], [3.05167, 36.79501], [3.05194, 36.79477], [3.05217, 36.79458], [3.05268, 36.79416], [3.05292, 36.79398], [3.05313, 36.79379], [3.05339, 36.79358], [3.05366, 36.79342], [3.0541, 36.79323], [3.05476, 36.79294], [3.05426, 36.79316], [3.054, 36.79339], [3.05365, 36.79357], [3.0534, 36.79377], [3.0536, 36.79345], [3.0541, 36.79323], [3.05361, 36.79247], [3.05319, 36.7918], [3.0528, 36.79192], [3.05241, 36.79191], [3.05212, 36.79174], [3.05193, 36.79144], [3.05179, 36.7911], [3.05224, 36.79103], [3.05276, 36.79107], [3.05344, 36.79105], [3.05382, 36.79104], [3.05423, 36.79104], [3.05476, 36.79102], [3.05549, 36.79106], [3.05617, 36.79116], [3.05673, 36.7912], [3.05704, 36.79111], [3.0573, 36.791], [3.05753, 36.79131], [3.05769, 36.79154], [3.05786, 36.79178], [3.05813, 36.79167], [3.05842, 36.79152], [3.05895, 36.79127], [3.05948, 36.79101], [3.06055, 36.79055], [3.06113, 36.7903], [3.06148, 36.79015], [3.06188, 36.78989], [3.06184, 36.79024], [3.06181, 36.79052], [3.06142, 36.79069], [3.06085, 36.79095], [3.06055, 36.79055], [3.06113, 36.7903], [3.06148, 36.79015], [3.06188, 36.78989], [3.0625, 36.78934], [3.06262, 36.78912], [3.06276, 36.78865], [3.06284, 36.78829], [3.06301, 36.78755], [3.0631, 36.78712], [3.0632, 36.78666], [3.06325, 36.78641], [3.06334, 36.78591], [3.06315, 36.78563], [3.06279, 36.78526], [3.06276, 36.78495], [3.06286, 36.78468], [3.06292, 36.78446], [3.06284, 36.78416], [3.06275, 36.7839], [3.06261, 36.78345], [3.06245, 36.78298], [3.06235, 36.78264], [3.06224, 36.78232], [3.06215, 36.78203], [3.06204, 36.78171], [3.06187, 36.78118], [3.06177, 36.78096], [3.06163, 36.78064], [3.06152, 36.78038], [3.06181, 36.78089], [3.06192, 36.78116], [3.0621, 36.7817], [3.0622, 36.78201], [3.0623, 36.7823], [3.0624, 36.78262], [3.06261, 36.78328], [3.06274, 36.78363], [3.06285, 36.7839], [3.06294, 36.78414], [3.06303, 36.78435], [3.06334, 36.78458], [3.06334, 36.78484], [3.0633, 36.78507], [3.06343, 36.78547], [3.06349, 36.78569], [3.06341, 36.78616], [3.06323, 36.78713], [3.063, 36.78816], [3.06289, 36.78865], [3.06278, 36.78907], [3.06283, 36.78902]], "friday": false, "agent": "Alae", "title": "Tracé 08 · samedi 14/11", "km": 17.5, "n_panels": 20, "rows": true, "total_min": 179, "intro": "Tactique B : ratissage complet. Tu entres dans la commune, tu suis les grands axes indiqués jusqu'à la sortie, et tu photographies TOUT panneau publicitaire que tu vois. Les panneaux sûrs de la commune sont dans la liste. Départ conseillé 9 h, fin prévue vers 11 h 59 (2 h 59 de travail, 17,5 km). Communes dans l'ordre : Hammamet → Raïs Hamidou → Bologhine → Oued Koreiche → Bab El Oued → Casbah. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent. Les heures tiennent compte de la circulation réelle mesurée les 11 et 12/11. Plus de 15 min de retard sur l'heure indiquée : saute les points de ratissage restants et passe à la commune suivante.", "stops": [{"order": 1, "lat": 36.813, "lon": 2.990263, "svc": 5.5, "arrive_min": 0.0, "leave_min": 5.5, "note": "Vers 9 h 00 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-01", "support": "sucette", "label": "(centre / sans lieu-dit) · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 2, "lat": 36.812762, "lon": 2.983654, "svc": 5.5, "arrive_min": 7.6, "leave_min": 13.1, "note": "Vers 9 h 08 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-02", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 3, "lat": 36.813659, "lon": 2.974515, "svc": 5.5, "arrive_min": 15.9, "leave_min": 21.4, "note": "Vers 9 h 16 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-03", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 4, "lat": 36.813741, "lon": 2.972235, "svc": 5.5, "arrive_min": 23.0, "leave_min": 28.5, "note": "Vers 9 h 23 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "1. Hammamet · 9 h 00 → 9 h 28 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> vers Raïs Hamidou</small>", "panels": [{"ref": "08-04", "support": "facade_mur", "label": "Hammamet · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Hammamet"}, {"order": 5, "lat": 36.8170501, "lon": 3.0085486, "svc": 0, "arrive_min": 34.7, "leave_min": 39.2, "note": "Vers 9 h 35 · <b>Ratissage</b> : suis Avenue Ho Chi Minh, Boulevard Touati Saïd. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Raïs Hamidou · 9 h 35 → 9 h 50 · 2 panneaux sûrs · ratissage jusqu'à 9 h 50<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": [], "kind": "pass", "commune": "Raïs Hamidou"}, {"order": 6, "lat": 36.817478, "lon": 3.012214, "svc": 8.0, "arrive_min": 41.4, "leave_min": 49.4, "note": "Vers 9 h 41 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "2. Raïs Hamidou · 9 h 35 → 9 h 50 · 2 panneaux sûrs · ratissage jusqu'à 9 h 50<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": [{"ref": "08-05", "support": "facade_mur", "label": "Raïs Hamidou · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "08-06", "support": "facade_mur", "label": "Raïs Hamidou · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Raïs Hamidou"}, {"order": 7, "lat": 36.81711543878808, "lon": 3.0133949745149535, "svc": 0, "arrive_min": 49.8, "leave_min": 49.8, "note": "Vers 9 h 50 · <b>Ratissage</b> : suis Boulevard Touati Saïd. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Raïs Hamidou · 9 h 35 → 9 h 50 · 2 panneaux sûrs · ratissage jusqu'à 9 h 50<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.814851,2.995470\" target=\"_blank\" rel=\"noopener\">Avenue Ho Chi Minh</a> · sortie par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> vers Bologhine</small>", "panels": [], "kind": "pass", "commune": "Raïs Hamidou"}, {"order": 8, "lat": 36.798904, "lon": 3.049574, "svc": 5.5, "arrive_min": 58.7, "leave_min": 64.2, "note": "Vers 9 h 59 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "3. Bologhine · 9 h 59 → 10 h 04 · 1 panneau sûr<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.811855,3.027404\" target=\"_blank\" rel=\"noopener\">Boulevard Touati Saïd</a> · sortie par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> vers Bab El Oued</small>", "panels": [{"ref": "08-07", "support": "facade_mur", "label": "Village Marie · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bologhine"}, {"order": 9, "lat": 36.788305, "lon": 3.0459815, "svc": 8.0, "arrive_min": 70.0, "leave_min": 78.0, "note": "Vers 10 h 10 · <b>2 panneaux ici : 8 min sur place, pas plus</b>. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "4. Oued Koreiche · 10 h 10 → 10 h 18 · 2 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.795734,3.051243\" target=\"_blank\" rel=\"noopener\">Boulevard Colonel Abderrahmane Mira</a> · sortie par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> vers Bab El Oued</small>", "panels": [{"ref": "08-08", "support": "panneau_4x3", "label": "Oued Koriche · ton relevé du 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}, {"ref": "08-09", "support": "facade_mur", "label": "Oued Koriche · ton relevé du 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Oued Koreiche"}, {"order": 10, "lat": 36.790173, "lon": 3.04762, "svc": 5.5, "arrive_min": 80.6, "leave_min": 86.1, "note": "Vers 10 h 21 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · 10 h 21 → 11 h 23 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-10", "support": "panneau_4x3", "label": "Droudj el Rounda · ton relevé du 06/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 11, "lat": 36.794603, "lon": 3.053191, "svc": 5.5, "arrive_min": 90.6, "leave_min": 96.1, "note": "Vers 10 h 31 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · 10 h 21 → 11 h 23 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-11", "support": "abribus", "label": "الساعات الثلاث · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 12, "lat": 36.793525, "lon": 3.053423, "svc": 5.5, "arrive_min": 99.6, "leave_min": 105.1, "note": "Vers 10 h 40 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · 10 h 21 → 11 h 23 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-12", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 13, "lat": 36.792974, "lon": 3.05478, "svc": 5.5, "arrive_min": 106.7, "leave_min": 112.2, "note": "Vers 10 h 47 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · 10 h 21 → 11 h 23 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-13", "support": "facade_mur", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 14, "lat": 36.793391, "lon": 3.054003, "svc": 5.5, "arrive_min": 113.7, "leave_min": 119.2, "note": "Vers 10 h 54 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · 10 h 21 → 11 h 23 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-14", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 15, "lat": 36.791948, "lon": 3.052708, "svc": 5.5, "arrive_min": 122.8, "leave_min": 128.3, "note": "Vers 11 h 03 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · 10 h 21 → 11 h 23 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-15", "support": "abribus", "label": "Bab El Oued · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 16, "lat": 36.789868, "lon": 3.06185, "svc": 5.5, "arrive_min": 137.1, "leave_min": 142.6, "note": "Vers 11 h 17 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "5. Bab El Oued · 10 h 21 → 11 h 23 · 7 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.787923,3.045243\" target=\"_blank\" rel=\"noopener\">Rond point de Triolet</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> vers Casbah</small>", "panels": [{"ref": "08-16", "support": "panneau_4x3", "label": "El Kettani · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Bab El Oued"}, {"order": 17, "lat": 36.785676, "lon": 3.063083, "svc": 5.5, "arrive_min": 147.5, "leave_min": 153.0, "note": "Vers 11 h 28 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · 11 h 28 → 11 h 59 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-17", "support": "abribus", "label": "Place des Martyrs · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 18, "lat": 36.780965, "lon": 3.061747, "svc": 5.5, "arrive_min": 156.3, "leave_min": 161.8, "note": "Vers 11 h 36 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · 11 h 28 → 11 h 59 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-18", "support": "abribus", "label": "Bab Azzoun · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 19, "lat": 36.780614, "lon": 3.061593, "svc": 5.5, "arrive_min": 162.9, "leave_min": 168.4, "note": "Vers 11 h 43 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · 11 h 28 → 11 h 59 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-19", "support": "panneau_4x3", "label": "Bab Azzoun · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}, {"order": 20, "lat": 36.789055, "lon": 3.06288, "svc": 5.5, "arrive_min": 173.9, "leave_min": 179.4, "note": "Vers 11 h 54 · 6 min sur place. Rien au bout de 5 min : touche « Introuvable » et repars.", "day": "6. Casbah · 11 h 28 → 11 h 59 · 4 panneaux sûrs<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a> · sortie par <a href=\"https://maps.google.com/?q=36.789863,3.061914\" target=\"_blank\" rel=\"noopener\">Boulevard Amara Rachid</a></small>", "panels": [{"ref": "08-20", "support": "terrasse", "label": "La Basse Casbah · ton relevé du 05/10", "stacked": false, "near_photo": false, "gps_doubt": false}], "kind": "stop", "commune": "Casbah"}]};
 const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
-  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade",
-  grand_panneau: "Grand panneau", pionnier: "Pionnier", face_2m2_mall: "Face 2 m² (centre commercial)" };
-// Même origine (github.io) pour toutes les pages: la clé doit distinguer chaque page.
-const KEY = "dclick-v6-" + R.key;
-const CAP = R.total_min, CHUNK = 10;
+  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade" };
+const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pages : la clé distingue chaque tracé
+const CAP = R.total_min, CHUNK = 10, LATE = 15;
+const WA = "213770880535";                   // Zakaria
 
-let state = { done: [], start: null };
+let state = { done: [], absent: [], skipped: [], news: [], start: null };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
 const pt = s => s.lat.toFixed(6) + "," + s.lon.toFixed(6);
 const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
 const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const isDone = s => state.done.includes(s.order);
+const isDone = s => state.done.includes(s.order), isAbs = s => state.absent.includes(s.order), isSkip = s => state.skipped.includes(s.order);
+const closed = s => isDone(s) || isAbs(s) || isSkip(s);
+const dist = (a, b) => { const k = Math.PI / 180, x = (b.lon - a.lon) * k * Math.cos((a.lat + b.lat) * k / 2), y = (b.lat - a.lat) * k; return 6371000 * Math.hypot(x, y); };
+const fmtD = m => m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km";
+let me = null, watchId = null;
 
-document.getElementById("sub").textContent = R.intro ||
-  `${R.n_panels} panneaux, ${R.stops.length} arrêts, ${String(R.km).replace(".", ",")} km à moto. ` +
-  `Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.`;
+function toast(t) { const el = document.getElementById("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 3500); }
+document.getElementById("sub").textContent = R.intro;
+if (R.friday) document.getElementById("friday").hidden = false;
 
 function render() {
-  const pending = R.stops.filter(s => !isDone(s));
+  const pending = R.stops.filter(s => !closed(s));
+  const closedRows = R.stops.length - pending.length;
   const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
-  const doneRows = R.stops.filter(isDone).length;
-  document.getElementById("count").textContent = R.rows ? `${doneRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} panneaux sûrs` : `${donePanels} / ${R.n_panels} panneaux`;
-  document.getElementById("meter").style.width = (R.rows ? 100 * doneRows / R.stops.length : 100 * donePanels / R.n_panels) + "%";
+  const absPanels = R.stops.filter(isAbs).reduce((a, s) => a + s.panels.length, 0);
+  document.getElementById("count").textContent = `${closedRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} sûrs` +
+    (absPanels ? ` · ${absPanels} introuvable${absPanels > 1 ? "s" : ""}` : "") + (state.news.length ? ` · ${state.news.length} nouveau${state.news.length > 1 ? "x" : ""}` : "");
+  document.getElementById("meter").style.width = (100 * closedRows / R.stops.length) + "%";
 
   const nav = document.getElementById("nav");
   if (pending.length) {
-    // Les 10 prochains arrêts non faits, dans l'ordre: Google Maps part de la position du téléphone.
     const next = pending.slice(0, CHUNK), last = next[next.length - 1];
     let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
     if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
-    nav.href = url;
+    nav.href = url; nav.hidden = false;
     nav.textContent = next.length > 1 ? `Naviguer : arrêts ${next[0].order} à ${last.order}` : `Naviguer : arrêt ${last.order}`;
-    nav.hidden = false;
-  } else {
-    nav.hidden = true;
-  }
+  } else { nav.hidden = true; }
 
-  const st = document.getElementById("status"), clock = document.getElementById("clock");
-  if (R.reloc) {
-    clock.textContent = "";
-    st.textContent = "Pas de chrono : avance à ton rythme, journée par journée.";
-  } else if (state.start) {
+  // chrono, avance ou retard, distance au prochain arrêt
+  const st = document.getElementById("status"), clock = document.getElementById("clock"), late = document.getElementById("late");
+  let delta = 0;
+  if (state.start) {
     const el = (Date.now() - state.start) / 60000;
     clock.textContent = `${hm(Math.max(0, el))} sur ${hm(CAP)}`;
-    const lastDone = R.stops.filter(isDone).pop();
-    const delta = lastDone ? el - lastDone.leave_min : 0;
-    const pace = Math.abs(delta) < 3 ? "dans les temps"
-      : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>`
-      : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
-    st.innerHTML = `Chrono lancé à ${clockOf(state.start)}, fin à ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
+    const lastClosed = R.stops.filter(closed).pop();
+    delta = lastClosed ? el - lastClosed.leave_min : 0;
+    const pace = Math.abs(delta) < 3 ? "dans les temps" : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>` : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
+    st.innerHTML = `Départ ${clockOf(state.start)}, fin prévue ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
   } else {
     clock.textContent = hm(CAP);
-    st.textContent = "Le chrono démarre quand tu touches « Fait » au 1er arrêt.";
+    st.textContent = "Le chrono démarre quand tu touches « Fait » ou « Introuvable » au 1er arrêt.";
   }
+  if (me && pending[0]) {
+    const d = dist(me, pending[0]);
+    st.innerHTML += d < 60 ? ` <b class="ahead">Tu es à l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} à ${fmtD(d)}.`;
+  }
+  // retard : proposer de sauter la fin du ratissage de la commune en cours
+  const cur = pending[0];
+  const restPass = cur ? R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass") : [];
+  const nextC = cur ? R.stops.find(s => s.order > cur.order && s.commune !== cur.commune && !closed(s)) : null;
+  if (delta > LATE && restPass.length) {
+    late.classList.add("on");
+    late.innerHTML = `<b>${Math.round(delta)} min de retard.</b> Saute le ratissage restant de ${cur.commune} (${restPass.length} passe${restPass.length > 1 ? "s" : ""})` +
+      (nextC ? ` et passe à ${nextC.commune}, arrêt ${nextC.order}.` : ".") + ` Les panneaux sûrs restent à faire.<button type="button" id="skipnow">Sauter le ratissage de ${cur.commune}</button>`;
+  } else { late.classList.remove("on"); late.innerHTML = ""; }
 
-  const firstPending = pending[0] && pending[0].order;
+  const firstPending = cur && cur.order;
   document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
     const head = s.day && (i === 0 || R.stops[i - 1].day !== s.day) ? `<li class="dayh">${s.day}</li>` : "";
-    const flags = [];
-    if (s.panels.some(p => p.gps_doubt)) flags.push("GPS douteux : cherche 5 minutes autour. Rien ? Note « introuvable » ou dis-le sur WhatsApp.");
-    else if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
-    if (s.panels.some(p => p.near_photo)) flags.push("Peut-être déjà photographié au jour 1 : vérifier");
-    return `${head}<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
+    const cls = [isDone(s) ? "done" : "", isAbs(s) ? "absent" : "", isSkip(s) ? "skipped" : "", s.order === firstPending ? "next" : "", s.kind === "pass" ? "pass" : ""].join(" ");
+    const tag = isAbs(s) ? `<span class="tag abs">introuvable</span>` : isSkip(s) ? `<span class="tag skp">sauté</span>` : "";
+    const second = s.kind === "pass"
+      ? `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Sauté · annuler" : "Sauter"}</button>`
+      : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · annuler" : "Introuvable"}</button>`;
+    return `${head}<li class="${cls}" id="s${s.order}">
       <div class="n">${s.order}</div>
       <div>
-        <div class="when">${s.note || `Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}`}</div>
-        <div class="panels">${s.panels.map(p => `<div><span class="ref">${p.ref}</span> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
-        ${flags.map(f => `<div class="flag">${f}</div>`).join("")}
+        <div class="when">${s.note}${tag}</div>
+        <div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
       </div>
       <div class="acts">
-        <a href="https://maps.google.com/?q=${pt(s)}" target="_blank" rel="noopener">Carte</a>
-        <button type="button" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
+        <a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Y aller</a>
+        ${second}
+        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
       </div>
     </li>`;
   }).join("");
 
-  const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
-  const msg = `${R.title || "Vague 5"} · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
-    (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
-  document.getElementById("send").href = "https://wa.me/213770880535?text=" + encodeURIComponent(msg);
+  // nouveaux panneaux
+  const nb = document.getElementById("newsbox");
+  nb.hidden = !state.news.length;
+  document.getElementById("newssum").textContent = `Mes nouveaux panneaux (${state.news.length})`;
+  document.getElementById("news").innerHTML = state.news.map((n, i) =>
+    `<li><span>N${i + 1} · ${clockOf(n.t)} · ±${Math.round(n.acc)} m · <a href="https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)}" target="_blank" rel="noopener">voir</a></span><button type="button" data-del="${i}">Retirer</button></li>`).join("");
+
+  // bilan WhatsApp
+  const codes = f => R.stops.filter(f).flatMap(s => s.panels.map(p => p.ref));
+  const abs = codes(isAbs);
+  const lines = [`*${R.title} · ${R.agent}*`,
+    `Étapes : ${closedRows}/${R.stops.length} · panneaux sûrs faits : ${donePanels}/${R.n_panels}`,
+    `Introuvables : ${abs.length ? abs.join(", ") : "aucun"}`,
+    `Passes de ratissage sautées : ${R.stops.filter(isSkip).length}`,
+    `Nouveaux panneaux notés : ${state.news.length}`,
+    ...state.news.map((n, i) => `N${i + 1} ${clockOf(n.t)} https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)} (±${Math.round(n.acc)} m)`),
+    state.start ? `Départ ${clockOf(state.start)} · ${hm((Date.now() - state.start) / 60000)} écoulées` : "Pas encore démarré"];
+  const txt = encodeURIComponent(lines.join("\n"));
+  document.getElementById("send").href = `https://wa.me/${WA}?text=${txt}`;
+  document.getElementById("sendany").href = `https://wa.me/?text=${txt}`;
+  if (map) drawDyn();
 }
 
-document.getElementById("stops").addEventListener("click", e => {
-  const b = e.target.closest("button[data-o]");
-  if (!b) return;
-  const o = Number(b.dataset.o), marked = !state.done.includes(o);
-  if (marked) {
-    state.done.push(o);
-    // Le chrono part à l'arrivée au 1er panneau: on retire le temps passé sur cet arrêt.
-    if (!state.start) state.start = Date.now() - R.stops.find(s => s.order === o).svc * 60000;
-  } else {
-    state.done = state.done.filter(x => x !== o);
+function startClock(o) { if (!state.start) state.start = Date.now() - (R.stops.find(s => s.order === o).svc || 0) * 60000; }
+document.addEventListener("click", e => {
+  const c = e.target.closest("button[data-c]");
+  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`Code ${c.dataset.c} copié : colle-le dans « Observations libres ».`), () => toast(c.dataset.c)); return; }
+  const d = e.target.closest("button[data-del]");
+  if (d) { if (confirm("Retirer ce nouveau panneau de ta liste ?")) { state.news.splice(Number(d.dataset.del), 1); save(); render(); } return; }
+  if (e.target.id === "skipnow") {
+    const cur = R.stops.find(s => !closed(s));
+    R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass").forEach(s => state.skipped.push(s.order));
+    save(); render(); toast("Ratissage sauté. Continue avec l'arrêt suivant."); return;
   }
-  save();
-  render();
-  const next = R.stops.find(s => !isDone(s));
-  if (marked && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
+  const b = e.target.closest("button[data-a]");
+  if (!b) return;
+  const o = Number(b.dataset.o), a = b.dataset.a;
+  const lists = { done: "done", abs: "absent", skip: "skipped" };
+  const L = lists[a], on = !state[L].includes(o);
+  for (const k of Object.values(lists)) state[k] = state[k].filter(x => x !== o);
+  if (on) { state[L].push(o); startClock(o); }
+  save(); render();
+  const next = R.stops.find(s => !closed(s));
+  if (on && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
 });
+
+function locateOnce(cb) {
+  if (!navigator.geolocation) { toast("Ce téléphone ne donne pas sa position."); return; }
+  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("Position refusée : autorise la localisation pour ce site."),
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+}
+function follow() {
+  if (watchId !== null || !navigator.geolocation) return;
+  watchId = navigator.geolocation.watchPosition(p => { me = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy }; if (Date.now() - (follow.t || 0) > 15000) { follow.t = Date.now(); render(); } }, () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
+}
+document.getElementById("newbtn").addEventListener("click", () => {
+  toast("Je prends ta position…");
+  locateOnce(c => {
+    state.news.push({ lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() });
+    save(); follow(); render();
+    toast(`Nouveau panneau N${state.news.length} noté (±${Math.round(c.accuracy)} m). Fais aussi le questionnaire SensQuest avec NOUVEAU.`);
+  });
+});
+
+// carte : chargée seulement quand on l'ouvre (page légère sur le réseau mobile)
+let map = null, dyn = null, meMark = null;
+function drawDyn() {
+  dyn.clearLayers();
+  R.stops.forEach(s => {
+    const col = isDone(s) ? "#1c4452" : isAbs(s) ? "#a21d4f" : isSkip(s) ? "#8a8378" : s.kind === "pass" ? "#8a8378" : "#d93813";
+    L.circleMarker([s.lat, s.lon], { radius: s.kind === "pass" ? 5 : 9, color: "#fff", weight: 2, fillColor: col, fillOpacity: 1 })
+      .bindTooltip(String(s.order), { permanent: s.kind !== "pass", direction: "center", className: "" }).addTo(dyn);
+  });
+  state.news.forEach((n, i) => L.circleMarker([n.lat, n.lon], { radius: 7, color: "#1c4452", weight: 3, fillColor: "#fff", fillOpacity: 1 }).bindTooltip("N" + (i + 1)).addTo(dyn));
+  if (me) { if (meMark) meMark.remove(); meMark = L.circleMarker([me.lat, me.lon], { radius: 8, color: "#fff", weight: 3, fillColor: "#2a7de1", fillOpacity: 1 }).addTo(map); }
+}
+function initMap() {
+  if (map || typeof L === "undefined") return !!map;
+  map = L.map("map", { zoomControl: true });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+  const line = L.polyline(R.geom.map(p => [p[1], p[0]]), { color: "#d93813", weight: 4, opacity: .8 }).addTo(map);
+  dyn = L.layerGroup().addTo(map); drawDyn();
+  map.fitBounds(line.getBounds(), { padding: [20, 20] });
+  document.getElementById("fit").onclick = () => map.fitBounds(line.getBounds(), { padding: [20, 20] });
+  return true;
+}
+document.getElementById("mapbox").addEventListener("toggle", e => {
+  if (!e.target.open) return;
+  if (typeof L !== "undefined") { initMap(); setTimeout(() => map.invalidateSize(), 50); return; }
+  const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  sc.onload = () => { initMap(); setTimeout(() => map.invalidateSize(), 50); };
+  sc.onerror = () => { document.getElementById("map").textContent = "Carte indisponible sans réseau. Utilise « Y aller »."; };
+  document.head.appendChild(sc);
+});
+document.getElementById("locate").addEventListener("click", () => locateOnce(c => {
+  me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy }; follow(); render();
+  if (map) map.setView([me.lat, me.lon], 16);
+}));
 
 render();
 setInterval(render, 30000);

@@ -4,17 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
-<title>D'click · Tracé 05</title>
+<title>D&#x27;click · Tracé 13</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-/* Palette Flasher (palettes-dusens-v12.html): orange = action, bleu = fait, magenta = alerte. */
+/* Palette Flasher : orange = action, bleu = fait, magenta = alerte. */
 :root {
   --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
   --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
-  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --pass: #8a8378;
 }
 @media (prefers-color-scheme: dark) { :root {
   --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
-  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --pass: #8d8d8d; } }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
@@ -22,178 +23,307 @@ header { padding: 18px 0 10px; }
 .kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
 h1 { margin: 2px 0 4px; font-size: 1.6rem; }
 .sub { color: var(--muted); font-size: .92rem; margin: 0; }
-.bar { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
-.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--fg); font-size: .92rem; }
+.banner b { color: var(--warn); }
+.bar { position: sticky; top: 0; z-index: 500; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .92rem; }
 .meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
 .meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.newbtn { font: 700 .95rem system-ui, sans-serif; border-radius: 10px; padding: 0 14px; border: 2px solid var(--accent); color: var(--accent); background: var(--panel); cursor: pointer; }
 .status { font-size: .9rem; color: var(--muted); }
 .status b.late { color: var(--warn); }
 .status b.ahead { color: var(--ok); }
-ol { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
-li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
-li.done { opacity: .55; }
-li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; }
-.when a { color: var(--accent); }
-li.next { border: 2px solid var(--accent); }
+.alert { display: none; background: var(--warn-bg); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+.alert.on { display: block; }
+.alert button { margin-top: 8px; width: 100%; font: 700 1rem system-ui, sans-serif; padding: 10px; border-radius: 10px; border: 2px solid var(--warn); color: var(--warn); background: transparent; cursor: pointer; }
+ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.stops > li.done, .stops > li.absent, .stops > li.skipped { opacity: .55; }
+.stops > li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; opacity: 1; }
+.dayh small { font-weight: 500; color: var(--muted); }
+.when a, .dayh a { color: var(--accent); }
+.stops > li.next { border: 2px solid var(--accent); }
 .n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+li.pass .n { color: var(--pass); }
 .when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.panels { display: grid; gap: 2px; }
-.ref { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
-.flag { display: inline-block; font-size: .8rem; font-weight: 600; color: var(--warn); background: var(--warn-bg); border-radius: 6px; padding: 2px 8px; margin-top: 4px; }
-.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; margin-top: 8px; }
-.acts a, .acts button { font: 600 1rem system-ui, sans-serif; border-radius: 10px; padding: 12px; text-align: center; text-decoration: none; cursor: pointer; }
-.acts a { border: 1px solid var(--line); color: var(--fg); background: transparent; }
-.acts button { border: 2px solid var(--ok); color: var(--ok); background: transparent; }
-li.done .acts button { background: var(--ok-bg); }
-.send { display: block; width: 100%; margin-top: 18px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
-details { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.panels { display: grid; gap: 4px; margin-top: 2px; }
+.ref { font: 700 .95rem ui-monospace, Menlo, monospace; border: 1px dashed var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 1px 6px; cursor: copy; }
+.tag { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 6px; padding: 1px 7px; margin-left: 4px; }
+.tag.abs { color: var(--warn); background: var(--warn-bg); }
+.tag.skp { color: var(--muted); background: var(--line); }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 12px 6px; text-align: center; text-decoration: none; cursor: pointer; background: transparent; }
+.acts a { border: 1px solid var(--line); color: var(--fg); }
+.acts .abs { border: 1px solid var(--warn); color: var(--warn); }
+.acts .ok { border: 2px solid var(--ok); color: var(--ok); }
+li.done .acts .ok { background: var(--ok-bg); }
+li.absent .acts .abs { background: var(--warn-bg); }
+.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+.send.main { background: var(--btn); color: var(--on-btn); border: 0; }
+details { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 summary { font-weight: 700; cursor: pointer; }
-details ol { margin: 8px 0 0; display: block; padding-left: 20px; list-style: decimal; }
-details li { display: list-item; background: none; border: 0; padding: 2px 0; }
+details ol, details ul { margin: 8px 0 0; padding-left: 20px; }
+details li { padding: 2px 0; }
+#map { height: 360px; border-radius: 10px; margin-top: 10px; }
+.maptools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.maptools button { font: 600 .9rem system-ui, sans-serif; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.news li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.news button { font: 600 .85rem system-ui, sans-serif; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: .92rem; max-width: 92vw; z-index: 1000; display: none; }
+.toast.on { display: block; }
 a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-li .mallrules { display: block; list-style: decimal; margin: 8px 0 4px; padding: 8px 10px 8px 28px; background: var(--warn-bg); border-radius: 8px; color: var(--fg); font-size: .88rem; gap: 0; }
-li .mallrules li { display: list-item; background: none; border: 0; padding: 2px 0; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="kicker">D'click · Tracé 05 · jour 3</div>
+    <div class="kicker">D&#x27;click · Tracé 13 · jour 6</div>
     <h1>Zineddine</h1>
     <p class="sub" id="sub"></p>
+    <div class="banner" id="friday" hidden><b>Vendredi :</b> termine avant 12 h 30, avant la prière. Si tu es en retard, saute le ratissage, jamais un panneau sûr.</div>
   </header>
 
   <div class="bar">
     <div class="prog"><span id="count"></span><span id="clock"></span></div>
     <div class="meter"><i id="meter"></i></div>
-    <a class="nav" id="nav" target="_blank" rel="noopener"></a>
+    <div class="row2"><a class="nav" id="nav" target="_blank" rel="noopener"></a><button class="newbtn" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button></div>
     <div class="status" id="status"></div>
+    <div class="alert" id="late"></div>
   </div>
 
-  <ol id="stops"></ol>
+  <details id="mapbox">
+    <summary>Carte du tracé et ma position</summary>
+    <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
+    <div class="maptools"><button type="button" id="locate">Me localiser</button><button type="button" id="fit">Tout le tracé</button></div>
+  </details>
 
-  <a class="send" id="send" target="_blank" rel="noopener">Envoyer mon avancement sur WhatsApp</a>
+  <ol class="stops" id="stops"></ol>
+
+  <details id="newsbox" hidden>
+    <summary id="newssum">Mes nouveaux panneaux</summary>
+    <ol class="news" id="news"></ol>
+  </details>
+
+  <a class="send main" id="send" target="_blank" rel="noopener">Envoyer mon bilan sur WhatsApp</a>
+  <a class="send" id="sendany" target="_blank" rel="noopener">Envoyer le bilan à un autre contact</a>
   <a class="send" href="tel:+213770776695">Une question sur le terrain : appeler Assil</a>
 
   <details>
+    <summary>Mode d'emploi de la page</summary>
+    <ul>
+      <li><b>Y aller</b> ouvre Google Maps vers cet arrêt depuis ta position. <b>Naviguer</b> enchaîne les 10 prochains arrêts.</li>
+      <li>Touche le <b>code</b> d'un panneau (ex. 05-01) : il est copié, colle-le dans « Observations libres » de SensQuest.</li>
+      <li><b>Fait</b> : panneau photographié. <b>Introuvable</b> : rien au bout de 5 minutes, tu repars. Sur une ligne de ratissage, <b>Sauter</b> la passe.</li>
+      <li><b>+ Nouveau</b> : un panneau qui n'est pas dans ta liste. La page note ta position GPS ; fais aussi le questionnaire SensQuest avec NOUVEAU.</li>
+      <li>Plus de 15 minutes de retard : la page te propose de passer à la commune suivante. Les panneaux sûrs restent prioritaires.</li>
+      <li>À la fin, <b>Envoyer mon bilan</b> : faits, introuvables, nouveaux avec leur position.</li>
+    </ul>
+  </details>
+  <details>
     <summary>Rappels</summary>
     <ol>
-      <li><b>Panneau trouvé en route, pas dans ta liste :</b> prends-le en photo et remplis le questionnaire, avec NOUVEAU dans « Observations libres ».</li>
-      <li>Écris le code de l'arrêt (05-01, 05-02…) dans « Observations libres ».</li>
       <li>Moto à l'arrêt complet avant de sortir le téléphone.</li>
       <li>Le GPS de SensQuest est parfois imprécis : devant le panneau, attends moins de 10 m avant de valider.</li>
       <li>Deux photos : vue d'ensemble (25 à 40 m), puis chaque face, marque lisible.</li>
-      <li>Panneau introuvable : note « introuvable » ou dis-le sur WhatsApp, puis arrêt suivant.</li>
-      <li>Termine le tracé en entier, il est payé complet. À la fin, envoie ton avancement à Zakaria (0770 88 05 35).</li>
-      <li>Termine avant la nuit, vers 17 h.</li>
+      <li>Termine le tracé en entier, il est payé complet.</li>
     </ol>
   </details>
 </div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const R = {"key": "T13v9", "agent": "Zineddine", "title": "Tracé 13 · lundi 16/11", "km": 42.1, "n_panels": 0, "rows": true, "total_min": 179, "intro": "Tactique B : ratissage complet. Tu entres dans la commune, tu suis les grands axes indiqués jusqu'à la sortie, et tu photographies TOUT panneau publicitaire que tu vois. Les panneaux sûrs de la commune sont dans la liste. Départ conseillé 9 h, fin prévue vers 11 h 59 (2 h 59 de travail, 42,1 km). Communes dans l'ordre : Sidi Moussa → Eucalyptus. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent. Les heures tiennent compte de la circulation réelle mesurée les 11 et 12/11. Plus de 15 min de retard sur l'heure indiquée : saute les points de ratissage restants et passe à la commune suivante.", "stops": [{"order": 1, "lat": 36.6110363, "lon": 3.1290382, "svc": 0, "arrive_min": 0.0, "leave_min": 3.8, "note": "Vers 9 h 00 · <b>Ratissage</b> : suis CW 115. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. Sidi Moussa · 9 h 00 → 9 h 15 · ratissage jusqu'à 9 h 15<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> vers Eucalyptus</small>", "panels": []}, {"order": 2, "lat": 36.6202989, "lon": 3.1244329, "svc": 0, "arrive_min": 5.0, "leave_min": 8.8, "note": "Vers 9 h 05 · <b>Ratissage</b> : suis CW 115. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. Sidi Moussa · 9 h 00 → 9 h 15 · ratissage jusqu'à 9 h 15<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> vers Eucalyptus</small>", "panels": []}, {"order": 3, "lat": 36.626190698903706, "lon": 3.1152541630292037, "svc": 0, "arrive_min": 10.9, "leave_min": 14.9, "note": "Vers 9 h 11 · <b>Ratissage</b> : suis CW 115, Route de Larabaa, RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. Sidi Moussa · 9 h 00 → 9 h 15 · ratissage jusqu'à 9 h 15<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> vers Eucalyptus</small>", "panels": []}, {"order": 4, "lat": 36.6426579, "lon": 3.1718685, "svc": 0, "arrive_min": 25.1, "leave_min": 33.0, "note": "Vers 9 h 25 · <b>Ratissage</b> : suis CW 59. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 5, "lat": 36.647828, "lon": 3.1800324, "svc": 0, "arrive_min": 34.1, "leave_min": 38.6, "note": "Vers 9 h 34 · <b>Ratissage</b> : suis CW 59, CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 6, "lat": 36.66288937826447, "lon": 3.1835836047666066, "svc": 0, "arrive_min": 39.4, "leave_min": 46.2, "note": "Vers 9 h 39 · <b>Ratissage</b> : suis CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 7, "lat": 36.6694868, "lon": 3.1905116, "svc": 0, "arrive_min": 47.9, "leave_min": 52.4, "note": "Vers 9 h 48 · <b>Ratissage</b> : suis CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 8, "lat": 36.656572, "lon": 3.2034269, "svc": 0, "arrive_min": 58.2, "leave_min": 69.3, "note": "Vers 9 h 58 · <b>Ratissage</b> : suis CW 118. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 9, "lat": 36.675016418682304, "lon": 3.194097288479044, "svc": 0, "arrive_min": 71.0, "leave_min": 78.1, "note": "Vers 10 h 11 · <b>Ratissage</b> : suis CW 118. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 10, "lat": 36.6887823, "lon": 3.1853288, "svc": 0, "arrive_min": 79.8, "leave_min": 85.7, "note": "Vers 10 h 20 · <b>Ratissage</b> : suis CW 118. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 11, "lat": 36.67983860843985, "lon": 3.1687409513626053, "svc": 0, "arrive_min": 88.8, "leave_min": 103.4, "note": "Vers 10 h 29 · <b>Ratissage</b> : suis RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 12, "lat": 36.68802917911703, "lon": 3.151558278557707, "svc": 0, "arrive_min": 104.8, "leave_min": 109.1, "note": "Vers 10 h 45 · <b>Ratissage</b> : suis les rues du secteur. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 13, "lat": 36.67112597765264, "lon": 3.1790794817568107, "svc": 0, "arrive_min": 110.6, "leave_min": 132.3, "note": "Vers 10 h 51 · <b>Ratissage</b> : suis les rues du secteur. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 14, "lat": 36.67156086624841, "lon": 3.174125799735697, "svc": 0, "arrive_min": 135.2, "leave_min": 152.5, "note": "Vers 11 h 15 · <b>Ratissage</b> : suis CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 15, "lat": 36.66217786034106, "lon": 3.1570490247264584, "svc": 0, "arrive_min": 159.1, "leave_min": 170.9, "note": "Vers 11 h 39 · <b>Ratissage</b> : suis RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}, {"order": 16, "lat": 36.656431570282884, "lon": 3.150929145408018, "svc": 0, "arrive_min": 174.8, "leave_min": 178.7, "note": "Vers 11 h 55 · <b>Ratissage</b> : suis RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": []}]};
+const R = {"key": "T13v11", "geom": [[3.13219, 36.60469], [3.13121, 36.60666], [3.13084, 36.60744], [3.13069, 36.60775], [3.12995, 36.6092], [3.12957, 36.60997], [3.12941, 36.6103], [3.12904, 36.61104], [3.12868, 36.61176], [3.12834, 36.61244], [3.128, 36.61312], [3.12757, 36.614], [3.1273, 36.61454], [3.12705, 36.61503], [3.12692, 36.61529], [3.12663, 36.61588], [3.12611, 36.61693], [3.12576, 36.61763], [3.12443, 36.6203], [3.12424, 36.62063], [3.12381, 36.62123], [3.12283, 36.6225], [3.12175, 36.62391], [3.12134, 36.62443], [3.12084, 36.62507], [3.12066, 36.62533], [3.12011, 36.62627], [3.11997, 36.6265], [3.11922, 36.62776], [3.11865, 36.62885], [3.11866, 36.62908], [3.11841, 36.62896], [3.11699, 36.62763], [3.1168, 36.62747], [3.11525, 36.62619], [3.1168, 36.62747], [3.11699, 36.62763], [3.11844, 36.62888], [3.11872, 36.6289], [3.11947, 36.62962], [3.12181, 36.63153], [3.12374, 36.63313], [3.12645, 36.63527], [3.12684, 36.63558], [3.12886, 36.63721], [3.13175, 36.63956], [3.13229, 36.64], [3.13353, 36.641], [3.13467, 36.64191], [3.13507, 36.64224], [3.13616, 36.64313], [3.13709, 36.6439], [3.14077, 36.64691], [3.14328, 36.64919], [3.14364, 36.64954], [3.14593, 36.65171], [3.14614, 36.65192], [3.14674, 36.65245], [3.14713, 36.65281], [3.14804, 36.65263], [3.15279, 36.65064], [3.16064, 36.64736], [3.1627, 36.64648], [3.16342, 36.64618], [3.16547, 36.64534], [3.1659, 36.64516], [3.1662, 36.64503], [3.16997, 36.64345], [3.17187, 36.64266], [3.17336, 36.64203], [3.17362, 36.64193], [3.17396, 36.64178], [3.17475, 36.64145], [3.1768, 36.64059], [3.17746, 36.642], [3.17772, 36.64266], [3.17829, 36.64381], [3.17882, 36.64505], [3.17912, 36.64579], [3.1793, 36.64612], [3.17957, 36.64657], [3.1797, 36.64684], [3.18003, 36.64783], [3.1807, 36.64968], [3.18095, 36.6498], [3.18105, 36.65068], [3.18131, 36.65142], [3.18166, 36.65243], [3.18175, 36.65297], [3.18181, 36.65319], [3.18197, 36.65348], [3.18249, 36.65416], [3.18265, 36.6544], [3.18279, 36.65468], [3.18293, 36.65505], [3.183, 36.65528], [3.18322, 36.65597], [3.18345, 36.65704], [3.18353, 36.65746], [3.1837, 36.65823], [3.18382, 36.65858], [3.18437, 36.65985], [3.18462, 36.66045], [3.18477, 36.66079], [3.18495, 36.66122], [3.185, 36.66151], [3.18453, 36.66204], [3.18417, 36.66236], [3.18358, 36.66289], [3.18162, 36.66467], [3.18139, 36.66488], [3.18075, 36.66548], [3.18043, 36.66577], [3.18011, 36.66607], [3.18183, 36.66726], [3.18203, 36.66745], [3.18238, 36.66775], [3.18271, 36.66811], [3.1829, 36.66832], [3.18316, 36.66853], [3.1835, 36.66876], [3.18399, 36.66901], [3.18433, 36.66912], [3.1847, 36.6692], [3.18499, 36.66924], [3.18558, 36.66927], [3.18906, 36.66925], [3.18945, 36.66925], [3.18975, 36.66927], [3.19025, 36.6694], [3.19051, 36.66949], [3.19088, 36.66963], [3.19226, 36.67016], [3.19309, 36.67047], [3.19441, 36.67097], [3.19493, 36.67109], [3.1955, 36.67111], [3.19589, 36.6711], [3.19729, 36.67118], [3.19765, 36.67121], [3.19792, 36.67133], [3.20087, 36.67302], [3.20133, 36.6731], [3.20432, 36.67286], [3.2048, 36.67286], [3.20518, 36.67298], [3.2048, 36.67286], [3.20432, 36.67286], [3.20133, 36.6731], [3.20087, 36.67302], [3.20055, 36.67284], [3.19806, 36.67142], [3.19779, 36.67127], [3.19729, 36.67118], [3.19603, 36.67118], [3.19671, 36.66989], [3.19685, 36.6696], [3.19711, 36.6691], [3.19761, 36.66809], [3.1978, 36.6677], [3.19795, 36.66739], [3.19809, 36.66712], [3.19821, 36.6669], [3.19854, 36.66625], [3.19889, 36.66555], [3.19909, 36.66516], [3.19926, 36.66484], [3.19947, 36.66442], [3.19966, 36.66403], [3.19985, 36.66366], [3.19998, 36.6634], [3.20026, 36.66284], [3.20058, 36.66222], [3.20207, 36.65933], [3.20224, 36.65899], [3.20343, 36.65657], [3.20224, 36.65899], [3.20207, 36.65933], [3.20162, 36.6602], [3.20058, 36.66222], [3.20026, 36.66284], [3.20002, 36.66331], [3.19985, 36.66366], [3.19966, 36.66403], [3.19947, 36.66442], [3.19926, 36.66484], [3.19909, 36.66516], [3.19891, 36.66551], [3.19854, 36.66625], [3.19821, 36.6669], [3.19809, 36.66712], [3.19795, 36.66739], [3.1978, 36.6677], [3.19761, 36.66809], [3.19711, 36.6691], [3.19685, 36.6696], [3.19671, 36.66989], [3.19611, 36.67103], [3.19598, 36.6713], [3.19555, 36.67216], [3.19526, 36.67273], [3.1941, 36.67502], [3.194, 36.67523], [3.1938, 36.67564], [3.19352, 36.67621], [3.1931, 36.677], [3.19298, 36.67723], [3.19276, 36.67766], [3.19259, 36.67795], [3.19248, 36.6782], [3.19224, 36.67866], [3.19211, 36.67889], [3.19195, 36.67922], [3.19164, 36.67988], [3.19151, 36.6801], [3.19133, 36.68049], [3.19083, 36.68147], [3.19043, 36.68221], [3.18894, 36.68513], [3.18853, 36.68595], [3.18792, 36.68719], [3.18716, 36.68863], [3.18696, 36.68893], [3.18668, 36.68906], [3.18627, 36.6891], [3.18602, 36.68922], [3.18571, 36.68916], [3.18533, 36.68878], [3.18411, 36.68765], [3.18293, 36.68657], [3.18221, 36.68589], [3.18172, 36.68544], [3.18135, 36.6851], [3.18093, 36.68471], [3.18028, 36.68411], [3.18006, 36.68391], [3.17955, 36.68342], [3.17628, 36.68028], [3.17576, 36.67977], [3.17498, 36.67904], [3.17439, 36.6785], [3.17484, 36.67807], [3.17499, 36.67786], [3.175, 36.67761], [3.17492, 36.67738], [3.17478, 36.67717], [3.17458, 36.67698], [3.17425, 36.67677], [3.1739, 36.67664], [3.1735, 36.67664], [3.17316, 36.67679], [3.17282, 36.67706], [3.1723, 36.67744], [3.16874, 36.67984], [3.16662, 36.68127], [3.16604, 36.68162], [3.1654, 36.68198], [3.1647, 36.68236], [3.16406, 36.68267], [3.16347, 36.68295], [3.16179, 36.68367], [3.16069, 36.68414], [3.16033, 36.68429], [3.1593, 36.68473], [3.15819, 36.68521], [3.15595, 36.68616], [3.15265, 36.68756], [3.15156, 36.68803], [3.14895, 36.68913], [3.14793, 36.68959], [3.14747, 36.68984], [3.14723, 36.69002], [3.14676, 36.69037], [3.14638, 36.69076], [3.14619, 36.69103], [3.14589, 36.69152], [3.14578, 36.69178], [3.14566, 36.69213], [3.14557, 36.69255], [3.14552, 36.69295], [3.14545, 36.69378], [3.14543, 36.69419], [3.14541, 36.6946], [3.14542, 36.69498], [3.14546, 36.69533], [3.14572, 36.69563], [3.14608, 36.69575], [3.14645, 36.69567], [3.14674, 36.69542], [3.1468, 36.69512], [3.14661, 36.69476], [3.14575, 36.69457], [3.14346, 36.69432], [3.14305, 36.69445], [3.14289, 36.69464], [3.1429, 36.69497], [3.14308, 36.69524], [3.14333, 36.69542], [3.14357, 36.69554], [3.14391, 36.69563], [3.14451, 36.69565], [3.14496, 36.6955], [3.14518, 36.69525], [3.14523, 36.69498], [3.14525, 36.69459], [3.14528, 36.69425], [3.14532, 36.69371], [3.14536, 36.69326], [3.14539, 36.6929], [3.14542, 36.69261], [3.14549, 36.69229], [3.14562, 36.69188], [3.14574, 36.69159], [3.1459, 36.69129], [3.14607, 36.69099], [3.14623, 36.69074], [3.14643, 36.69049], [3.14675, 36.69018], [3.147, 36.69], [3.14752, 36.68969], [3.14795, 36.68947], [3.15261, 36.68747], [3.15579, 36.68612], [3.15728, 36.68548], [3.16068, 36.68403], [3.16095, 36.68391], [3.16341, 36.68286], [3.16429, 36.68245], [3.16554, 36.68177], [3.16621, 36.68141], [3.16763, 36.68047], [3.17123, 36.67802], [3.17177, 36.67765], [3.17224, 36.67733], [3.17261, 36.67708], [3.17307, 36.67672], [3.17336, 36.67649], [3.17394, 36.67601], [3.17452, 36.67548], [3.17523, 36.6748], [3.1759, 36.67416], [3.17694, 36.67315], [3.17873, 36.67146], [3.17908, 36.67113], [3.18183, 36.66848], [3.18315, 36.66719], [3.18348, 36.66681], [3.18383, 36.66636], [3.18412, 36.66594], [3.18438, 36.66548], [3.18466, 36.66494], [3.18481, 36.66455], [3.18504, 36.66385], [3.18527, 36.66264], [3.1853, 36.66224], [3.18532, 36.66192], [3.18532, 36.66153], [3.18526, 36.66089], [3.18512, 36.66026], [3.18498, 36.65984], [3.18386, 36.65671], [3.18362, 36.65609], [3.18337, 36.65545], [3.18291, 36.65411], [3.18212, 36.65193], [3.18198, 36.65171], [3.1817, 36.65155], [3.18152, 36.65137], [3.18121, 36.6501], [3.18107, 36.64988], [3.18079, 36.64993], [3.18105, 36.65068], [3.18131, 36.65142], [3.18166, 36.65243], [3.18175, 36.65297], [3.18181, 36.65319], [3.18197, 36.65348], [3.18249, 36.65416], [3.18265, 36.6544], [3.18279, 36.65468], [3.18293, 36.65505], [3.18322, 36.65597], [3.18345, 36.65704], [3.18353, 36.65746], [3.1837, 36.65823], [3.18382, 36.65858], [3.18417, 36.65938], [3.18437, 36.65985], [3.18462, 36.66045], [3.18477, 36.66079], [3.18495, 36.66122], [3.185, 36.66151], [3.18453, 36.66204], [3.18417, 36.66236], [3.18162, 36.66467], [3.18139, 36.66488], [3.18075, 36.66548], [3.18039, 36.66581], [3.18011, 36.66607], [3.17905, 36.66706], [3.17803, 36.66798], [3.17728, 36.66867], [3.17437, 36.67134], [3.17413, 36.67156], [3.17194, 36.67355], [3.17103, 36.67287], [3.17068, 36.67271], [3.17035, 36.67256], [3.17009, 36.6724], [3.16977, 36.67215], [3.16954, 36.67194], [3.16939, 36.67167], [3.16939, 36.67143], [3.16949, 36.67113], [3.16966, 36.67075], [3.16973, 36.67045], [3.16969, 36.67021], [3.1696, 36.66999], [3.16896, 36.67066], [3.16864, 36.6707], [3.16818, 36.67061], [3.16767, 36.67055], [3.16714, 36.6705], [3.16677, 36.6705], [3.16647, 36.67044], [3.16614, 36.67072], [3.16579, 36.6704], [3.16542, 36.67007], [3.1651, 36.66975], [3.16487, 36.66953], [3.16444, 36.66912], [3.16388, 36.66859], [3.16329, 36.66803], [3.16243, 36.66723], [3.16132, 36.66619], [3.16069, 36.6656], [3.16012, 36.66506], [3.15943, 36.66442], [3.15891, 36.66395], [3.15833, 36.66342], [3.15784, 36.66291], [3.15705, 36.66218], [3.15592, 36.66113], [3.15512, 36.66035], [3.15399, 36.65931], [3.15371, 36.65902], [3.15346, 36.65882], [3.15273, 36.65813], [3.15227, 36.6577], [3.15176, 36.65722], [3.15151, 36.65698], [3.15116, 36.65665], [3.15097, 36.65647], [3.15093, 36.65643]], "friday": false, "agent": "Zineddine", "title": "Tracé 13 · lundi 16/11", "km": 42.1, "n_panels": 0, "rows": true, "total_min": 179, "intro": "Tactique B : ratissage complet. Tu entres dans la commune, tu suis les grands axes indiqués jusqu'à la sortie, et tu photographies TOUT panneau publicitaire que tu vois. Les panneaux sûrs de la commune sont dans la liste. Départ conseillé 9 h, fin prévue vers 11 h 59 (2 h 59 de travail, 42,1 km). Communes dans l'ordre : Sidi Moussa → Eucalyptus. Finis chaque commune avant d'entrer dans la suivante. Aucune commune de ce tracé n'est donnée à l'autre agent. Les heures tiennent compte de la circulation réelle mesurée les 11 et 12/11. Plus de 15 min de retard sur l'heure indiquée : saute les points de ratissage restants et passe à la commune suivante.", "stops": [{"order": 1, "lat": 36.6110363, "lon": 3.1290382, "svc": 0, "arrive_min": 0.0, "leave_min": 3.8, "note": "Vers 9 h 00 · <b>Ratissage</b> : suis CW 115. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. Sidi Moussa · 9 h 00 → 9 h 15 · ratissage jusqu'à 9 h 15<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> vers Eucalyptus</small>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 2, "lat": 36.6202989, "lon": 3.1244329, "svc": 0, "arrive_min": 5.0, "leave_min": 8.8, "note": "Vers 9 h 05 · <b>Ratissage</b> : suis CW 115. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. Sidi Moussa · 9 h 00 → 9 h 15 · ratissage jusqu'à 9 h 15<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> vers Eucalyptus</small>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 3, "lat": 36.626190698903706, "lon": 3.1152541630292037, "svc": 0, "arrive_min": 10.9, "leave_min": 14.9, "note": "Vers 9 h 11 · <b>Ratissage</b> : suis CW 115, Route de Larabaa, RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "1. Sidi Moussa · 9 h 00 → 9 h 15 · ratissage jusqu'à 9 h 15<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> vers Eucalyptus</small>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 4, "lat": 36.6426579, "lon": 3.1718685, "svc": 0, "arrive_min": 25.1, "leave_min": 33.0, "note": "Vers 9 h 25 · <b>Ratissage</b> : suis CW 59. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 5, "lat": 36.647828, "lon": 3.1800324, "svc": 0, "arrive_min": 34.1, "leave_min": 38.6, "note": "Vers 9 h 34 · <b>Ratissage</b> : suis CW 59, CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 6, "lat": 36.66288937826447, "lon": 3.1835836047666066, "svc": 0, "arrive_min": 39.4, "leave_min": 46.2, "note": "Vers 9 h 39 · <b>Ratissage</b> : suis CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 7, "lat": 36.6694868, "lon": 3.1905116, "svc": 0, "arrive_min": 47.9, "leave_min": 52.4, "note": "Vers 9 h 48 · <b>Ratissage</b> : suis CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 8, "lat": 36.656572, "lon": 3.2034269, "svc": 0, "arrive_min": 58.2, "leave_min": 69.3, "note": "Vers 9 h 58 · <b>Ratissage</b> : suis CW 118. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 9, "lat": 36.675016418682304, "lon": 3.194097288479044, "svc": 0, "arrive_min": 71.0, "leave_min": 78.1, "note": "Vers 10 h 11 · <b>Ratissage</b> : suis CW 118. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 10, "lat": 36.6887823, "lon": 3.1853288, "svc": 0, "arrive_min": 79.8, "leave_min": 85.7, "note": "Vers 10 h 20 · <b>Ratissage</b> : suis CW 118. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 11, "lat": 36.67983860843985, "lon": 3.1687409513626053, "svc": 0, "arrive_min": 88.8, "leave_min": 103.4, "note": "Vers 10 h 29 · <b>Ratissage</b> : suis RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 12, "lat": 36.68802917911703, "lon": 3.151558278557707, "svc": 0, "arrive_min": 104.8, "leave_min": 109.1, "note": "Vers 10 h 45 · <b>Ratissage</b> : suis les rues du secteur. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 13, "lat": 36.67112597765264, "lon": 3.1790794817568107, "svc": 0, "arrive_min": 110.6, "leave_min": 132.3, "note": "Vers 10 h 51 · <b>Ratissage</b> : suis les rues du secteur. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 14, "lat": 36.67156086624841, "lon": 3.174125799735697, "svc": 0, "arrive_min": 135.2, "leave_min": 152.5, "note": "Vers 11 h 15 · <b>Ratissage</b> : suis CW 58. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 15, "lat": 36.66217786034106, "lon": 3.1570490247264584, "svc": 0, "arrive_min": 159.1, "leave_min": 170.9, "note": "Vers 11 h 39 · <b>Ratissage</b> : suis RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 16, "lat": 36.656431570282884, "lon": 3.150929145408018, "svc": 0, "arrive_min": 174.8, "leave_min": 178.7, "note": "Vers 11 h 55 · <b>Ratissage</b> : suis RN 61. Photo + questionnaire pour TOUT panneau publicitaire vu, avec NOUVEAU dans Observations.", "day": "2. Eucalyptus · 9 h 25 → 11 h 59 · ratissage jusqu'à 11 h 59<br><small>Entrée par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · sortie par <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Déjà photographiés ici, ne pas refaire : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}]};
 const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
-  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade",
-  grand_panneau: "Grand panneau", pionnier: "Pionnier", face_2m2_mall: "Face 2 m² (centre commercial)" };
-// Même origine (github.io) pour toutes les pages: la clé doit distinguer chaque page.
-const KEY = "dclick-v6-" + R.key;
-const CAP = R.total_min, CHUNK = 10;
+  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade" };
+const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pages : la clé distingue chaque tracé
+const CAP = R.total_min, CHUNK = 10, LATE = 15;
+const WA = "213770880535";                   // Zakaria
 
-let state = { done: [], start: null };
+let state = { done: [], absent: [], skipped: [], news: [], start: null };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
 const pt = s => s.lat.toFixed(6) + "," + s.lon.toFixed(6);
 const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
 const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const isDone = s => state.done.includes(s.order);
+const isDone = s => state.done.includes(s.order), isAbs = s => state.absent.includes(s.order), isSkip = s => state.skipped.includes(s.order);
+const closed = s => isDone(s) || isAbs(s) || isSkip(s);
+const dist = (a, b) => { const k = Math.PI / 180, x = (b.lon - a.lon) * k * Math.cos((a.lat + b.lat) * k / 2), y = (b.lat - a.lat) * k; return 6371000 * Math.hypot(x, y); };
+const fmtD = m => m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km";
+let me = null, watchId = null;
 
-document.getElementById("sub").textContent = R.intro ||
-  `${R.n_panels} panneaux, ${R.stops.length} arrêts, ${String(R.km).replace(".", ",")} km à moto. ` +
-  `Fais les arrêts dans l'ordre et touche « Fait » après chaque arrêt.`;
+function toast(t) { const el = document.getElementById("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 3500); }
+document.getElementById("sub").textContent = R.intro;
+if (R.friday) document.getElementById("friday").hidden = false;
 
 function render() {
-  const pending = R.stops.filter(s => !isDone(s));
+  const pending = R.stops.filter(s => !closed(s));
+  const closedRows = R.stops.length - pending.length;
   const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
-  const doneRows = R.stops.filter(isDone).length;
-  document.getElementById("count").textContent = R.rows ? `${doneRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} panneaux sûrs` : `${donePanels} / ${R.n_panels} panneaux`;
-  document.getElementById("meter").style.width = (R.rows ? 100 * doneRows / R.stops.length : 100 * donePanels / R.n_panels) + "%";
+  const absPanels = R.stops.filter(isAbs).reduce((a, s) => a + s.panels.length, 0);
+  document.getElementById("count").textContent = `${closedRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} sûrs` +
+    (absPanels ? ` · ${absPanels} introuvable${absPanels > 1 ? "s" : ""}` : "") + (state.news.length ? ` · ${state.news.length} nouveau${state.news.length > 1 ? "x" : ""}` : "");
+  document.getElementById("meter").style.width = (100 * closedRows / R.stops.length) + "%";
 
   const nav = document.getElementById("nav");
   if (pending.length) {
-    // Les 10 prochains arrêts non faits, dans l'ordre: Google Maps part de la position du téléphone.
     const next = pending.slice(0, CHUNK), last = next[next.length - 1];
     let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
     if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
-    nav.href = url;
+    nav.href = url; nav.hidden = false;
     nav.textContent = next.length > 1 ? `Naviguer : arrêts ${next[0].order} à ${last.order}` : `Naviguer : arrêt ${last.order}`;
-    nav.hidden = false;
-  } else {
-    nav.hidden = true;
-  }
+  } else { nav.hidden = true; }
 
-  const st = document.getElementById("status"), clock = document.getElementById("clock");
-  if (R.reloc) {
-    clock.textContent = "";
-    st.textContent = "Pas de chrono : avance à ton rythme, journée par journée.";
-  } else if (state.start) {
+  // chrono, avance ou retard, distance au prochain arrêt
+  const st = document.getElementById("status"), clock = document.getElementById("clock"), late = document.getElementById("late");
+  let delta = 0;
+  if (state.start) {
     const el = (Date.now() - state.start) / 60000;
     clock.textContent = `${hm(Math.max(0, el))} sur ${hm(CAP)}`;
-    const lastDone = R.stops.filter(isDone).pop();
-    const delta = lastDone ? el - lastDone.leave_min : 0;
-    const pace = Math.abs(delta) < 3 ? "dans les temps"
-      : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>`
-      : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
-    st.innerHTML = `Chrono lancé à ${clockOf(state.start)}, fin à ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
+    const lastClosed = R.stops.filter(closed).pop();
+    delta = lastClosed ? el - lastClosed.leave_min : 0;
+    const pace = Math.abs(delta) < 3 ? "dans les temps" : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>` : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
+    st.innerHTML = `Départ ${clockOf(state.start)}, fin prévue ${clockOf(state.start + CAP * 60000)}. Tu es ${pace}.`;
   } else {
     clock.textContent = hm(CAP);
-    st.textContent = "Le chrono démarre quand tu touches « Fait » au 1er arrêt.";
+    st.textContent = "Le chrono démarre quand tu touches « Fait » ou « Introuvable » au 1er arrêt.";
   }
+  if (me && pending[0]) {
+    const d = dist(me, pending[0]);
+    st.innerHTML += d < 60 ? ` <b class="ahead">Tu es à l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} à ${fmtD(d)}.`;
+  }
+  // retard : proposer de sauter la fin du ratissage de la commune en cours
+  const cur = pending[0];
+  const restPass = cur ? R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass") : [];
+  const nextC = cur ? R.stops.find(s => s.order > cur.order && s.commune !== cur.commune && !closed(s)) : null;
+  if (delta > LATE && restPass.length) {
+    late.classList.add("on");
+    late.innerHTML = `<b>${Math.round(delta)} min de retard.</b> Saute le ratissage restant de ${cur.commune} (${restPass.length} passe${restPass.length > 1 ? "s" : ""})` +
+      (nextC ? ` et passe à ${nextC.commune}, arrêt ${nextC.order}.` : ".") + ` Les panneaux sûrs restent à faire.<button type="button" id="skipnow">Sauter le ratissage de ${cur.commune}</button>`;
+  } else { late.classList.remove("on"); late.innerHTML = ""; }
 
-  const firstPending = pending[0] && pending[0].order;
+  const firstPending = cur && cur.order;
   document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
     const head = s.day && (i === 0 || R.stops[i - 1].day !== s.day) ? `<li class="dayh">${s.day}</li>` : "";
-    const flags = [];
-    if (s.panels.some(p => p.gps_doubt)) flags.push("GPS douteux : cherche 5 minutes autour. Rien ? Note « introuvable » ou dis-le sur WhatsApp.");
-    else if (s.panels.some(p => p.stacked)) flags.push("Plusieurs panneaux au même point : chercher dans les 50 m");
-    if (s.panels.some(p => p.near_photo)) flags.push("Peut-être déjà photographié au jour 1 : vérifier");
-    return `${head}<li class="${isDone(s) ? "done" : ""} ${s.order === firstPending ? "next" : ""}" id="s${s.order}">
+    const cls = [isDone(s) ? "done" : "", isAbs(s) ? "absent" : "", isSkip(s) ? "skipped" : "", s.order === firstPending ? "next" : "", s.kind === "pass" ? "pass" : ""].join(" ");
+    const tag = isAbs(s) ? `<span class="tag abs">introuvable</span>` : isSkip(s) ? `<span class="tag skp">sauté</span>` : "";
+    const second = s.kind === "pass"
+      ? `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Sauté · annuler" : "Sauter"}</button>`
+      : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · annuler" : "Introuvable"}</button>`;
+    return `${head}<li class="${cls}" id="s${s.order}">
       <div class="n">${s.order}</div>
       <div>
-        <div class="when">${s.note || `Prévu à +${hm(s.arrive_min)} · ${s.panels.length} panneau${s.panels.length > 1 ? "x" : ""}`}</div>
-        <div class="panels">${s.panels.map(p => `<div><span class="ref">${p.ref}</span> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
-        ${flags.map(f => `<div class="flag">${f}</div>`).join("")}
+        <div class="when">${s.note}${tag}</div>
+        <div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
       </div>
       <div class="acts">
-        <a href="https://maps.google.com/?q=${pt(s)}" target="_blank" rel="noopener">Carte</a>
-        <button type="button" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
+        <a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Y aller</a>
+        ${second}
+        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
       </div>
     </li>`;
   }).join("");
 
-  const lastRef = R.stops.filter(isDone).flatMap(s => s.panels).map(p => p.ref).pop() || "aucun";
-  const msg = `${R.title || "Vague 5"} · ${R.agent} · dernier code ${lastRef} · ${donePanels}/${R.n_panels} panneaux` +
-    (state.start ? ` · ${hm((Date.now() - state.start) / 60000)} écoulées` : "");
-  document.getElementById("send").href = "https://wa.me/213770880535?text=" + encodeURIComponent(msg);
+  // nouveaux panneaux
+  const nb = document.getElementById("newsbox");
+  nb.hidden = !state.news.length;
+  document.getElementById("newssum").textContent = `Mes nouveaux panneaux (${state.news.length})`;
+  document.getElementById("news").innerHTML = state.news.map((n, i) =>
+    `<li><span>N${i + 1} · ${clockOf(n.t)} · ±${Math.round(n.acc)} m · <a href="https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)}" target="_blank" rel="noopener">voir</a></span><button type="button" data-del="${i}">Retirer</button></li>`).join("");
+
+  // bilan WhatsApp
+  const codes = f => R.stops.filter(f).flatMap(s => s.panels.map(p => p.ref));
+  const abs = codes(isAbs);
+  const lines = [`*${R.title} · ${R.agent}*`,
+    `Étapes : ${closedRows}/${R.stops.length} · panneaux sûrs faits : ${donePanels}/${R.n_panels}`,
+    `Introuvables : ${abs.length ? abs.join(", ") : "aucun"}`,
+    `Passes de ratissage sautées : ${R.stops.filter(isSkip).length}`,
+    `Nouveaux panneaux notés : ${state.news.length}`,
+    ...state.news.map((n, i) => `N${i + 1} ${clockOf(n.t)} https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)} (±${Math.round(n.acc)} m)`),
+    state.start ? `Départ ${clockOf(state.start)} · ${hm((Date.now() - state.start) / 60000)} écoulées` : "Pas encore démarré"];
+  const txt = encodeURIComponent(lines.join("\n"));
+  document.getElementById("send").href = `https://wa.me/${WA}?text=${txt}`;
+  document.getElementById("sendany").href = `https://wa.me/?text=${txt}`;
+  if (map) drawDyn();
 }
 
-document.getElementById("stops").addEventListener("click", e => {
-  const b = e.target.closest("button[data-o]");
-  if (!b) return;
-  const o = Number(b.dataset.o), marked = !state.done.includes(o);
-  if (marked) {
-    state.done.push(o);
-    // Le chrono part à l'arrivée au 1er panneau: on retire le temps passé sur cet arrêt.
-    if (!state.start) state.start = Date.now() - R.stops.find(s => s.order === o).svc * 60000;
-  } else {
-    state.done = state.done.filter(x => x !== o);
+function startClock(o) { if (!state.start) state.start = Date.now() - (R.stops.find(s => s.order === o).svc || 0) * 60000; }
+document.addEventListener("click", e => {
+  const c = e.target.closest("button[data-c]");
+  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`Code ${c.dataset.c} copié : colle-le dans « Observations libres ».`), () => toast(c.dataset.c)); return; }
+  const d = e.target.closest("button[data-del]");
+  if (d) { if (confirm("Retirer ce nouveau panneau de ta liste ?")) { state.news.splice(Number(d.dataset.del), 1); save(); render(); } return; }
+  if (e.target.id === "skipnow") {
+    const cur = R.stops.find(s => !closed(s));
+    R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass").forEach(s => state.skipped.push(s.order));
+    save(); render(); toast("Ratissage sauté. Continue avec l'arrêt suivant."); return;
   }
-  save();
-  render();
-  const next = R.stops.find(s => !isDone(s));
-  if (marked && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
+  const b = e.target.closest("button[data-a]");
+  if (!b) return;
+  const o = Number(b.dataset.o), a = b.dataset.a;
+  const lists = { done: "done", abs: "absent", skip: "skipped" };
+  const L = lists[a], on = !state[L].includes(o);
+  for (const k of Object.values(lists)) state[k] = state[k].filter(x => x !== o);
+  if (on) { state[L].push(o); startClock(o); }
+  save(); render();
+  const next = R.stops.find(s => !closed(s));
+  if (on && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
 });
+
+function locateOnce(cb) {
+  if (!navigator.geolocation) { toast("Ce téléphone ne donne pas sa position."); return; }
+  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("Position refusée : autorise la localisation pour ce site."),
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+}
+function follow() {
+  if (watchId !== null || !navigator.geolocation) return;
+  watchId = navigator.geolocation.watchPosition(p => { me = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy }; if (Date.now() - (follow.t || 0) > 15000) { follow.t = Date.now(); render(); } }, () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
+}
+document.getElementById("newbtn").addEventListener("click", () => {
+  toast("Je prends ta position…");
+  locateOnce(c => {
+    state.news.push({ lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() });
+    save(); follow(); render();
+    toast(`Nouveau panneau N${state.news.length} noté (±${Math.round(c.accuracy)} m). Fais aussi le questionnaire SensQuest avec NOUVEAU.`);
+  });
+});
+
+// carte : chargée seulement quand on l'ouvre (page légère sur le réseau mobile)
+let map = null, dyn = null, meMark = null;
+function drawDyn() {
+  dyn.clearLayers();
+  R.stops.forEach(s => {
+    const col = isDone(s) ? "#1c4452" : isAbs(s) ? "#a21d4f" : isSkip(s) ? "#8a8378" : s.kind === "pass" ? "#8a8378" : "#d93813";
+    L.circleMarker([s.lat, s.lon], { radius: s.kind === "pass" ? 5 : 9, color: "#fff", weight: 2, fillColor: col, fillOpacity: 1 })
+      .bindTooltip(String(s.order), { permanent: s.kind !== "pass", direction: "center", className: "" }).addTo(dyn);
+  });
+  state.news.forEach((n, i) => L.circleMarker([n.lat, n.lon], { radius: 7, color: "#1c4452", weight: 3, fillColor: "#fff", fillOpacity: 1 }).bindTooltip("N" + (i + 1)).addTo(dyn));
+  if (me) { if (meMark) meMark.remove(); meMark = L.circleMarker([me.lat, me.lon], { radius: 8, color: "#fff", weight: 3, fillColor: "#2a7de1", fillOpacity: 1 }).addTo(map); }
+}
+function initMap() {
+  if (map || typeof L === "undefined") return !!map;
+  map = L.map("map", { zoomControl: true });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+  const line = L.polyline(R.geom.map(p => [p[1], p[0]]), { color: "#d93813", weight: 4, opacity: .8 }).addTo(map);
+  dyn = L.layerGroup().addTo(map); drawDyn();
+  map.fitBounds(line.getBounds(), { padding: [20, 20] });
+  document.getElementById("fit").onclick = () => map.fitBounds(line.getBounds(), { padding: [20, 20] });
+  return true;
+}
+document.getElementById("mapbox").addEventListener("toggle", e => {
+  if (!e.target.open) return;
+  if (typeof L !== "undefined") { initMap(); setTimeout(() => map.invalidateSize(), 50); return; }
+  const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  sc.onload = () => { initMap(); setTimeout(() => map.invalidateSize(), 50); };
+  sc.onerror = () => { document.getElementById("map").textContent = "Carte indisponible sans réseau. Utilise « Y aller »."; };
+  document.head.appendChild(sc);
+});
+document.getElementById("locate").addEventListener("click", () => locateOnce(c => {
+  me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy }; follow(); render();
+  if (map) map.setView([me.lat, me.lon], 16);
+}));
 
 render();
 setInterval(render, 30000);
