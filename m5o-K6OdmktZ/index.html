@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>TEST · Suivi</title>
+<style>
+:root { --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #5a554b; --line: #e4dfd7; --accent: #b83210;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --run: #8a5a00; --run-bg: #fbf0d9; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --run: #e0b04a; --run-bg: #3a2c0c; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 18px 16px 48px; }
+h1 { margin: 0 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); margin: 0 0 14px; font-size: .92rem; }
+.top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.top button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 8px 14px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+h2 { font-size: 1.1rem; margin: 22px 0 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.name { font-weight: 800; font-size: 1.1rem; }
+.name a { color: inherit; }
+.st { font-size: .8rem; font-weight: 700; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.st.wait { background: var(--line); color: var(--muted); }
+.st.run { background: var(--run-bg); color: var(--run); }
+.st.pause { background: var(--warn-bg); color: var(--warn); }
+.st.fin { background: var(--ok-bg); color: var(--ok); }
+.st.silent { background: var(--warn-bg); color: var(--warn); }
+.route { color: var(--muted); font-size: .88rem; margin: 2px 0 8px; }
+.meter { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+.meter i { display: block; height: 100%; background: linear-gradient(135deg, #c2340f, #d93813); }
+.card.fin .meter i { background: var(--ok); }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 6px 0 0; font-size: .9rem; font-variant-numeric: tabular-nums; }
+dt { color: var(--muted); }
+dd { margin: 0; }
+.late { color: var(--warn); font-weight: 700; }
+.ahead { color: var(--ok); font-weight: 700; }
+.foot { margin-top: 22px; color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Suivi de TEST</h1>
+  <p class="sub">Mis à jour chaque fois qu'un agent touche un bouton sur sa page, et toutes les 10 minutes pendant son travail. La page se rafraîchit seule chaque minute.</p>
+  <div class="top"><button type="button" id="refresh">Rafraîchir</button><span class="sub" id="stamp"></span></div>
+  <div id="days"></div>
+  <p class="foot">Les compteurs viennent des boutons « Fait », « Introuvable » et « Sauter » des agents ; les questionnaires restent dans SensQuest. Les messages du relais sont gardés 12 heures.</p>
+</div>
+<script>
+const D = {"topic": "dclick-test-vGxWTU_yO9lDq8k87lE", "routes": [{"id": "05", "day": 3, "agent": "Alae (test)", "url": "https://zakariaalz.github.io/dclick-terrain/UdEPHC226UFm/", "total": 172, "n": 7, "communes": "Hydra → Bir Mourad Raïs"}]};
+const JOUR = { 3: "Vendredi 13/11", 4: "Samedi 14/11", 5: "Dimanche 15/11", 6: "Lundi 16/11" };
+const hhmm = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
+let last = {};
+async function load() {
+  try {
+    const r = await fetch(`https://ntfy.sh/${D.topic}/json?poll=1&since=all`, { cache: "no-store" });
+    const txt = await r.text(); const next = {};
+    for (const line of txt.split("\n")) {
+      if (!line.trim()) continue;
+      let m; try { m = JSON.parse(line); } catch (e) { continue; }
+      if (m.event !== "message") continue;
+      let b; try { b = JSON.parse(m.message); } catch (e) { continue; }
+      if (!b.t || !D.routes.some(x => x.id === b.t)) continue;
+      if (!next[b.t] || b.at > next[b.t].at) next[b.t] = b;
+    }
+    last = next;
+    document.getElementById("stamp").textContent = "Dernière lecture : " + hhmm(Date.now());
+  } catch (e) {
+    document.getElementById("stamp").textContent = "Lecture impossible (réseau) à " + hhmm(Date.now()) + ", nouvel essai dans une minute.";
+  }
+  draw();
+}
+function card(r) {
+  const b = last[r.id];
+  let st = "wait", lab = "Pas commencé", body = `<dl><dt>Prévu</dt><dd>${hm(r.total)} de travail · ${r.n} panneaux sûrs</dd></dl>`;
+  if (b) {
+    const quiet = (Date.now() - b.at) / 60000;
+    if (b.fin) { st = "fin"; lab = "Terminé"; }
+    else if (b.pz) { st = "pause"; lab = "En pause"; }
+    else if (b.st) { st = quiet > 30 ? "silent" : "run"; lab = quiet > 30 ? `Silence depuis ${Math.round(quiet)} min` : "En cours"; }
+    const pace = !b.st || b.fin ? "" : Math.abs(b.late) < 3 ? "dans les temps" : b.late > 0 ? `<span class="late">retard ${b.late} min</span>` : `<span class="ahead">avance ${-b.late} min</span>`;
+    body = `<div class="meter"><i style="width:${Math.round(100 * b.closed / b.rows)}%"></i></div><dl>
+      <dt>Étapes</dt><dd>${b.closed} / ${b.rows}${pace ? " · " + pace : ""}</dd>
+      <dt>Panneaux sûrs</dt><dd>${b.sd} / ${b.sn} faits${b.abs ? ` · <span class="late">${b.abs} introuvable${b.abs > 1 ? "s" : ""}</span>` : ""}</dd>
+      <dt>Nouveaux</dt><dd>${b.news}</dd>
+      ${b.skip ? `<dt>Sauté</dt><dd>${b.skip} passe${b.skip > 1 ? "s" : ""} de ratissage</dd>` : ""}
+      ${b.undone ? `<dt>Annulés</dt><dd class="late">${b.undone} arrêt${b.undone > 1 ? "s" : ""}</dd>` : ""}
+      ${b.st ? `<dt>Départ</dt><dd>${hhmm(b.st)}${b.fin ? "" : ` · fin prévue ${hhmm(b.st + b.cap * 60000)}`}</dd>` : ""}
+      ${!b.fin && b.nx ? `<dt>Prochain</dt><dd>arrêt ${b.nx} · ${b.nxc}</dd>` : ""}
+      <dt>Activité</dt><dd>${hhmm(b.at)}${b.sent ? ` · bilan WhatsApp envoyé à ${hhmm(b.sent)}` : " · aucun bilan WhatsApp"}</dd></dl>`;
+  }
+  return `<div class="card ${st}"><div class="head"><span class="name"><a href="${r.url}" target="_blank" rel="noopener">${r.agent}</a> · T${r.id}</span><span class="st ${st}">${lab}</span></div>
+    <div class="route">${r.communes}</div>${body}</div>`;
+}
+function draw() {
+  const days = [...new Set(D.routes.map(r => r.day))].sort();
+  document.getElementById("days").innerHTML = days.map(d => `<h2>${JOUR[d] || "Jour " + d}</h2><div class="grid">${D.routes.filter(r => r.day === d).map(card).join("")}</div>`).join("");
+}
+document.getElementById("refresh").addEventListener("click", load);
+load(); setInterval(load, 60000);
+</script>
+</body>
+</html>
