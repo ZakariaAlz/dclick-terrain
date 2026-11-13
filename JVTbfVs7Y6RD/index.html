@@ -329,7 +329,7 @@ function render() {
 function startClock(o) { if (!state.start) { state.start = Date.now() - (R.stops.find(s => s.order === o).svc || 0) * 60000; follow(); } }
 document.addEventListener("click", e => {
   const c = e.target.closest("button[data-c]");
-  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`Code ${c.dataset.c} copié : colle-le dans « Observations libres ».`), () => toast(c.dataset.c)); return; }
+  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`L'code ${c.dataset.c} tna9el : 7ottou f « Observations » f SensQuest.`), () => toast(c.dataset.c)); return; }
   const sb = e.target.closest("button[data-start]");
   if (sb) { state.plan = Number(sb.dataset.start); save(); render(); toast(`Départ prévu à ${T(0)} : toutes les heures sont recalées.`); return; }
   const d = e.target.closest("button[data-del]");
