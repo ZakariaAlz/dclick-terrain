@@ -67,6 +67,7 @@ async function load() {
       if (!b.t || !D.routes.some(x => x.id === b.t)) continue;
       if (!next[b.t] || b.at > next[b.t].at) next[b.t] = b;
     }
+    for (const k in next) if (next[k].reset) delete next[k];   // remise à zéro d'un tracé (essais effacés)
     last = next;
     document.getElementById("stamp").textContent = "Dernière lecture : " + hhmm(Date.now());
   } catch (e) {
