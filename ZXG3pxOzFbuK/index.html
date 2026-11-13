@@ -284,7 +284,8 @@ function ping() {
       undone: [...new Set(state.undone)].filter(o => !closed(R.stops.find(s => s.order === o))).length,
       news: state.news.length, st: state.start, pz: !!state.pauseOn, fin: left.length === 0 && !!state.start,
       nx: left[0] ? left[0].order : null, nxc: left[0] ? left[0].commune : null,
-      late: state.start && prev ? Math.round(elapsed() - prev.leave_min) : 0, sent: state.lastSent, cap: CAP, at: Date.now() };
+      late: state.start && prev ? Math.round(elapsed() - prev.leave_min) : 0, sent: state.lastSent, cap: CAP, at: Date.now(),
+      cc: [...new Set(R.stops.map(s => s.commune))].map(c => { const all = R.stops.filter(s => s.commune === c); return [all.filter(closed).length, all.length]; }) };
     fetch("https://ntfy.sh/" + R.topic, { method: "POST", body: JSON.stringify(body) }).then(() => { lastPing = Date.now(); }, () => {});
   }, 800);
 }
