@@ -5,104 +5,56 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>D'click · Suivi des agents</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Même design que les pages des agents : plaque, panneaux directionnels, ruban par commune ; thèmes nhar / lil. */
-:root, [data-theme="nhar"] {
-  --fond: #f4f0e9; --surface: #ffffff; --surface-2: #faf8f4; --filet: #e2dcd2; --filet-fort: #cfc7ba;
-  --encre: #17140f; --encre-2: #5a5348; --encre-3: #8a8275;
-  --orange: #d93813; --orange-vif: #e8581f; --orange-txt: #b3300f;
-  --bleu: #1c4452; --bleu-txt: #24586a; --magenta: #a21d4f; --magenta-voile: #f6e2ea;
-  --plaque: #102e3a; --plaque-txt: #ffffff; --plaque-filet: #e0481a; --fait: #1c4452;
-  color-scheme: light;
-}
-[data-theme="lil"] {
-  --fond: #0a1317; --surface: #101d23; --surface-2: #14242b; --filet: #1f323b; --filet-fort: #2b434d;
-  --encre: #f1ebe2; --encre-2: #a7b3b7; --encre-3: #71808a;
-  --orange: #f0642c; --orange-vif: #ff7a3d; --orange-txt: #ff8a52;
-  --bleu: #6aa6bd; --bleu-txt: #8cc0d3; --magenta: #ef6f99; --magenta-voile: #2d1220;
-  --plaque: #123441; --plaque-txt: #f1ebe2; --plaque-filet: #f0642c; --fait: #2a5c6e;
-  color-scheme: dark;
-}
+:root { --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #5a554b; --line: #e4dfd7; --accent: #b83210;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --run: #8a5a00; --run-bg: #fbf0d9; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --run: #e0b04a; --run-bg: #3a2c0c; } }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--fond); color: var(--encre); font: 400 16px/24px "Barlow", "Segoe UI", system-ui, sans-serif; }
-.wrap { max-width: 1040px; margin: 0 auto; padding-bottom: 48px; }
-header { background: var(--plaque); color: var(--plaque-txt); padding: 20px 16px 16px; border-bottom: 4px solid var(--plaque-filet); }
-.htop { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.kick { font: 600 12px/16px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
-.hbtn { font: 700 13px/16px "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; background: transparent; color: var(--plaque-txt); border: 1px solid currentColor; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
-header h1 { margin: 8px 0 4px; font: 800 44px/44px "Barlow Condensed", sans-serif; text-transform: uppercase; }
-header p { margin: 0; font: 400 15px/22px "Barlow", sans-serif; opacity: .9; }
-.chips { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { font: 700 15px/20px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.35); padding: 4px 10px; border-radius: 3px; }
-.chip b { color: var(--plaque-filet); }
-.pad { padding: 0 16px; }
-.jour { margin: 24px 0 0; background: var(--plaque); color: var(--plaque-txt); padding: 10px 12px; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); font: 800 24px/26px "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .03em; }
-.jour::before { content: "→ "; color: var(--plaque-filet); }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 12px; }
-.card { background: var(--surface); border: 1px solid var(--filet); padding: 14px; display: grid; gap: 12px; }
-.card.run { border: 2px solid var(--orange); }
-.card.silent, .card.pause { border: 2px solid var(--magenta); }
-.top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; }
-.plaque { background: var(--orange); color: #fff; font: 800 28px/28px "Barlow Condensed", sans-serif; padding: 8px 8px 6px; min-width: 60px; text-align: center; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); }
-.plaque small { display: block; font: 700 10px/12px "Barlow Condensed", sans-serif; letter-spacing: .12em; opacity: .9; }
-.card.fin .plaque { background: var(--fait); }
-.card.wait .plaque { background: var(--encre-3); }
-.nom { font: 800 24px/26px "Barlow Condensed", sans-serif; text-transform: uppercase; letter-spacing: .02em; }
-.nom a { color: inherit; text-decoration: none; border-bottom: 2px solid var(--orange); }
-.route { font: 500 14px/20px "Barlow", sans-serif; color: var(--encre-2); }
-.st { font: 700 14px/18px "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase; border-radius: 3px; padding: 4px 8px; white-space: nowrap; border: 1px solid var(--filet-fort); color: var(--encre-2); }
-.card.run .st { background: var(--orange); border-color: var(--orange); color: #fff; }
-.card.fin .st { background: var(--fait); border-color: var(--fait); color: #fff; }
-.card.pause .st, .card.silent .st { background: var(--magenta); border-color: var(--magenta); color: #fff; }
-.ruban { display: flex; gap: 3px; }
-.seg { flex: 1 1 0; min-width: 0; }
-.seg .tr { height: 8px; background: var(--filet); position: relative; overflow: hidden; }
-.seg .tr i { position: absolute; inset: 0 auto 0 0; background: var(--orange); }
-.seg.fin .tr i { background: var(--fait); }
-.seg.cur .tr { outline: 2px solid var(--orange); outline-offset: 1px; }
-.seg span { display: block; font: 600 11px/14px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--encre-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
-.seg.cur span { color: var(--orange-txt); }
-.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.kpi { border-top: 3px solid var(--filet-fort); padding-top: 6px; }
-.kpi .v { font: 800 28px/30px "Barlow Condensed", sans-serif; font-variant-numeric: tabular-nums; }
-.kpi .v small { font-size: 16px; color: var(--encre-3); }
-.kpi .l { font: 600 12px/16px "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--encre-2); }
-.kpi.o { border-top-color: var(--orange); } .kpi.m { border-top-color: var(--magenta); } .kpi.m .v { color: var(--magenta); } .kpi.b { border-top-color: var(--bleu); }
-.lignes { display: grid; gap: 4px; font: 500 15px/21px "Barlow", sans-serif; color: var(--encre-2); }
-.lignes b { color: var(--encre); font-weight: 700; }
-.late { color: var(--magenta); font-weight: 700; }
-.ahead { color: var(--bleu-txt); font-weight: 700; }
-.alerte { background: var(--magenta-voile); border-left: 4px solid var(--magenta); padding: 8px 10px; font: 600 14px/20px "Barlow", sans-serif; }
-.foot { margin-top: 24px; color: var(--encre-2); font: 400 14px/20px "Barlow", sans-serif; }
-a:focus-visible, button:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 980px; margin: 0 auto; padding: 18px 16px 48px; }
+h1 { margin: 0 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); margin: 0 0 14px; font-size: .92rem; }
+.top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.top button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 8px 14px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+h2 { font-size: 1.1rem; margin: 22px 0 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.name { font-weight: 800; font-size: 1.1rem; }
+.name a { color: inherit; }
+.st { font-size: .8rem; font-weight: 700; border-radius: 999px; padding: 2px 10px; white-space: nowrap; }
+.st.wait { background: var(--line); color: var(--muted); }
+.st.run { background: var(--run-bg); color: var(--run); }
+.st.pause { background: var(--warn-bg); color: var(--warn); }
+.st.fin { background: var(--ok-bg); color: var(--ok); }
+.st.silent { background: var(--warn-bg); color: var(--warn); }
+.route { color: var(--muted); font-size: .88rem; margin: 2px 0 8px; }
+.meter { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+.meter i { display: block; height: 100%; background: linear-gradient(135deg, #c2340f, #d93813); }
+.card.fin .meter i { background: var(--ok); }
+dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 6px 0 0; font-size: .9rem; font-variant-numeric: tabular-nums; }
+dt { color: var(--muted); }
+dd { margin: 0; }
+.late { color: var(--warn); font-weight: 700; }
+.ahead { color: var(--ok); font-weight: 700; }
+.foot { margin-top: 22px; color: var(--muted); font-size: .85rem; }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="htop"><div class="kick">D'click · suivi en direct</div><div><button type="button" class="hbtn" id="refresh">Rafraîchir</button> <button type="button" class="hbtn" id="theme">Lil</button></div></div>
-    <h1>Les agents</h1>
-    <p>Chaque bouton touché par un agent arrive ici, et toutes les 10 minutes pendant son travail. La page se met à jour seule chaque minute.</p>
-    <div class="chips" id="chips"></div>
-  </header>
-  <div class="pad">
-    <div id="days"></div>
-    <p class="foot">Les compteurs viennent des boutons des agents ; les photos et les questionnaires restent dans SensQuest. Le relais garde les messages 12 heures.</p>
-  </div>
+  <h1>Suivi des agents D'click</h1>
+  <p class="sub">Mis à jour chaque fois qu'un agent touche un bouton sur sa page, et toutes les 10 minutes pendant son travail. La page se rafraîchit seule chaque minute.</p>
+  <div class="top"><button type="button" id="refresh">Rafraîchir</button><span class="sub" id="stamp"></span></div>
+  <div id="days"></div>
+  <p class="foot">Les compteurs viennent des boutons « Fait », « Introuvable » et « Sauter » des agents ; les questionnaires restent dans SensQuest. Les messages du relais sont gardés 12 heures.</p>
 </div>
 <script>
 const D = {"topic": "dclick-3t6kY3LyQZjXzVqSo62ivc1a", "routes": [{"id": "04", "day": 3, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/Cme3TIlvlNXt/", "total": 180, "n": 0, "communes": "Baraki → Eucalyptus"}, {"id": "05", "day": 3, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/GYduhH-xYSaX/", "total": 172, "n": 7, "communes": "Hydra → Bir Mourad Raïs"}, {"id": "07", "day": 4, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/JVTbfVs7Y6RD/", "total": 178, "n": 7, "communes": "El Achour → Draria → Khraïssia"}, {"id": "08", "day": 4, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/4QL7ejZ-8krn/", "total": 179, "n": 17, "communes": "Hammamet → Raïs Hamidou → Bologhine → Oued Koreiche → Bab El Oued → Casbah"}, {"id": "10", "day": 5, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/ZXG3pxOzFbuK/", "total": 180, "n": 18, "communes": "Chéraga"}, {"id": "11", "day": 5, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/KQbr084UsraZ/", "total": 180, "n": 0, "communes": "Bourouba → El Harrach → Oued Smar"}, {"id": "13", "day": 6, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/Fpc6CVR1oy_I/", "total": 179, "n": 0, "communes": "Sidi Moussa → Eucalyptus"}, {"id": "14", "day": 6, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/WU8LVttsEDDP/", "total": 177, "n": 0, "communes": "Bab Ezzouar → Mohammadia"}]};
-const THK = "dclick-theme";
-let theme = null; try { theme = localStorage.getItem(THK); } catch (e) {}
-if (!theme) theme = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "lil" : "nhar";
-document.documentElement.dataset.theme = theme;
 const JOUR = { 3: "Vendredi 13/11", 4: "Samedi 14/11", 5: "Dimanche 15/11", 6: "Lundi 16/11" };
 const hhmm = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
-let last = {}, readAt = null, readErr = false;
+let last = {};
 async function load() {
   try {
     const r = await fetch(`https://ntfy.sh/${D.topic}/json?poll=1&since=all`, { cache: "no-store" });
@@ -115,64 +67,40 @@ async function load() {
       if (!b.t || !D.routes.some(x => x.id === b.t)) continue;
       if (!next[b.t] || b.at > next[b.t].at) next[b.t] = b;
     }
-    last = next; readAt = Date.now(); readErr = false;
-  } catch (e) { readErr = true; }
+    last = next;
+    document.getElementById("stamp").textContent = "Dernière lecture : " + hhmm(Date.now());
+  } catch (e) {
+    document.getElementById("stamp").textContent = "Lecture impossible (réseau) à " + hhmm(Date.now()) + ", nouvel essai dans une minute.";
+  }
   draw();
-}
-function ruban(r, b) {
-  const cs = r.communes.split(" → ");
-  const curI = b && b.cc ? b.cc.findIndex(([d, n]) => d < n) : -1;
-  return `<div class="ruban">${cs.map((c, i) => {
-    const [d, n] = b && b.cc && b.cc[i] ? b.cc[i] : [0, 1];
-    return `<div class="seg ${d === n && b ? "fin" : ""} ${i === curI && b && !b.fin ? "cur" : ""}" style="flex-grow:${n}"><div class="tr"><i style="width:${Math.round(100 * d / n)}%"></i></div><span>${c}</span></div>`;
-  }).join("")}</div>`;
 }
 function card(r) {
   const b = last[r.id];
-  let st = "wait", lab = "Pas commencé", body = "";
-  if (!b) {
-    body = `<div class="lignes"><div>Prévu : <b>${hm(r.total)}</b> de travail · <b>${r.n}</b> panneaux sûrs</div></div>`;
-  } else {
+  let st = "wait", lab = "Pas commencé", body = `<dl><dt>Prévu</dt><dd>${hm(r.total)} de travail · ${r.n} panneaux sûrs</dd></dl>`;
+  if (b) {
     const quiet = (Date.now() - b.at) / 60000;
     if (b.fin) { st = "fin"; lab = "Terminé"; }
     else if (b.pz) { st = "pause"; lab = "En pause"; }
-    else if (b.st) { st = quiet > 30 ? "silent" : "run"; lab = quiet > 30 ? `Silence ${Math.round(quiet)} min` : "En cours"; }
+    else if (b.st) { st = quiet > 30 ? "silent" : "run"; lab = quiet > 30 ? `Silence depuis ${Math.round(quiet)} min` : "En cours"; }
     const pace = !b.st || b.fin ? "" : Math.abs(b.late) < 3 ? "dans les temps" : b.late > 0 ? `<span class="late">retard ${b.late} min</span>` : `<span class="ahead">avance ${-b.late} min</span>`;
-    body = `<div class="kpis">
-        <div class="kpi o"><div class="v">${b.closed}<small>/${b.rows}</small></div><div class="l">Étapes</div></div>
-        <div class="kpi b"><div class="v">${b.sn ? `${b.sd}<small>/${b.sn}</small>` : "—"}</div><div class="l">${b.sn ? "Sûrs faits" : "Ratissage seul"}</div></div>
-        <div class="kpi ${b.abs ? "m" : ""}"><div class="v">${b.abs}</div><div class="l">Introuvables</div></div>
-        <div class="kpi"><div class="v">${b.news}</div><div class="l">Nouveaux</div></div></div>
-      <div class="lignes">
-        ${b.st ? `<div>Départ <b>${hhmm(b.st)}</b>${b.fin ? "" : ` · fin prévue <b>${hhmm(b.st + b.cap * 60000)}</b>`}${pace ? " · " + pace : ""}</div>` : ""}
-        ${!b.fin && b.nx ? `<div>Prochain : <b>arrêt ${b.nx}</b> · ${b.nxc}</div>` : ""}
-        ${b.skip || b.undone ? `<div>${b.skip ? `${b.skip} passe${b.skip > 1 ? "s" : ""} de ratissage sautée${b.skip > 1 ? "s" : ""}` : ""}${b.skip && b.undone ? " · " : ""}${b.undone ? `<span class="late">${b.undone} arrêt${b.undone > 1 ? "s" : ""} annulé${b.undone > 1 ? "s" : ""}</span>` : ""}</div>` : ""}
-        <div>Dernière activité <b>${hhmm(b.at)}</b> · ${b.sent ? `bilan WhatsApp à <b>${hhmm(b.sent)}</b>` : `<span class="late">aucun bilan WhatsApp</span>`}</div>
-      </div>
-      ${st === "silent" ? `<div class="alerte">Rien depuis ${Math.round(quiet)} minutes : appelle-le.</div>` : ""}`;
+    body = `<div class="meter"><i style="width:${Math.round(100 * b.closed / b.rows)}%"></i></div><dl>
+      <dt>Étapes</dt><dd>${b.closed} / ${b.rows}${pace ? " · " + pace : ""}</dd>
+      <dt>Panneaux sûrs</dt><dd>${b.sd} / ${b.sn} faits${b.abs ? ` · <span class="late">${b.abs} introuvable${b.abs > 1 ? "s" : ""}</span>` : ""}</dd>
+      <dt>Nouveaux</dt><dd>${b.news}</dd>
+      ${b.skip ? `<dt>Sauté</dt><dd>${b.skip} passe${b.skip > 1 ? "s" : ""} de ratissage</dd>` : ""}
+      ${b.undone ? `<dt>Annulés</dt><dd class="late">${b.undone} arrêt${b.undone > 1 ? "s" : ""}</dd>` : ""}
+      ${b.st ? `<dt>Départ</dt><dd>${hhmm(b.st)}${b.fin ? "" : ` · fin prévue ${hhmm(b.st + b.cap * 60000)}`}</dd>` : ""}
+      ${!b.fin && b.nx ? `<dt>Prochain</dt><dd>arrêt ${b.nx} · ${b.nxc}</dd>` : ""}
+      <dt>Activité</dt><dd>${hhmm(b.at)}${b.sent ? ` · bilan WhatsApp envoyé à ${hhmm(b.sent)}` : " · aucun bilan WhatsApp"}</dd></dl>`;
   }
-  return `<div class="card ${st}"><div class="top"><div class="plaque"><small>TRACÉ</small>${r.id}</div>
-      <div><div class="nom"><a href="${r.url}" target="_blank" rel="noopener">${r.agent}</a></div><div class="route">${r.communes}</div></div>
-      <span class="st">${lab}</span></div>${ruban(r, b)}${body}</div>`;
+  return `<div class="card ${st}"><div class="head"><span class="name"><a href="${r.url}" target="_blank" rel="noopener">${r.agent}</a> · T${r.id}</span><span class="st ${st}">${lab}</span></div>
+    <div class="route">${r.communes}</div>${body}</div>`;
 }
 function draw() {
-  const vals = Object.values(last);
-  const enCours = vals.filter(b => b.st && !b.fin).length, finis = vals.filter(b => b.fin).length;
-  const sd = vals.reduce((a, b) => a + (b.sd || 0), 0), news = vals.reduce((a, b) => a + (b.news || 0), 0), abs = vals.reduce((a, b) => a + (b.abs || 0), 0);
-  document.getElementById("chips").innerHTML = [
-    readErr ? "<b>Lecture impossible</b>, nouvel essai" : `Lu à <b>${readAt ? hhmm(readAt) : "…"}</b>`,
-    `<b>${enCours}</b> en cours`, `<b>${finis}</b> terminé${finis > 1 ? "s" : ""}`, `<b>${sd}</b> sûrs faits`, `<b>${news}</b> nouveaux`, `<b>${abs}</b> introuvables`
-  ].map(x => `<span class="chip">${x}</span>`).join("");
-  document.getElementById("theme").textContent = document.documentElement.dataset.theme === "lil" ? "Nhar" : "Lil";
   const days = [...new Set(D.routes.map(r => r.day))].sort();
-  document.getElementById("days").innerHTML = days.map(d => `<div class="jour">${JOUR[d] || "Jour " + d}</div><div class="grid">${D.routes.filter(r => r.day === d).map(card).join("")}</div>`).join("");
+  document.getElementById("days").innerHTML = days.map(d => `<h2>${JOUR[d] || "Jour " + d}</h2><div class="grid">${D.routes.filter(r => r.day === d).map(card).join("")}</div>`).join("");
 }
 document.getElementById("refresh").addEventListener("click", load);
-document.getElementById("theme").addEventListener("click", () => {
-  const nt = document.documentElement.dataset.theme === "lil" ? "nhar" : "lil";
-  document.documentElement.dataset.theme = nt; try { localStorage.setItem(THK, nt); } catch (e) {}
-  draw();
-});
 load(); setInterval(load, 60000);
 </script>
 </body>

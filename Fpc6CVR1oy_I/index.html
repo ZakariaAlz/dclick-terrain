@@ -6,190 +6,131 @@
 <meta name="robots" content="noindex,nofollow">
 <title>D&#x27;click · Tracé 13</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* « Signalétique » : la page se lit comme la route. Plaque de sortie pour l'arrêt en cours, panneau directionnel pour
-   chaque commune, ruban segmenté par commune. ADN DSR (orange Flasher, bleu pétrole, magenta), deux thèmes : nhar / lil. */
-:root, [data-theme="nhar"] {
-  --fond: #f4f0e9; --surface: #ffffff; --surface-2: #faf8f4; --filet: #e2dcd2; --filet-fort: #cfc7ba;
-  --encre: #17140f; --encre-2: #5a5348; --encre-3: #8a8275;
-  --orange: #d93813; --orange-vif: #e8581f; --orange-txt: #b3300f; --orange-voile: #fbe6dc;
-  --bleu: #1c4452; --bleu-txt: #24586a; --bleu-voile: #e2ecef;
-  --magenta: #a21d4f; --magenta-voile: #f6e2ea;
-  --plaque: #102e3a; --plaque-txt: #ffffff; --plaque-filet: #e0481a;
-  --fait: #1c4452; --fait-txt: #ffffff; --toast: #102e3a;
-  color-scheme: light;
+/* Palette Flasher : orange = action, bleu = fait, magenta = alerte. */
+:root {
+  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
+  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --pass: #8a8378;
 }
-[data-theme="lil"] {
-  --fond: #0a1317; --surface: #101d23; --surface-2: #14242b; --filet: #1f323b; --filet-fort: #2b434d;
-  --encre: #f1ebe2; --encre-2: #a7b3b7; --encre-3: #71808a;
-  --orange: #f0642c; --orange-vif: #ff7a3d; --orange-txt: #ff8a52; --orange-voile: #2a1810;
-  --bleu: #6aa6bd; --bleu-txt: #8cc0d3; --bleu-voile: #12303b;
-  --magenta: #ef6f99; --magenta-voile: #2d1220;
-  --plaque: #123441; --plaque-txt: #f1ebe2; --plaque-filet: #f0642c;
-  --fait: #2a5c6e; --fait-txt: #f1ebe2; --toast: #f1ebe2;
-  color-scheme: dark;
-}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --pass: #8d8d8d; } }
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--fond); color: var(--encre); font: 400 16px/24px "Barlow", "Segoe UI", system-ui, sans-serif; transition: background .25s, color .25s; }
-.cond { font-family: "Barlow Condensed", "Arial Narrow", sans-serif; }
-.mono { font-family: "IBM Plex Mono", ui-monospace, Consolas, monospace; }
-.wrap { max-width: 640px; margin: 0 auto; padding-bottom: 48px; }
-.pad { padding: 0 16px; }
-/* En-tête : plaque routière, filet orange */
-header { background: var(--plaque); color: var(--plaque-txt); padding: 20px 16px 16px; border-bottom: 4px solid var(--plaque-filet); }
-.htop { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.kick { font: 600 12px/16px "IBM Plex Mono", monospace; letter-spacing: .1em; text-transform: uppercase; opacity: .8; }
-.theme { font: 700 13px/16px "Barlow Condensed", sans-serif; letter-spacing: .08em; text-transform: uppercase; background: transparent; color: var(--plaque-txt); border: 1px solid currentColor; border-radius: 999px; padding: 6px 12px; cursor: pointer; opacity: .9; }
-header h1 { margin: 8px 0 4px; font: 800 44px/44px "Barlow Condensed", sans-serif; letter-spacing: .01em; text-transform: uppercase; }
-header .sub { margin: 0; font: 400 15px/22px "Barlow", sans-serif; opacity: .9; }
-.intro-meta { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { font: 700 15px/20px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.35); padding: 4px 10px; border-radius: 3px; }
-/* Bandeaux */
-.note-band { margin: 16px 0 0; padding: 12px 14px; background: var(--surface); border-left: 4px solid var(--bleu); font: 500 15px/22px "Barlow", sans-serif; }
-.note-band.mag { border-left-color: var(--magenta); }
-.note-band b { font-weight: 700; }
-.startpick { margin: 16px 0 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--encre-2); font: 600 15px/20px "Barlow", sans-serif; }
-.startpick button { font: 700 17px/20px "Barlow Condensed", sans-serif; letter-spacing: .03em; border-radius: 3px; padding: 10px 14px; border: 1px solid var(--filet-fort); background: var(--surface); color: var(--encre); cursor: pointer; }
-.startpick button[aria-pressed="true"] { background: var(--orange); border-color: var(--orange); color: #fff; }
-details { margin: 16px 0 0; background: var(--surface); padding: 12px 14px; border: 1px solid var(--filet); }
-summary { font: 700 16px/22px "Barlow", sans-serif; cursor: pointer; }
-details ol, details ul { margin: 8px 0 0; padding-left: 20px; font-size: 15px; line-height: 22px; color: var(--encre); }
-details li { padding: 3px 0; }
-.remarks { border-left: 4px solid var(--orange); }
-/* Barre fixe */
-.bar { position: sticky; top: 0; z-index: 1000; background: var(--fond); padding: 10px 16px 12px; border-bottom: 1px solid var(--filet); display: grid; gap: 10px; }
-.prog { display: flex; justify-content: space-between; gap: 8px; font: 700 16px/20px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; color: var(--encre-2); font-variant-numeric: tabular-nums; }
-.ruban { display: flex; gap: 3px; }
-.seg { flex: 1 1 0; min-width: 0; }
-.seg .tr { height: 8px; background: var(--filet); position: relative; overflow: hidden; }
-.seg .tr i { position: absolute; inset: 0 auto 0 0; background: var(--orange); }
-.seg.fin .tr i { background: var(--fait); }
-.seg.cur .tr { outline: 2px solid var(--orange); outline-offset: 1px; }
-.seg span { display: block; font: 600 11px/14px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; color: var(--encre-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
-.seg.cur span { color: var(--orange-txt); }
-/* Arrêt en cours : plaque de sortie */
-.now { background: var(--surface); border: 1px solid var(--filet); padding: 12px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 12px; align-items: start; }
-.plaque { background: var(--orange); color: #fff; font: 800 34px/34px "Barlow Condensed", sans-serif; padding: 8px 10px 6px; min-width: 64px; text-align: center; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); font-variant-numeric: tabular-nums; }
-.plaque small { display: block; font: 700 10px/12px "Barlow Condensed", sans-serif; letter-spacing: .12em; opacity: .9; }
-.now.pass .plaque { background: var(--bleu); }
-.now .t { font: 700 20px/24px "Barlow Condensed", sans-serif; letter-spacing: .02em; text-transform: uppercase; }
-.now .note { font: 500 15px/21px "Barlow", sans-serif; color: var(--encre-2); margin-top: 2px; }
-.now .panels { grid-column: 1 / -1; }
-.now .row3 { grid-column: 1 / -1; }
-.now.fin { grid-template-columns: 1fr; border-left: 4px solid var(--fait); }
-.row3 { display: grid; grid-template-columns: 1.15fr 1fr 1.1fr; gap: 8px; }
-.row3 a, .row3 button { font: 700 17px/20px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; border-radius: 4px; padding: 12px 6px; min-height: 52px; text-align: center; text-decoration: none; cursor: pointer; background: var(--surface); color: var(--bleu-txt); border: 1.5px solid var(--bleu-txt); display: flex; align-items: center; justify-content: center; }
-.row3 .abs { color: var(--magenta); border-color: var(--magenta); }
-.row3 .ok { background: linear-gradient(90deg, var(--orange), var(--orange-vif)); color: #fff; border: 0; font-size: 20px; }
-li.done .row3 .ok { background: var(--fait); color: var(--fait-txt); }
-li.absent .row3 .abs, li.skipped .row3 .abs { background: var(--magenta); color: #fff; }
-.mini { display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 8px; }
-.mini a, .mini button { font: 700 15px/18px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; border-radius: 4px; padding: 8px 6px; min-height: 42px; border: 1px solid var(--filet-fort); background: var(--surface); color: var(--encre); text-decoration: none; text-align: center; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.mini .new { border-color: var(--orange); color: var(--orange-txt); }
-.mini button[aria-pressed="true"] { background: var(--magenta); border-color: var(--magenta); color: #fff; }
-.status { font: 500 14px/20px "Barlow", sans-serif; color: var(--encre-2); }
-.status b.late { color: var(--magenta); }
-.status b.ahead { color: var(--bleu-txt); }
-.alert { display: none; background: var(--magenta-voile); border-left: 4px solid var(--magenta); padding: 10px 12px; font: 500 15px/21px "Barlow", sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 18px 0 10px; }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { margin: 2px 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--fg); font-size: .92rem; }
+.banner b { color: var(--warn); }
+.banner.sq { background: var(--ok-bg); }
+.banner.sq b { color: var(--ok); }
+.bar { position: sticky; top: 0; z-index: 1000; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .92rem; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.newbtn { font: 700 .95rem system-ui, sans-serif; border-radius: 10px; padding: 0 14px; border: 2px solid var(--accent); color: var(--accent); background: var(--panel); cursor: pointer; }
+.status { font-size: .9rem; color: var(--muted); }
+.status b.late { color: var(--warn); }
+.status b.ahead { color: var(--ok); }
+.alert { display: none; background: var(--warn-bg); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
 .alert.on { display: block; }
-.alert button, .alert a { display: block; width: 100%; margin-top: 8px; text-align: center; text-decoration: none; font: 700 17px/22px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; padding: 12px; border-radius: 4px; border: 0; cursor: pointer; background: linear-gradient(90deg, var(--orange), var(--orange-vif)); color: #fff; }
-#sendnag { background: var(--bleu-voile); border-left-color: var(--bleu); }
-/* Liste complète */
-h2.liste { font: 800 22px/26px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; margin: 24px 0 0; }
-ol.stops { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
-.stops > li { background: var(--surface); border: 1px solid var(--filet); padding: 12px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
-.stops > li.next { border: 2px solid var(--orange); }
-.stops > li.done, .stops > li.absent, .stops > li.skipped { background: var(--surface-2); }
-.stops > li.done .panels, .stops > li.absent .panels, .stops > li.skipped .panels, .stops > li.done .when, .stops > li.skipped .when { display: none; }
-/* Panneau directionnel par commune */
-.stops > li.dayh { display: block; border: 0; padding: 0; background: none; margin-top: 12px; }
-.dir { background: var(--plaque); color: var(--plaque-txt); padding: 10px 12px; border-radius: 4px; box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
-.dir .c { font: 800 24px/26px "Barlow Condensed", sans-serif; letter-spacing: .03em; text-transform: uppercase; }
-.dir .c::before { content: "→ "; color: var(--plaque-filet); }
-.dir .m { font: 500 14px/20px "Barlow", sans-serif; opacity: .9; margin-top: 2px; }
-.dir .m a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
-.dir .sens { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.2); font: 600 14px/20px "Barlow", sans-serif; color: #ffd2c2; }
-.dir .k { font: 700 13px/16px "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase; opacity: .85; margin-top: 4px; }
-.n { font: 800 26px/30px "Barlow Condensed", sans-serif; color: var(--orange-txt); font-variant-numeric: tabular-nums; }
-li.pass .n { color: var(--bleu-txt); }
-.when { font: 500 15px/21px "Barlow", sans-serif; color: var(--encre-2); font-variant-numeric: tabular-nums; }
-.when b { color: var(--encre); }
-.panels { display: grid; gap: 4px; margin-top: 4px; font: 400 15px/22px "Barlow", sans-serif; }
-.ref { font: 600 15px/20px "IBM Plex Mono", monospace; border: 1px dashed var(--filet-fort); border-radius: 3px; background: var(--surface-2); color: var(--encre); padding: 2px 6px; cursor: copy; }
-.tag { display: inline-block; font: 700 12px/16px "Barlow Condensed", sans-serif; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--magenta); color: var(--magenta); border-radius: 3px; padding: 0 6px; margin-left: 6px; }
-.tag.skp { border-color: var(--encre-3); color: var(--encre-3); }
-.stops .row3 { grid-column: 1 / -1; margin-top: 8px; }
-/* Fin de page */
-.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 4px; border: 1.5px solid var(--bleu-txt); background: var(--surface); color: var(--bleu-txt); font: 700 18px/22px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; text-align: center; text-decoration: none; }
-.send.main { background: linear-gradient(90deg, var(--orange), var(--orange-vif)); color: #fff; border: 0; }
-#map { height: 380px; margin-top: 10px; position: relative; z-index: 0; isolation: isolate; }
-[data-theme="lil"] #map .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(.85) contrast(.9) saturate(.6); }
-.maptools, .reglages { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.maptools button, .reglages button { font: 700 15px/18px "Barlow Condensed", sans-serif; letter-spacing: .04em; text-transform: uppercase; border-radius: 4px; padding: 10px 12px; border: 1px solid var(--filet-fort); background: var(--surface-2); color: var(--encre); cursor: pointer; }
-.reglages button[aria-pressed="true"] { border-color: var(--bleu-txt); color: var(--bleu-txt); }
+#sendnag { background: var(--ok-bg); }
+#sendnag a { display: block; margin-top: 8px; text-align: center; font-weight: 700; padding: 10px; border-radius: 10px; background: var(--btn); color: var(--on-btn); text-decoration: none; }
+#sendnag.fin { border: 2px solid var(--ok); }
+.alert button { margin-top: 8px; width: 100%; font: 700 1rem system-ui, sans-serif; padding: 10px; border-radius: 10px; border: 2px solid var(--warn); color: var(--warn); background: transparent; cursor: pointer; }
+ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.stops > li.done, .stops > li.absent, .stops > li.skipped { opacity: .55; }
+.stops > li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; opacity: 1; }
+.dayh small { font-weight: 500; color: var(--muted); }
+.when a, .dayh a { color: var(--accent); }
+.stops > li.next { border: 2px solid var(--accent); }
+.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+li.pass .n { color: var(--pass); }
+.when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.panels { display: grid; gap: 4px; margin-top: 2px; }
+.ref { font: 700 .95rem ui-monospace, Menlo, monospace; border: 1px dashed var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 1px 6px; cursor: copy; }
+.tag { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 6px; padding: 1px 7px; margin-left: 4px; }
+.tag.abs { color: var(--warn); background: var(--warn-bg); }
+.tag.skp { color: var(--muted); background: var(--line); }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; margin-top: 8px; }
+.acts a, .acts button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 12px 6px; text-align: center; text-decoration: none; cursor: pointer; background: transparent; }
+.acts a { border: 1px solid var(--line); color: var(--fg); }
+.acts .abs { border: 1px solid var(--warn); color: var(--warn); }
+.acts .ok { border: 2px solid var(--ok); color: var(--ok); }
+li.done .acts .ok { background: var(--ok-bg); }
+li.absent .acts .abs { background: var(--warn-bg); }
+.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+.send.main { background: var(--btn); color: var(--on-btn); border: 0; }
+details { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+summary { font-weight: 700; cursor: pointer; }
+details ol, details ul { margin: 8px 0 0; padding-left: 20px; }
+details li { padding: 2px 0; }
+#map { height: 360px; border-radius: 10px; margin-top: 10px; position: relative; z-index: 0; isolation: isolate; }
+.maptools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.maptools button { font: 600 .9rem system-ui, sans-serif; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
 .news li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
-.news button { font: 600 13px/18px "Barlow", sans-serif; border: 1px solid var(--filet-fort); background: transparent; color: var(--encre-2); border-radius: 4px; padding: 4px 8px; cursor: pointer; }
-.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); background: var(--toast); color: var(--fond); padding: 12px 16px; border-radius: 4px; font: 600 15px/22px "Barlow", sans-serif; max-width: 92vw; z-index: 2000; display: none; }
+.news button { font: 600 .85rem system-ui, sans-serif; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+.startpick { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .9rem; color: var(--muted); }
+.startpick button { font: 600 .9rem system-ui, sans-serif; border-radius: 999px; padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.startpick button[aria-pressed="true"] { border: 2px solid var(--accent); color: var(--accent); }
+.tools { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.tools button { font: 600 .9rem system-ui, sans-serif; border-radius: 10px; padding: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.tools button[aria-pressed="true"] { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
+.sens { display: inline-block; margin-top: 4px; font-size: .85rem; font-weight: 600; color: var(--warn); }
+.prog small { color: var(--muted); }
+.remarks { margin-top: 10px; background: var(--ok-bg); border: 0; }
+.remarks ol { padding-left: 20px; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: .92rem; max-width: 92vw; z-index: 1000; display: none; }
 .toast.on { display: block; }
-a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 </style>
 </head>
-
-
 <body>
 <div class="wrap">
   <header>
-    <div class="htop"><div class="kick">D&#x27;click · Tracé 13 · jour 6</div><button type="button" class="theme" id="theme" aria-label="Changer de thème">Lil</button></div>
+    <div class="kicker">D&#x27;click · Tracé 13 · jour 6</div>
     <h1>Zineddine</h1>
     <p class="sub" id="sub"></p>
-    <div class="intro-meta" id="meta"></div>
-  </header>
-  <div class="pad">
-    <div class="note-band"><b>Tsawer w l'questionnaire ghir f SensQuest.</b> Had la page t'guidik bark.</div>
-    <div class="note-band mag" id="friday" hidden><b>Jem3a :</b> tebda 9h w tkemmel 9bel salat, wela tebda 14h ba3d salat. Khtar lta7t.</div>
+    <div class="banner sq"><b>Tsawer w l'questionnaire ghir f SensQuest.</b> Had la page t'guidik bark.</div>
+    <div class="banner" id="friday" hidden><b>Jem3a :</b> tebda 9h w tkemmel 9bel salat, wela tebda 14h ba3d salat. Khtar lta7t.</div>
     <div class="startpick" id="startpick"></div>
-    <details class="remarks" id="remarks" hidden><summary id="remsum"></summary><div id="remtxt"></div></details>
-  </div>
+    <details class="remarks" id="remarks" open hidden><summary id="remsum"></summary><div id="remtxt"></div></details>
+  </header>
 
   <div class="bar">
     <div class="prog"><span id="count"></span><span id="clock"></span></div>
-    <div class="ruban" id="ruban" aria-label="Avancement par commune"></div>
-    <div class="now" id="now"></div>
-    <div class="mini"><a id="nav" target="_blank" rel="noopener"></a><button class="new" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button><button type="button" id="pause" aria-pressed="false">Pause</button></div>
+    <div class="meter"><i id="meter"></i></div>
+    <div class="row2"><a class="nav" id="nav" target="_blank" rel="noopener"></a><button class="newbtn" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button></div>
+    <div class="tools"><button type="button" id="pause" aria-pressed="false">Pause (salat, makla)</button><button type="button" id="wake" aria-pressed="false">L'écran ma ytfach</button><button type="button" id="sound" aria-pressed="true">Son : ON</button></div>
     <div class="status" id="status"></div>
     <div class="alert" id="late"></div>
     <div class="alert" id="sendnag"></div>
   </div>
 
-  <div class="pad">
-    <details id="mapbox">
-      <summary>La carte</summary>
-      <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
-      <div class="maptools"><button type="button" id="locate">Win rani ?</button><button type="button" id="fit">Kamel l'tracé</button></div>
-    </details>
+  <details id="mapbox">
+    <summary>La carte</summary>
+    <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
+    <div class="maptools"><button type="button" id="locate">Win rani ?</button><button type="button" id="fit">Kamel l'tracé</button></div>
+  </details>
 
-    <h2 class="liste">Kamel l'liste</h2>
-    <ol class="stops" id="stops"></ol>
+  <ol class="stops" id="stops"></ol>
 
-    <details id="newsbox" hidden>
-      <summary id="newssum">Les panneaux jdad</summary>
-      <ol class="news" id="news"></ol>
-    </details>
+  <details id="newsbox" hidden>
+    <summary id="newssum">Les panneaux jdad</summary>
+    <ol class="news" id="news"></ol>
+  </details>
 
-    <a class="send main" id="send" target="_blank" rel="noopener">Ab3at l'bilan f WhatsApp</a>
-    <a class="send" id="sendany" target="_blank" rel="noopener">Ab3at l'bilan l wa7ed akhor</a>
-    <a class="send" href="tel:+213770880535">Ila 3andak questions sa9sini : 3ayatli f telephone</a>
+  <a class="send main" id="send" target="_blank" rel="noopener">Ab3at l'bilan f WhatsApp</a>
+  <a class="send" id="sendany" target="_blank" rel="noopener">Ab3at l'bilan l wa7ed akhor</a>
+  <a class="send" href="tel:+213770880535">Ila 3andak questions sa9sini : 3ayatli f telephone</a>
 
-    <details>
-      <summary>Réglages</summary>
-      <div class="reglages"><button type="button" id="wake" aria-pressed="false">L'écran ma ytfach</button><button type="button" id="sound" aria-pressed="true">Son : ON</button></div>
-    </details>
-    <details>
+  <details>
     <summary>Kifach tkhdem b la page</summary>
     <ul>
       <li><b>Tsawer w questionnaire :</b> ghir f SensQuest.</li>
@@ -212,24 +153,18 @@ a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px soli
       <li>Kemmel l'tracé kamel.</li>
     </ol>
   </details>
-  </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const R = {"key": "T13v13", "id": "13", "day": 6, "topic": "dclick-3t6kY3LyQZjXzVqSo62ivc1a", "remarks": {"title": "Remarques 3la nhar 1 ou 2 (a9rahom 9bel matabda)", "html": "<p>Khdemt intik ou kount khfif, bassah kayan 3 3fayas lazam tsagamhom men l'youm w jay :</p><ol><li><b>GPS :</b> 35 men 42 points GPS ta3hom fayat 20 m (wasal hata 36 m). 9bal matvalidi, ou9ef 9edam l'panneau ou assana GPS yahbet ta7t 10 m, hakdak khir ou khir.</li><li><b>Moula7adat :</b> khoud wa9tak fel questionnaire, zidli les remarques, ou aktabli NOUVEAU f les points li rak tzidhom.</li><li><b>Photos :</b> khoud wa9tak m3a les photos, siyi a7kamhom bien ou eviti tkoun haja tban bzf wala mgenyathom. Vue d'ensemble men 25 m hata 30 m à peu près, ou les photos le9rab lazam la marque fihom tban mlih, surtout slogan ta3ha.</li><li><b>Rod balek 9bel ma tsawar :</b> verifiyi daymen ida ta9dar tsawar Zinou, surtout fel playas li fihom doula kima fel Val.</li></ol>"}, "geom": [[3.13219, 36.60469], [3.13121, 36.60666], [3.13084, 36.60744], [3.13069, 36.60775], [3.12995, 36.6092], [3.12957, 36.60997], [3.12941, 36.6103], [3.12904, 36.61104], [3.12868, 36.61176], [3.12834, 36.61244], [3.128, 36.61312], [3.12757, 36.614], [3.1273, 36.61454], [3.12705, 36.61503], [3.12692, 36.61529], [3.12663, 36.61588], [3.12611, 36.61693], [3.12576, 36.61763], [3.12443, 36.6203], [3.12424, 36.62063], [3.12381, 36.62123], [3.12283, 36.6225], [3.12175, 36.62391], [3.12134, 36.62443], [3.12084, 36.62507], [3.12066, 36.62533], [3.12011, 36.62627], [3.11997, 36.6265], [3.11922, 36.62776], [3.11865, 36.62885], [3.11866, 36.62908], [3.11841, 36.62896], [3.11699, 36.62763], [3.1168, 36.62747], [3.11525, 36.62619], [3.1168, 36.62747], [3.11699, 36.62763], [3.11844, 36.62888], [3.11872, 36.6289], [3.11947, 36.62962], [3.12181, 36.63153], [3.12374, 36.63313], [3.12645, 36.63527], [3.12684, 36.63558], [3.12886, 36.63721], [3.13175, 36.63956], [3.13229, 36.64], [3.13353, 36.641], [3.13467, 36.64191], [3.13507, 36.64224], [3.13616, 36.64313], [3.13709, 36.6439], [3.14077, 36.64691], [3.14328, 36.64919], [3.14364, 36.64954], [3.14593, 36.65171], [3.14614, 36.65192], [3.14674, 36.65245], [3.14713, 36.65281], [3.14804, 36.65263], [3.15279, 36.65064], [3.16064, 36.64736], [3.1627, 36.64648], [3.16342, 36.64618], [3.16547, 36.64534], [3.1659, 36.64516], [3.1662, 36.64503], [3.16997, 36.64345], [3.17187, 36.64266], [3.17336, 36.64203], [3.17362, 36.64193], [3.17396, 36.64178], [3.17475, 36.64145], [3.1768, 36.64059], [3.17746, 36.642], [3.17772, 36.64266], [3.17829, 36.64381], [3.17882, 36.64505], [3.17912, 36.64579], [3.1793, 36.64612], [3.17957, 36.64657], [3.1797, 36.64684], [3.18003, 36.64783], [3.1807, 36.64968], [3.18095, 36.6498], [3.18105, 36.65068], [3.18131, 36.65142], [3.18166, 36.65243], [3.18175, 36.65297], [3.18181, 36.65319], [3.18197, 36.65348], [3.18249, 36.65416], [3.18265, 36.6544], [3.18279, 36.65468], [3.18293, 36.65505], [3.183, 36.65528], [3.18322, 36.65597], [3.18345, 36.65704], [3.18353, 36.65746], [3.1837, 36.65823], [3.18382, 36.65858], [3.18437, 36.65985], [3.18462, 36.66045], [3.18477, 36.66079], [3.18495, 36.66122], [3.185, 36.66151], [3.18453, 36.66204], [3.18417, 36.66236], [3.18358, 36.66289], [3.18162, 36.66467], [3.18139, 36.66488], [3.18075, 36.66548], [3.18043, 36.66577], [3.18011, 36.66607], [3.18183, 36.66726], [3.18203, 36.66745], [3.18238, 36.66775], [3.18271, 36.66811], [3.1829, 36.66832], [3.18316, 36.66853], [3.1835, 36.66876], [3.18399, 36.66901], [3.18433, 36.66912], [3.1847, 36.6692], [3.18499, 36.66924], [3.18558, 36.66927], [3.18906, 36.66925], [3.18945, 36.66925], [3.18975, 36.66927], [3.19025, 36.6694], [3.19051, 36.66949], [3.19088, 36.66963], [3.19226, 36.67016], [3.19309, 36.67047], [3.19441, 36.67097], [3.19493, 36.67109], [3.1955, 36.67111], [3.19589, 36.6711], [3.19729, 36.67118], [3.19765, 36.67121], [3.19792, 36.67133], [3.20087, 36.67302], [3.20133, 36.6731], [3.20432, 36.67286], [3.2048, 36.67286], [3.20518, 36.67298], [3.2048, 36.67286], [3.20432, 36.67286], [3.20133, 36.6731], [3.20087, 36.67302], [3.20055, 36.67284], [3.19806, 36.67142], [3.19779, 36.67127], [3.19729, 36.67118], [3.19603, 36.67118], [3.19671, 36.66989], [3.19685, 36.6696], [3.19711, 36.6691], [3.19761, 36.66809], [3.1978, 36.6677], [3.19795, 36.66739], [3.19809, 36.66712], [3.19821, 36.6669], [3.19854, 36.66625], [3.19889, 36.66555], [3.19909, 36.66516], [3.19926, 36.66484], [3.19947, 36.66442], [3.19966, 36.66403], [3.19985, 36.66366], [3.19998, 36.6634], [3.20026, 36.66284], [3.20058, 36.66222], [3.20207, 36.65933], [3.20224, 36.65899], [3.20343, 36.65657], [3.20224, 36.65899], [3.20207, 36.65933], [3.20162, 36.6602], [3.20058, 36.66222], [3.20026, 36.66284], [3.20002, 36.66331], [3.19985, 36.66366], [3.19966, 36.66403], [3.19947, 36.66442], [3.19926, 36.66484], [3.19909, 36.66516], [3.19891, 36.66551], [3.19854, 36.66625], [3.19821, 36.6669], [3.19809, 36.66712], [3.19795, 36.66739], [3.1978, 36.6677], [3.19761, 36.66809], [3.19711, 36.6691], [3.19685, 36.6696], [3.19671, 36.66989], [3.19611, 36.67103], [3.19598, 36.6713], [3.19555, 36.67216], [3.19526, 36.67273], [3.1941, 36.67502], [3.194, 36.67523], [3.1938, 36.67564], [3.19352, 36.67621], [3.1931, 36.677], [3.19298, 36.67723], [3.19276, 36.67766], [3.19259, 36.67795], [3.19248, 36.6782], [3.19224, 36.67866], [3.19211, 36.67889], [3.19195, 36.67922], [3.19164, 36.67988], [3.19151, 36.6801], [3.19133, 36.68049], [3.19083, 36.68147], [3.19043, 36.68221], [3.18894, 36.68513], [3.18853, 36.68595], [3.18792, 36.68719], [3.18716, 36.68863], [3.18696, 36.68893], [3.18668, 36.68906], [3.18627, 36.6891], [3.18602, 36.68922], [3.18571, 36.68916], [3.18533, 36.68878], [3.18411, 36.68765], [3.18293, 36.68657], [3.18221, 36.68589], [3.18172, 36.68544], [3.18135, 36.6851], [3.18093, 36.68471], [3.18028, 36.68411], [3.18006, 36.68391], [3.17955, 36.68342], [3.17628, 36.68028], [3.17576, 36.67977], [3.17498, 36.67904], [3.17439, 36.6785], [3.17484, 36.67807], [3.17499, 36.67786], [3.175, 36.67761], [3.17492, 36.67738], [3.17478, 36.67717], [3.17458, 36.67698], [3.17425, 36.67677], [3.1739, 36.67664], [3.1735, 36.67664], [3.17316, 36.67679], [3.17282, 36.67706], [3.1723, 36.67744], [3.16874, 36.67984], [3.16662, 36.68127], [3.16604, 36.68162], [3.1654, 36.68198], [3.1647, 36.68236], [3.16406, 36.68267], [3.16347, 36.68295], [3.16179, 36.68367], [3.16069, 36.68414], [3.16033, 36.68429], [3.1593, 36.68473], [3.15819, 36.68521], [3.15595, 36.68616], [3.15265, 36.68756], [3.15156, 36.68803], [3.14895, 36.68913], [3.14793, 36.68959], [3.14747, 36.68984], [3.14723, 36.69002], [3.14676, 36.69037], [3.14638, 36.69076], [3.14619, 36.69103], [3.14589, 36.69152], [3.14578, 36.69178], [3.14566, 36.69213], [3.14557, 36.69255], [3.14552, 36.69295], [3.14545, 36.69378], [3.14543, 36.69419], [3.14541, 36.6946], [3.14542, 36.69498], [3.14546, 36.69533], [3.14572, 36.69563], [3.14608, 36.69575], [3.14645, 36.69567], [3.14674, 36.69542], [3.1468, 36.69512], [3.14661, 36.69476], [3.14575, 36.69457], [3.14346, 36.69432], [3.14305, 36.69445], [3.14289, 36.69464], [3.1429, 36.69497], [3.14308, 36.69524], [3.14333, 36.69542], [3.14357, 36.69554], [3.14391, 36.69563], [3.14451, 36.69565], [3.14496, 36.6955], [3.14518, 36.69525], [3.14523, 36.69498], [3.14525, 36.69459], [3.14528, 36.69425], [3.14532, 36.69371], [3.14536, 36.69326], [3.14539, 36.6929], [3.14542, 36.69261], [3.14549, 36.69229], [3.14562, 36.69188], [3.14574, 36.69159], [3.1459, 36.69129], [3.14607, 36.69099], [3.14623, 36.69074], [3.14643, 36.69049], [3.14675, 36.69018], [3.147, 36.69], [3.14752, 36.68969], [3.14795, 36.68947], [3.15261, 36.68747], [3.15579, 36.68612], [3.15728, 36.68548], [3.16068, 36.68403], [3.16095, 36.68391], [3.16341, 36.68286], [3.16429, 36.68245], [3.16554, 36.68177], [3.16621, 36.68141], [3.16763, 36.68047], [3.17123, 36.67802], [3.17177, 36.67765], [3.17224, 36.67733], [3.17261, 36.67708], [3.17307, 36.67672], [3.17336, 36.67649], [3.17394, 36.67601], [3.17452, 36.67548], [3.17523, 36.6748], [3.1759, 36.67416], [3.17694, 36.67315], [3.17873, 36.67146], [3.17908, 36.67113], [3.18183, 36.66848], [3.18315, 36.66719], [3.18348, 36.66681], [3.18383, 36.66636], [3.18412, 36.66594], [3.18438, 36.66548], [3.18466, 36.66494], [3.18481, 36.66455], [3.18504, 36.66385], [3.18527, 36.66264], [3.1853, 36.66224], [3.18532, 36.66192], [3.18532, 36.66153], [3.18526, 36.66089], [3.18512, 36.66026], [3.18498, 36.65984], [3.18386, 36.65671], [3.18362, 36.65609], [3.18337, 36.65545], [3.18291, 36.65411], [3.18212, 36.65193], [3.18198, 36.65171], [3.1817, 36.65155], [3.18152, 36.65137], [3.18121, 36.6501], [3.18107, 36.64988], [3.18079, 36.64993], [3.18105, 36.65068], [3.18131, 36.65142], [3.18166, 36.65243], [3.18175, 36.65297], [3.18181, 36.65319], [3.18197, 36.65348], [3.18249, 36.65416], [3.18265, 36.6544], [3.18279, 36.65468], [3.18293, 36.65505], [3.18322, 36.65597], [3.18345, 36.65704], [3.18353, 36.65746], [3.1837, 36.65823], [3.18382, 36.65858], [3.18417, 36.65938], [3.18437, 36.65985], [3.18462, 36.66045], [3.18477, 36.66079], [3.18495, 36.66122], [3.185, 36.66151], [3.18453, 36.66204], [3.18417, 36.66236], [3.18162, 36.66467], [3.18139, 36.66488], [3.18075, 36.66548], [3.18039, 36.66581], [3.18011, 36.66607], [3.17905, 36.66706], [3.17803, 36.66798], [3.17728, 36.66867], [3.17437, 36.67134], [3.17413, 36.67156], [3.17194, 36.67355], [3.17103, 36.67287], [3.17068, 36.67271], [3.17035, 36.67256], [3.17009, 36.6724], [3.16977, 36.67215], [3.16954, 36.67194], [3.16939, 36.67167], [3.16939, 36.67143], [3.16949, 36.67113], [3.16966, 36.67075], [3.16973, 36.67045], [3.16969, 36.67021], [3.1696, 36.66999], [3.16896, 36.67066], [3.16864, 36.6707], [3.16818, 36.67061], [3.16767, 36.67055], [3.16714, 36.6705], [3.16677, 36.6705], [3.16647, 36.67044], [3.16614, 36.67072], [3.16579, 36.6704], [3.16542, 36.67007], [3.1651, 36.66975], [3.16487, 36.66953], [3.16444, 36.66912], [3.16388, 36.66859], [3.16329, 36.66803], [3.16243, 36.66723], [3.16132, 36.66619], [3.16069, 36.6656], [3.16012, 36.66506], [3.15943, 36.66442], [3.15891, 36.66395], [3.15833, 36.66342], [3.15784, 36.66291], [3.15705, 36.66218], [3.15592, 36.66113], [3.15512, 36.66035], [3.15399, 36.65931], [3.15371, 36.65902], [3.15346, 36.65882], [3.15273, 36.65813], [3.15227, 36.6577], [3.15176, 36.65722], [3.15151, 36.65698], [3.15116, 36.65665], [3.15097, 36.65647], [3.15093, 36.65643]], "friday": false, "agent": "Zineddine", "title": "Tracé 13 · lundi 16/11", "km": 42.1, "n_panels": 0, "rows": true, "total_min": 179, "intro": "Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom. Sidi Moussa → Eucalyptus. Kemmel commune 9bel ma tdkhol l'okhra.", "stops": [{"order": 1, "lat": 36.6110363, "lon": 3.1290382, "svc": 0, "arrive_min": 0.0, "leave_min": 3.8, "note": "<b>Dour f</b> CW 115", "day": "<div class='c'>1. Sidi Moussa</div><div class='m'>⟦0⟧ → ⟦15⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> l Eucalyptus</div>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 2, "lat": 36.6202989, "lon": 3.1244329, "svc": 0, "arrive_min": 5.0, "leave_min": 8.8, "note": "<b>Dour f</b> CW 115", "day": "<div class='c'>1. Sidi Moussa</div><div class='m'>⟦0⟧ → ⟦15⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> l Eucalyptus</div>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 3, "lat": 36.626190698903706, "lon": 3.1152541630292037, "svc": 0, "arrive_min": 10.9, "leave_min": 14.9, "note": "<b>Dour f</b> CW 115, Route de Larabaa, RN 61", "day": "<div class='c'>1. Sidi Moussa</div><div class='m'>⟦0⟧ → ⟦15⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> l Eucalyptus</div>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 4, "lat": 36.6426579, "lon": 3.1718685, "svc": 0, "arrive_min": 25.1, "leave_min": 33.0, "note": "<b>Dour f</b> CW 59", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 5, "lat": 36.647828, "lon": 3.1800324, "svc": 0, "arrive_min": 34.1, "leave_min": 38.6, "note": "<b>Dour f</b> CW 59, CW 58", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 6, "lat": 36.66288937826447, "lon": 3.1835836047666066, "svc": 0, "arrive_min": 39.4, "leave_min": 46.2, "note": "<b>Dour f</b> CW 58", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 7, "lat": 36.6694868, "lon": 3.1905116, "svc": 0, "arrive_min": 47.9, "leave_min": 52.4, "note": "<b>Dour f</b> CW 58", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 8, "lat": 36.656572, "lon": 3.2034269, "svc": 0, "arrive_min": 58.2, "leave_min": 69.3, "note": "<b>Dour f</b> CW 118", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 9, "lat": 36.675016418682304, "lon": 3.194097288479044, "svc": 0, "arrive_min": 71.0, "leave_min": 78.1, "note": "<b>Dour f</b> CW 118", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 10, "lat": 36.6887823, "lon": 3.1853288, "svc": 0, "arrive_min": 79.8, "leave_min": 85.7, "note": "<b>Dour f</b> CW 118", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 11, "lat": 36.67983860843985, "lon": 3.1687409513626053, "svc": 0, "arrive_min": 88.8, "leave_min": 103.4, "note": "<b>Dour f</b> RN 61", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 12, "lat": 36.68802917911703, "lon": 3.151558278557707, "svc": 0, "arrive_min": 104.8, "leave_min": 109.1, "note": "<b>Dour f</b> les rues du secteur", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 13, "lat": 36.67112597765264, "lon": 3.1790794817568107, "svc": 0, "arrive_min": 110.6, "leave_min": 132.3, "note": "<b>Dour f</b> les rues du secteur", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 14, "lat": 36.67156086624841, "lon": 3.174125799735697, "svc": 0, "arrive_min": 135.2, "leave_min": 152.5, "note": "<b>Dour f</b> CW 58", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 15, "lat": 36.66217786034106, "lon": 3.1570490247264584, "svc": 0, "arrive_min": 159.1, "leave_min": 170.9, "note": "<b>Dour f</b> RN 61", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 16, "lat": 36.656431570282884, "lon": 3.150929145408018, "svc": 0, "arrive_min": 174.8, "leave_min": 178.7, "note": "<b>Dour f</b> RN 61", "day": "<div class='c'>2. Eucalyptus</div><div class='m'>⟦25⟧ → ⟦179⟧ · ratissage</div><div class='m'>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></div>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}]};
-// Thème nhar / lil : choix mémorisé sur le téléphone, sinon celui du téléphone
-const THK = "dclick-theme";
-let theme = null; try { theme = localStorage.getItem(THK); } catch (e) {}
-if (!theme) theme = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "lil" : "nhar";
-document.documentElement.dataset.theme = theme;
+const R = {"key": "T13v13", "id": "13", "day": 6, "topic": "dclick-3t6kY3LyQZjXzVqSo62ivc1a", "remarks": {"title": "Remarques 3la nhar 1 ou 2 (a9rahom 9bel matabda)", "html": "<p>Khdemt intik ou kount khfif, bassah kayan 3 3fayas lazam tsagamhom men l'youm w jay :</p><ol><li><b>GPS :</b> 35 men 42 points GPS ta3hom fayat 20 m (wasal hata 36 m). 9bal matvalidi, ou9ef 9edam l'panneau ou assana GPS yahbet ta7t 10 m, hakdak khir ou khir.</li><li><b>Moula7adat :</b> khoud wa9tak fel questionnaire, zidli les remarques, ou aktabli NOUVEAU f les points li rak tzidhom.</li><li><b>Photos :</b> khoud wa9tak m3a les photos, siyi a7kamhom bien ou eviti tkoun haja tban bzf wala mgenyathom. Vue d'ensemble men 25 m hata 30 m à peu près, ou les photos le9rab lazam la marque fihom tban mlih, surtout slogan ta3ha.</li><li><b>Rod balek 9bel ma tsawar :</b> verifiyi daymen ida ta9dar tsawar Zinou, surtout fel playas li fihom doula kima fel Val.</li></ol>"}, "geom": [[3.13219, 36.60469], [3.13121, 36.60666], [3.13084, 36.60744], [3.13069, 36.60775], [3.12995, 36.6092], [3.12957, 36.60997], [3.12941, 36.6103], [3.12904, 36.61104], [3.12868, 36.61176], [3.12834, 36.61244], [3.128, 36.61312], [3.12757, 36.614], [3.1273, 36.61454], [3.12705, 36.61503], [3.12692, 36.61529], [3.12663, 36.61588], [3.12611, 36.61693], [3.12576, 36.61763], [3.12443, 36.6203], [3.12424, 36.62063], [3.12381, 36.62123], [3.12283, 36.6225], [3.12175, 36.62391], [3.12134, 36.62443], [3.12084, 36.62507], [3.12066, 36.62533], [3.12011, 36.62627], [3.11997, 36.6265], [3.11922, 36.62776], [3.11865, 36.62885], [3.11866, 36.62908], [3.11841, 36.62896], [3.11699, 36.62763], [3.1168, 36.62747], [3.11525, 36.62619], [3.1168, 36.62747], [3.11699, 36.62763], [3.11844, 36.62888], [3.11872, 36.6289], [3.11947, 36.62962], [3.12181, 36.63153], [3.12374, 36.63313], [3.12645, 36.63527], [3.12684, 36.63558], [3.12886, 36.63721], [3.13175, 36.63956], [3.13229, 36.64], [3.13353, 36.641], [3.13467, 36.64191], [3.13507, 36.64224], [3.13616, 36.64313], [3.13709, 36.6439], [3.14077, 36.64691], [3.14328, 36.64919], [3.14364, 36.64954], [3.14593, 36.65171], [3.14614, 36.65192], [3.14674, 36.65245], [3.14713, 36.65281], [3.14804, 36.65263], [3.15279, 36.65064], [3.16064, 36.64736], [3.1627, 36.64648], [3.16342, 36.64618], [3.16547, 36.64534], [3.1659, 36.64516], [3.1662, 36.64503], [3.16997, 36.64345], [3.17187, 36.64266], [3.17336, 36.64203], [3.17362, 36.64193], [3.17396, 36.64178], [3.17475, 36.64145], [3.1768, 36.64059], [3.17746, 36.642], [3.17772, 36.64266], [3.17829, 36.64381], [3.17882, 36.64505], [3.17912, 36.64579], [3.1793, 36.64612], [3.17957, 36.64657], [3.1797, 36.64684], [3.18003, 36.64783], [3.1807, 36.64968], [3.18095, 36.6498], [3.18105, 36.65068], [3.18131, 36.65142], [3.18166, 36.65243], [3.18175, 36.65297], [3.18181, 36.65319], [3.18197, 36.65348], [3.18249, 36.65416], [3.18265, 36.6544], [3.18279, 36.65468], [3.18293, 36.65505], [3.183, 36.65528], [3.18322, 36.65597], [3.18345, 36.65704], [3.18353, 36.65746], [3.1837, 36.65823], [3.18382, 36.65858], [3.18437, 36.65985], [3.18462, 36.66045], [3.18477, 36.66079], [3.18495, 36.66122], [3.185, 36.66151], [3.18453, 36.66204], [3.18417, 36.66236], [3.18358, 36.66289], [3.18162, 36.66467], [3.18139, 36.66488], [3.18075, 36.66548], [3.18043, 36.66577], [3.18011, 36.66607], [3.18183, 36.66726], [3.18203, 36.66745], [3.18238, 36.66775], [3.18271, 36.66811], [3.1829, 36.66832], [3.18316, 36.66853], [3.1835, 36.66876], [3.18399, 36.66901], [3.18433, 36.66912], [3.1847, 36.6692], [3.18499, 36.66924], [3.18558, 36.66927], [3.18906, 36.66925], [3.18945, 36.66925], [3.18975, 36.66927], [3.19025, 36.6694], [3.19051, 36.66949], [3.19088, 36.66963], [3.19226, 36.67016], [3.19309, 36.67047], [3.19441, 36.67097], [3.19493, 36.67109], [3.1955, 36.67111], [3.19589, 36.6711], [3.19729, 36.67118], [3.19765, 36.67121], [3.19792, 36.67133], [3.20087, 36.67302], [3.20133, 36.6731], [3.20432, 36.67286], [3.2048, 36.67286], [3.20518, 36.67298], [3.2048, 36.67286], [3.20432, 36.67286], [3.20133, 36.6731], [3.20087, 36.67302], [3.20055, 36.67284], [3.19806, 36.67142], [3.19779, 36.67127], [3.19729, 36.67118], [3.19603, 36.67118], [3.19671, 36.66989], [3.19685, 36.6696], [3.19711, 36.6691], [3.19761, 36.66809], [3.1978, 36.6677], [3.19795, 36.66739], [3.19809, 36.66712], [3.19821, 36.6669], [3.19854, 36.66625], [3.19889, 36.66555], [3.19909, 36.66516], [3.19926, 36.66484], [3.19947, 36.66442], [3.19966, 36.66403], [3.19985, 36.66366], [3.19998, 36.6634], [3.20026, 36.66284], [3.20058, 36.66222], [3.20207, 36.65933], [3.20224, 36.65899], [3.20343, 36.65657], [3.20224, 36.65899], [3.20207, 36.65933], [3.20162, 36.6602], [3.20058, 36.66222], [3.20026, 36.66284], [3.20002, 36.66331], [3.19985, 36.66366], [3.19966, 36.66403], [3.19947, 36.66442], [3.19926, 36.66484], [3.19909, 36.66516], [3.19891, 36.66551], [3.19854, 36.66625], [3.19821, 36.6669], [3.19809, 36.66712], [3.19795, 36.66739], [3.1978, 36.6677], [3.19761, 36.66809], [3.19711, 36.6691], [3.19685, 36.6696], [3.19671, 36.66989], [3.19611, 36.67103], [3.19598, 36.6713], [3.19555, 36.67216], [3.19526, 36.67273], [3.1941, 36.67502], [3.194, 36.67523], [3.1938, 36.67564], [3.19352, 36.67621], [3.1931, 36.677], [3.19298, 36.67723], [3.19276, 36.67766], [3.19259, 36.67795], [3.19248, 36.6782], [3.19224, 36.67866], [3.19211, 36.67889], [3.19195, 36.67922], [3.19164, 36.67988], [3.19151, 36.6801], [3.19133, 36.68049], [3.19083, 36.68147], [3.19043, 36.68221], [3.18894, 36.68513], [3.18853, 36.68595], [3.18792, 36.68719], [3.18716, 36.68863], [3.18696, 36.68893], [3.18668, 36.68906], [3.18627, 36.6891], [3.18602, 36.68922], [3.18571, 36.68916], [3.18533, 36.68878], [3.18411, 36.68765], [3.18293, 36.68657], [3.18221, 36.68589], [3.18172, 36.68544], [3.18135, 36.6851], [3.18093, 36.68471], [3.18028, 36.68411], [3.18006, 36.68391], [3.17955, 36.68342], [3.17628, 36.68028], [3.17576, 36.67977], [3.17498, 36.67904], [3.17439, 36.6785], [3.17484, 36.67807], [3.17499, 36.67786], [3.175, 36.67761], [3.17492, 36.67738], [3.17478, 36.67717], [3.17458, 36.67698], [3.17425, 36.67677], [3.1739, 36.67664], [3.1735, 36.67664], [3.17316, 36.67679], [3.17282, 36.67706], [3.1723, 36.67744], [3.16874, 36.67984], [3.16662, 36.68127], [3.16604, 36.68162], [3.1654, 36.68198], [3.1647, 36.68236], [3.16406, 36.68267], [3.16347, 36.68295], [3.16179, 36.68367], [3.16069, 36.68414], [3.16033, 36.68429], [3.1593, 36.68473], [3.15819, 36.68521], [3.15595, 36.68616], [3.15265, 36.68756], [3.15156, 36.68803], [3.14895, 36.68913], [3.14793, 36.68959], [3.14747, 36.68984], [3.14723, 36.69002], [3.14676, 36.69037], [3.14638, 36.69076], [3.14619, 36.69103], [3.14589, 36.69152], [3.14578, 36.69178], [3.14566, 36.69213], [3.14557, 36.69255], [3.14552, 36.69295], [3.14545, 36.69378], [3.14543, 36.69419], [3.14541, 36.6946], [3.14542, 36.69498], [3.14546, 36.69533], [3.14572, 36.69563], [3.14608, 36.69575], [3.14645, 36.69567], [3.14674, 36.69542], [3.1468, 36.69512], [3.14661, 36.69476], [3.14575, 36.69457], [3.14346, 36.69432], [3.14305, 36.69445], [3.14289, 36.69464], [3.1429, 36.69497], [3.14308, 36.69524], [3.14333, 36.69542], [3.14357, 36.69554], [3.14391, 36.69563], [3.14451, 36.69565], [3.14496, 36.6955], [3.14518, 36.69525], [3.14523, 36.69498], [3.14525, 36.69459], [3.14528, 36.69425], [3.14532, 36.69371], [3.14536, 36.69326], [3.14539, 36.6929], [3.14542, 36.69261], [3.14549, 36.69229], [3.14562, 36.69188], [3.14574, 36.69159], [3.1459, 36.69129], [3.14607, 36.69099], [3.14623, 36.69074], [3.14643, 36.69049], [3.14675, 36.69018], [3.147, 36.69], [3.14752, 36.68969], [3.14795, 36.68947], [3.15261, 36.68747], [3.15579, 36.68612], [3.15728, 36.68548], [3.16068, 36.68403], [3.16095, 36.68391], [3.16341, 36.68286], [3.16429, 36.68245], [3.16554, 36.68177], [3.16621, 36.68141], [3.16763, 36.68047], [3.17123, 36.67802], [3.17177, 36.67765], [3.17224, 36.67733], [3.17261, 36.67708], [3.17307, 36.67672], [3.17336, 36.67649], [3.17394, 36.67601], [3.17452, 36.67548], [3.17523, 36.6748], [3.1759, 36.67416], [3.17694, 36.67315], [3.17873, 36.67146], [3.17908, 36.67113], [3.18183, 36.66848], [3.18315, 36.66719], [3.18348, 36.66681], [3.18383, 36.66636], [3.18412, 36.66594], [3.18438, 36.66548], [3.18466, 36.66494], [3.18481, 36.66455], [3.18504, 36.66385], [3.18527, 36.66264], [3.1853, 36.66224], [3.18532, 36.66192], [3.18532, 36.66153], [3.18526, 36.66089], [3.18512, 36.66026], [3.18498, 36.65984], [3.18386, 36.65671], [3.18362, 36.65609], [3.18337, 36.65545], [3.18291, 36.65411], [3.18212, 36.65193], [3.18198, 36.65171], [3.1817, 36.65155], [3.18152, 36.65137], [3.18121, 36.6501], [3.18107, 36.64988], [3.18079, 36.64993], [3.18105, 36.65068], [3.18131, 36.65142], [3.18166, 36.65243], [3.18175, 36.65297], [3.18181, 36.65319], [3.18197, 36.65348], [3.18249, 36.65416], [3.18265, 36.6544], [3.18279, 36.65468], [3.18293, 36.65505], [3.18322, 36.65597], [3.18345, 36.65704], [3.18353, 36.65746], [3.1837, 36.65823], [3.18382, 36.65858], [3.18417, 36.65938], [3.18437, 36.65985], [3.18462, 36.66045], [3.18477, 36.66079], [3.18495, 36.66122], [3.185, 36.66151], [3.18453, 36.66204], [3.18417, 36.66236], [3.18162, 36.66467], [3.18139, 36.66488], [3.18075, 36.66548], [3.18039, 36.66581], [3.18011, 36.66607], [3.17905, 36.66706], [3.17803, 36.66798], [3.17728, 36.66867], [3.17437, 36.67134], [3.17413, 36.67156], [3.17194, 36.67355], [3.17103, 36.67287], [3.17068, 36.67271], [3.17035, 36.67256], [3.17009, 36.6724], [3.16977, 36.67215], [3.16954, 36.67194], [3.16939, 36.67167], [3.16939, 36.67143], [3.16949, 36.67113], [3.16966, 36.67075], [3.16973, 36.67045], [3.16969, 36.67021], [3.1696, 36.66999], [3.16896, 36.67066], [3.16864, 36.6707], [3.16818, 36.67061], [3.16767, 36.67055], [3.16714, 36.6705], [3.16677, 36.6705], [3.16647, 36.67044], [3.16614, 36.67072], [3.16579, 36.6704], [3.16542, 36.67007], [3.1651, 36.66975], [3.16487, 36.66953], [3.16444, 36.66912], [3.16388, 36.66859], [3.16329, 36.66803], [3.16243, 36.66723], [3.16132, 36.66619], [3.16069, 36.6656], [3.16012, 36.66506], [3.15943, 36.66442], [3.15891, 36.66395], [3.15833, 36.66342], [3.15784, 36.66291], [3.15705, 36.66218], [3.15592, 36.66113], [3.15512, 36.66035], [3.15399, 36.65931], [3.15371, 36.65902], [3.15346, 36.65882], [3.15273, 36.65813], [3.15227, 36.6577], [3.15176, 36.65722], [3.15151, 36.65698], [3.15116, 36.65665], [3.15097, 36.65647], [3.15093, 36.65643]], "friday": false, "agent": "Zineddine", "title": "Tracé 13 · lundi 16/11", "km": 42.1, "n_panels": 0, "rows": true, "total_min": 179, "intro": "Akhdam l'maximum de panneaux, 3andak la liberté f dakhlat ou l'kharjat ou siyi dir itineraire l'rohak pour les panneaux li rana nsiyou nakhadmohom ou njibou GPS ta3hom. Sidi Moussa → Eucalyptus · 2 h 59 khedma, 42,1 km · tkemmel vers ⟦179⟧. Kemmel commune 9bel ma tdkhol l'okhra.", "stops": [{"order": 1, "lat": 36.6110363, "lon": 3.1290382, "svc": 0, "arrive_min": 0.0, "leave_min": 3.8, "note": "<b>Dour f</b> CW 115", "day": "1. Sidi Moussa · ⟦0⟧ → ⟦15⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> l Eucalyptus</small>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 2, "lat": 36.6202989, "lon": 3.1244329, "svc": 0, "arrive_min": 5.0, "leave_min": 8.8, "note": "<b>Dour f</b> CW 115", "day": "1. Sidi Moussa · ⟦0⟧ → ⟦15⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> l Eucalyptus</small>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 3, "lat": 36.626190698903706, "lon": 3.1152541630292037, "svc": 0, "arrive_min": 10.9, "leave_min": 14.9, "note": "<b>Dour f</b> CW 115, Route de Larabaa, RN 61", "day": "1. Sidi Moussa · ⟦0⟧ → ⟦15⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.591087,3.089675\" target=\"_blank\" rel=\"noopener\">RN 61; CW 14</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> l Eucalyptus</small>", "panels": [], "kind": "pass", "commune": "Sidi Moussa"}, {"order": 4, "lat": 36.6426579, "lon": 3.1718685, "svc": 0, "arrive_min": 25.1, "leave_min": 33.0, "note": "<b>Dour f</b> CW 59", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 5, "lat": 36.647828, "lon": 3.1800324, "svc": 0, "arrive_min": 34.1, "leave_min": 38.6, "note": "<b>Dour f</b> CW 59, CW 58", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 6, "lat": 36.66288937826447, "lon": 3.1835836047666066, "svc": 0, "arrive_min": 39.4, "leave_min": 46.2, "note": "<b>Dour f</b> CW 58", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 7, "lat": 36.6694868, "lon": 3.1905116, "svc": 0, "arrive_min": 47.9, "leave_min": 52.4, "note": "<b>Dour f</b> CW 58", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 8, "lat": 36.656572, "lon": 3.2034269, "svc": 0, "arrive_min": 58.2, "leave_min": 69.3, "note": "<b>Dour f</b> CW 118", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 9, "lat": 36.675016418682304, "lon": 3.194097288479044, "svc": 0, "arrive_min": 71.0, "leave_min": 78.1, "note": "<b>Dour f</b> CW 118", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 10, "lat": 36.6887823, "lon": 3.1853288, "svc": 0, "arrive_min": 79.8, "leave_min": 85.7, "note": "<b>Dour f</b> CW 118", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 11, "lat": 36.67983860843985, "lon": 3.1687409513626053, "svc": 0, "arrive_min": 88.8, "leave_min": 103.4, "note": "<b>Dour f</b> RN 61", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 12, "lat": 36.68802917911703, "lon": 3.151558278557707, "svc": 0, "arrive_min": 104.8, "leave_min": 109.1, "note": "<b>Dour f</b> les rues du secteur", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 13, "lat": 36.67112597765264, "lon": 3.1790794817568107, "svc": 0, "arrive_min": 110.6, "leave_min": 132.3, "note": "<b>Dour f</b> les rues du secteur", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 14, "lat": 36.67156086624841, "lon": 3.174125799735697, "svc": 0, "arrive_min": 135.2, "leave_min": 152.5, "note": "<b>Dour f</b> CW 58", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 15, "lat": 36.66217786034106, "lon": 3.1570490247264584, "svc": 0, "arrive_min": 159.1, "leave_min": 170.9, "note": "<b>Dour f</b> RN 61", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}, {"order": 16, "lat": 36.656431570282884, "lon": 3.150929145408018, "svc": 0, "arrive_min": 174.8, "leave_min": 178.7, "note": "<b>Dour f</b> RN 61", "day": "2. Eucalyptus · ⟦25⟧ → ⟦179⟧ · ratissage<br><small>Dkhol men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a> · okhroj men <a href=\"https://maps.google.com/?q=36.642288,3.135135\" target=\"_blank\" rel=\"noopener\">RN 61</a><br>Tsawrou deja, ma t3awedhomch : <a href=\"https://maps.google.com/?q=36.652996,3.146870\" target=\"_blank\" rel=\"noopener\">1</a></small>", "panels": [], "kind": "pass", "commune": "Eucalyptus"}]};
 const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
   terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade" };
 const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pages : la clé distingue chaque tracé
 const CAP = R.total_min, CHUNK = 10, LATE = 15;
 const WA = "213770880535";                   // Zakaria
 
-let state = { done: [], absent: [], skipped: [], news: [], start: null, plan: 540, pauses: [], pauseOn: null, lastAct: null, sound: true, near: [], undone: [], lastSent: null, sentDone: [], finishedAt: null, remSeen: false };
+let state = { done: [], absent: [], skipped: [], news: [], start: null, plan: 540, pauses: [], pauseOn: null, lastAct: null, sound: true, near: [], undone: [], lastSent: null, sentDone: [], finishedAt: null };
 try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
@@ -295,29 +230,20 @@ if (R.friday) document.getElementById("friday").hidden = false;
 
 function render() {
   document.getElementById("sub").textContent = fill(R.intro);
-  document.getElementById("meta").innerHTML = [hm(CAP) + " khedma", String(R.km).replace(".", ",") + " km", R.n_panels + " sûrs", "tkemmel " + T(CAP)].map(x => `<span class="chip">${x}</span>`).join("");
-  document.getElementById("theme").textContent = document.documentElement.dataset.theme === "lil" ? "Nhar" : "Lil";
-  if (R.remarks) {
-    const rb = document.getElementById("remarks");
-    if (rb.hidden) { rb.hidden = false; rb.open = !state.remSeen; document.getElementById("remsum").textContent = R.remarks.title; document.getElementById("remtxt").innerHTML = R.remarks.html; }
-  }
+  if (R.remarks) { const rb = document.getElementById("remarks"); rb.hidden = false; document.getElementById("remsum").textContent = R.remarks.title; document.getElementById("remtxt").innerHTML = R.remarks.html; }
   const sb2 = document.getElementById("sound"); sb2.setAttribute("aria-pressed", String(state.sound)); sb2.textContent = state.sound ? "Son : ON" : "Son : OFF";
   const sp = document.getElementById("startpick");
   sp.innerHTML = state.start ? `Bdit f ${clockOf(state.start)}.`
     : "Nebda f : " + STARTS.map(([m, l]) => `<button type="button" data-start="${m}" aria-pressed="${state.plan === m}">${l}</button>`).join("");
   const pb = document.getElementById("pause"); pb.setAttribute("aria-pressed", !!state.pauseOn);
-  pb.textContent = state.pauseOn ? `Kemmel · ${clockOf(state.pauseOn)}` : "Pause";
+  pb.textContent = state.pauseOn ? `Kemmel (pause men ${clockOf(state.pauseOn)})` : "Pause (salat, makla)";
   const pending = R.stops.filter(s => !closed(s));
   const closedRows = R.stops.length - pending.length;
   const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
   const absPanels = R.stops.filter(isAbs).reduce((a, s) => a + s.panels.length, 0);
   document.getElementById("count").textContent = `${closedRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} sûrs` +
     (absPanels ? ` · ${absPanels} introuvable${absPanels > 1 ? "s" : ""}` : "") + (state.news.length ? ` · ${state.news.length} nouveau${state.news.length > 1 ? "x" : ""}` : "");
-  const comms = [...new Set(R.stops.map(s => s.commune))], curC = (R.stops.find(s => !closed(s)) || {}).commune;
-  document.getElementById("ruban").innerHTML = comms.map(c => {
-    const all = R.stops.filter(s => s.commune === c), dn = all.filter(closed).length, w = Math.round(100 * dn / all.length);
-    return `<div class="seg ${dn === all.length ? "fin" : ""} ${c === curC ? "cur" : ""}" style="flex-grow:${all.length}"><div class="tr"><i style="width:${w}%"></i></div><span>${c}</span></div>`;
-  }).join("");
+  document.getElementById("meter").style.width = (100 * closedRows / R.stops.length) + "%";
 
   const nav = document.getElementById("nav");
   if (pending.length) {
@@ -325,7 +251,7 @@ function render() {
     let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
     if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
     nav.href = url; nav.hidden = false;
-    nav.textContent = next.length > 1 ? `Roh · ${next[0].order} → ${last.order}` : `Roh · ${last.order}`;
+    nav.textContent = next.length > 1 ? `Roh : arrêts ${next[0].order} → ${last.order}` : `Roh : arrêt ${last.order}`;
   } else { nav.hidden = true; }
 
   // chrono, avance ou retard, distance au prochain arrêt
@@ -373,26 +299,11 @@ function render() {
   } else { late.classList.remove("on"); late.innerHTML = ""; }
 
   const firstPending = cur && cur.order;
-  const actsOf = s => {
-    const second = s.kind === "pass"
-      ? `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Khallit · rja3" : "Khalli"}</button>`
-      : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · rja3" : "Introuvable"}</button>`;
-    return `<div class="row3"><a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Plassatha fel maps</a>${second}<button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · rja3" : "Fait"}</button></div>`;
-  };
-  const panelsOf = s => s.panels.length ? `<div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>` : "";
-  const nowEl = document.getElementById("now");
-  if (cur) {
-    nowEl.className = "now" + (cur.kind === "pass" ? " pass" : "");
-    nowEl.innerHTML = `<div class="plaque"><small>ARRÊT</small>${cur.order}</div><div><div class="t">${cur.commune} · ${T(cur.arrive_min)}</div><div class="note">${cur.note}</div></div>${panelsOf(cur)}${actsOf(cur)}`;
-  } else {
-    nowEl.className = "now fin";
-    nowEl.innerHTML = `<div><div class="t">Kemmelt l'tracé, saha !</div><div class="note">Ab3at l'bilan f WhatsApp lta7t.</div></div>`;
-  }
   document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
     let head = "";
     if (s.day && (i === 0 || R.stops[i - 1].day !== s.day)) {
       const inC = R.stops.filter(x => x.day === s.day), dn = inC.filter(closed).length;
-      head = `<li class="dayh"><div class="dir">${fill(s.day)}<div class="k">${dn} / ${inC.length} kemmelt</div></div></li>`;
+      head = `<li class="dayh">${fill(s.day)}<br><small>${dn} / ${inC.length} kemmelt</small></li>`;
     }
     const cls = [isDone(s) ? "done" : "", isAbs(s) ? "absent" : "", isSkip(s) ? "skipped" : "", s.order === firstPending ? "next" : "", s.kind === "pass" ? "pass" : ""].join(" ");
     const tag = isAbs(s) ? `<span class="tag abs">introuvable</span>` : isSkip(s) ? `<span class="tag skp">sauté</span>` : "";
@@ -402,7 +313,7 @@ function render() {
     return `${head}<li class="${cls}" id="s${s.order}">
       <div class="n">${s.order}</div>
       <div>
-        <div class="when"><b>${T(s.arrive_min)}</b> · ${s.note}${tag}</div>
+        <div class="when">${T(s.arrive_min)} · ${s.note}${tag}</div>
         <div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
       </div>
       <div class="acts">
@@ -429,13 +340,13 @@ function render() {
   const undone = [...new Set(state.undone)].filter(o => !closed(R.stops.find(s => s.order === o)));
   const finished = left.length === 0;
   const lines = [`*${R.title} · ${R.agent} · ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}*`,
-    finished ? "TRACÉ TERMINÉ" : `En cours : ${closedRows}/${R.stops.length} étapes`,
-    `Faits (${doneRefs.length}/${R.n_panels} panneaux sûrs) : ${doneRefs.join(", ") || "aucun"}` + (rows(s => isDone(s) && s.kind === "pass").length ? ` · ratissage : ${rows(s => isDone(s) && s.kind === "pass").length} passe${rows(s => isDone(s) && s.kind === "pass").length > 1 ? "s faites" : " faite"}` : ""),
-    `Introuvables : ${absRefs.join(", ") || "aucun"}`,
-    `Ratissage sauté : ${rows(isSkip).length} passe${rows(isSkip).length > 1 ? "s" : ""}`,
-    ...(undone.length ? [`Annulés (Fait retiré) : arrêts ${undone.join(", ")}`] : []),
-    ...(left.length ? [`Pas encore faits : ${leftSafe.length ? leftSafe.join(", ") + " · " : ""}arrêts ${left.map(s => s.order).join(", ")}`] : []),
-    `Nouveaux : ${state.news.length}`,
+    finished ? "✅ TRACÉ TERMINÉ" : `⏳ En cours : ${closedRows}/${R.stops.length} étapes`,
+    `✔️ Faits (${doneRefs.length}/${R.n_panels} panneaux sûrs) : ${doneRefs.join(", ") || "aucun"}` + (rows(s => isDone(s) && s.kind === "pass").length ? ` · ratissage : ${rows(s => isDone(s) && s.kind === "pass").length} passe${rows(s => isDone(s) && s.kind === "pass").length > 1 ? "s faites" : " faite"}` : ""),
+    `❌ Introuvables : ${absRefs.join(", ") || "aucun"}`,
+    `⏭️ Ratissage sauté : ${rows(isSkip).length} passe${rows(isSkip).length > 1 ? "s" : ""}`,
+    ...(undone.length ? [`↩️ Annulés (Fait retiré) : arrêts ${undone.join(", ")}`] : []),
+    ...(left.length ? [`🕒 Pas encore faits : ${leftSafe.length ? leftSafe.join(", ") + " · " : ""}arrêts ${left.map(s => s.order).join(", ")}`] : []),
+    `➕ Nouveaux : ${state.news.length}`,
     ...state.news.map((n, i) => `N${i + 1} ${clockOf(n.t)} https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)} (±${Math.round(n.acc)} m)`),
     state.start ? `Départ ${clockOf(state.start)} · ${hm(elapsed())} de travail` + (pausedMin() >= 1 ? ` · ${hm(pausedMin())} de pause` : "") : `Pas encore démarré (départ prévu ${T(0)})`];
   const txt = encodeURIComponent(lines.join("\n"));
@@ -494,12 +405,6 @@ document.addEventListener("click", e => {
   if (on && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
 });
 
-document.getElementById("theme").addEventListener("click", () => {
-  const nt = document.documentElement.dataset.theme === "lil" ? "nhar" : "lil";
-  document.documentElement.dataset.theme = nt; try { localStorage.setItem(THK, nt); } catch (e) {}
-  render();
-});
-document.getElementById("remarks").addEventListener("toggle", e => { if (!e.target.open && !state.remSeen) { state.remSeen = true; save(); } });
 document.getElementById("sound").addEventListener("click", () => { state.sound = !state.sound; save(); render(); if (state.sound) beep("near"); });
 document.getElementById("pause").addEventListener("click", () => {
   if (state.pauseOn) { state.pauses.push([state.pauseOn, Date.now()]); state.pauseOn = null; toast("Rja3t : les heures tzad b la pause."); }
