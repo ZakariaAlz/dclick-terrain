@@ -47,7 +47,7 @@ dd { margin: 0; }
   <p class="sub">Mis à jour chaque fois qu'un agent touche un bouton sur sa page, et toutes les 10 minutes pendant son travail. La page se rafraîchit seule chaque minute.</p>
   <div class="top"><button type="button" id="refresh">Rafraîchir</button><span class="sub" id="stamp"></span></div>
   <div id="days"></div>
-  <p class="foot">Les compteurs viennent des boutons « Fait », « Introuvable » et « Sauter » des agents ; les questionnaires restent dans SensQuest. Les messages du relais sont gardés 12 heures.</p>
+  <p class="foot">Les compteurs viennent des boutons « Fait », « Introuvable » et « Passer et revenir après » des agents ; les questionnaires restent dans SensQuest. Les messages du relais sont gardés 12 heures.</p>
 </div>
 <script>
 const D = {"topic": "dclick-e_4LFNwWOXVr7v8Ha5vPrD7N", "routes": [{"id": "04", "day": 3, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/Cme3TIlvlNXt/", "total": 180, "n": 0, "communes": "Baraki → Eucalyptus"}, {"id": "05", "day": 3, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/GYduhH-xYSaX/", "total": 172, "n": 7, "communes": "Hydra → Bir Mourad Raïs"}, {"id": "07", "day": 4, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/JVTbfVs7Y6RD/", "total": 178, "n": 7, "communes": "El Achour → Draria → Khraïssia"}, {"id": "08", "day": 4, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/4QL7ejZ-8krn/", "total": 179, "n": 17, "communes": "Hammamet → Raïs Hamidou → Bologhine → Oued Koreiche → Bab El Oued → Casbah"}, {"id": "10", "day": 5, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/ZXG3pxOzFbuK/", "total": 180, "n": 18, "communes": "Chéraga"}, {"id": "11", "day": 5, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/KQbr084UsraZ/", "total": 180, "n": 0, "communes": "Bourouba → El Harrach → Oued Smar"}, {"id": "13", "day": 6, "agent": "Zineddine", "url": "https://zakariaalz.github.io/dclick-terrain/Fpc6CVR1oy_I/", "total": 179, "n": 0, "communes": "Sidi Moussa → Eucalyptus"}, {"id": "14", "day": 6, "agent": "Alae", "url": "https://zakariaalz.github.io/dclick-terrain/WU8LVttsEDDP/", "total": 177, "n": 0, "communes": "Bab Ezzouar → Mohammadia"}]};
@@ -87,7 +87,7 @@ function card(r) {
       <dt>Étapes</dt><dd>${b.closed} / ${b.rows}${pace ? " · " + pace : ""}</dd>
       <dt>Panneaux sûrs</dt><dd>${b.sd} / ${b.sn} faits${b.abs ? ` · <span class="late">${b.abs} introuvable${b.abs > 1 ? "s" : ""}</span>` : ""}</dd>
       <dt>Nouveaux</dt><dd>${b.news}</dd>
-      ${b.skip ? `<dt>Sauté</dt><dd>${b.skip} passe${b.skip > 1 ? "s" : ""} de ratissage</dd>` : ""}
+      ${b.skip ? `<dt>Passés</dt><dd>${b.skip} étape${b.skip > 1 ? "s" : ""} « revenir après »</dd>` : ""}
       ${b.undone ? `<dt>Annulés</dt><dd class="late">${b.undone} arrêt${b.undone > 1 ? "s" : ""}</dd>` : ""}
       ${b.st ? `<dt>Départ</dt><dd>${hhmm(b.st)}${b.fin ? "" : ` · fin prévue ${hhmm(b.st + b.cap * 60000)}`}</dd>` : ""}
       ${!b.fin && b.nx ? `<dt>Prochain</dt><dd>arrêt ${b.nx} · ${b.nxc}</dd>` : ""}

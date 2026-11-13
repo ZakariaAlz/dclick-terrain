@@ -47,7 +47,7 @@ dd { margin: 0; }
   <p class="sub">Mis à jour chaque fois qu'un agent touche un bouton sur sa page, et toutes les 10 minutes pendant son travail. La page se rafraîchit seule chaque minute.</p>
   <div class="top"><button type="button" id="refresh">Rafraîchir</button><span class="sub" id="stamp"></span></div>
   <div id="days"></div>
-  <p class="foot">Les compteurs viennent des boutons « Fait », « Introuvable » et « Sauter » des agents ; les questionnaires restent dans SensQuest. Les messages du relais sont gardés 12 heures.</p>
+  <p class="foot">Les compteurs viennent des boutons « Fait », « Introuvable » et « Passer et revenir après » des agents ; les questionnaires restent dans SensQuest. Les messages du relais sont gardés 12 heures.</p>
 </div>
 <script>
 const D = {"topic": "dclick-test-vGxWTU_yO9lDq8k87lE", "routes": [{"id": "05", "day": 3, "agent": "Alae (test)", "url": "https://zakariaalz.github.io/dclick-terrain/UdEPHC226UFm/", "total": 172, "n": 7, "communes": "Hydra → Bir Mourad Raïs"}]};
@@ -87,7 +87,7 @@ function card(r) {
       <dt>Étapes</dt><dd>${b.closed} / ${b.rows}${pace ? " · " + pace : ""}</dd>
       <dt>Panneaux sûrs</dt><dd>${b.sd} / ${b.sn} faits${b.abs ? ` · <span class="late">${b.abs} introuvable${b.abs > 1 ? "s" : ""}</span>` : ""}</dd>
       <dt>Nouveaux</dt><dd>${b.news}</dd>
-      ${b.skip ? `<dt>Sauté</dt><dd>${b.skip} passe${b.skip > 1 ? "s" : ""} de ratissage</dd>` : ""}
+      ${b.skip ? `<dt>Passés</dt><dd>${b.skip} étape${b.skip > 1 ? "s" : ""} « revenir après »</dd>` : ""}
       ${b.undone ? `<dt>Annulés</dt><dd class="late">${b.undone} arrêt${b.undone > 1 ? "s" : ""}</dd>` : ""}
       ${b.st ? `<dt>Départ</dt><dd>${hhmm(b.st)}${b.fin ? "" : ` · fin prévue ${hhmm(b.st + b.cap * 60000)}`}</dd>` : ""}
       ${!b.fin && b.nx ? `<dt>Prochain</dt><dd>arrêt ${b.nx} · ${b.nxc}</dd>` : ""}
