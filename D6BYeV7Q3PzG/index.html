@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>D&#x27;click · Ratissage · Zineddine · Sortie 6</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* Palette Flasher : orange = action, bleu = fait, magenta = alerte. */
+:root {
+  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
+  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec; --pass: #8a8378;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; --pass: #8d8d8d; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 18px 0 10px; }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { margin: 2px 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--warn-bg); color: var(--fg); font-size: .92rem; }
+.banner b { color: var(--warn); }
+.banner.sq { background: var(--ok-bg); }
+.banner.sq b { color: var(--ok); }
+.bar { position: sticky; top: 0; z-index: 1000; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; font-size: .92rem; }
+.meter { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--btn); width: 0; transition: width .3s; }
+.row2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 14px; border-radius: 10px; font-size: 1.05rem; }
+.newbtn { font: 700 .95rem system-ui, sans-serif; border-radius: 10px; padding: 0 14px; border: 2px solid var(--accent); color: var(--accent); background: var(--panel); cursor: pointer; }
+.status { font-size: .9rem; color: var(--muted); }
+.status b.late { color: var(--warn); }
+.status b.ahead { color: var(--ok); }
+.alert { display: none; background: var(--warn-bg); border-radius: 10px; padding: 10px 12px; font-size: .92rem; }
+.alert.on { display: block; }
+#sendnag { background: var(--ok-bg); }
+#sendnag a { display: block; margin-top: 8px; text-align: center; font-weight: 700; padding: 10px; border-radius: 10px; background: var(--btn); color: var(--on-btn); text-decoration: none; }
+#sendnag.fin { border: 2px solid var(--ok); }
+.alert button { margin-top: 8px; width: 100%; font: 700 1rem system-ui, sans-serif; padding: 10px; border-radius: 10px; border: 2px solid var(--warn); color: var(--warn); background: transparent; cursor: pointer; }
+ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.stops > li.done, .stops > li.absent, .stops > li.skipped { opacity: .55; }
+.stops > li.dayh { display: block; background: none; border: 0; padding: 10px 2px 0; font-weight: 800; font-size: 1.05rem; opacity: 1; }
+.dayh small { font-weight: 500; color: var(--muted); }
+.when a, .dayh a { color: var(--accent); }
+.stops > li.next { border: 2px solid var(--accent); }
+.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+li.pass .n { color: var(--pass); }
+.when { font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.panels { display: grid; gap: 4px; margin-top: 2px; }
+.ref { font: 700 .95rem ui-monospace, Menlo, monospace; border: 1px dashed var(--line); background: transparent; color: var(--fg); border-radius: 6px; padding: 1px 6px; cursor: copy; }
+.tag { display: inline-block; font-size: .78rem; font-weight: 700; border-radius: 6px; padding: 1px 7px; margin-left: 4px; }
+.tag.abs { color: var(--warn); background: var(--warn-bg); }
+.tag.skp { color: var(--muted); background: var(--line); }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 8px; margin-top: 8px; }
+.acts:has(> :nth-child(4)) { grid-template-columns: .75fr 1fr 1fr 1.1fr; gap: 6px; }
+.acts:has(> :nth-child(4)) a, .acts:has(> :nth-child(4)) button { font-size: .88rem; padding: 12px 4px; }
+.acts a, .acts button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 12px 6px; text-align: center; text-decoration: none; cursor: pointer; background: transparent; }
+.acts a { border: 1px solid var(--line); color: var(--fg); }
+.acts .abs { border: 1px solid var(--warn); color: var(--warn); }
+.acts .ok { border: 2px solid var(--ok); color: var(--ok); }
+li.done .acts .ok { background: var(--ok-bg); }
+li.absent .acts .abs { background: var(--warn-bg); }
+.send { display: block; width: 100%; margin-top: 12px; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); font: 600 1rem system-ui, sans-serif; text-align: center; text-decoration: none; }
+.send.main { background: var(--btn); color: var(--on-btn); border: 0; }
+details { margin-top: 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+summary { font-weight: 700; cursor: pointer; }
+details ol, details ul { margin: 8px 0 0; padding-left: 20px; }
+details li { padding: 2px 0; }
+#map { height: 360px; border-radius: 10px; margin-top: 10px; position: relative; z-index: 0; isolation: isolate; }
+.maptools { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+.pin span { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; color: #fff; font: 700 11px/1 system-ui, sans-serif; box-shadow: 0 1px 3px rgba(0,0,0,.45); }
+.pin.nx span { font-size: 13px; box-shadow: 0 0 0 5px rgba(217,56,19,.35), 0 1px 3px rgba(0,0,0,.45); }
+.pin.ps span { color: #3d3a35; background: #fff !important; border: 2px solid #6b655b; }
+.pin.ps.ok span { color: #fff; background: #1c4452 !important; border-color: #fff; }
+.maptools button { font: 600 .9rem system-ui, sans-serif; border-radius: 8px; padding: 8px 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
+.news li { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.news button { font: 600 .85rem system-ui, sans-serif; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; padding: 4px 8px; cursor: pointer; }
+.startpick { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .9rem; color: var(--muted); }
+.startpick button { font: 600 .9rem system-ui, sans-serif; border-radius: 999px; padding: 6px 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.startpick button[aria-pressed="true"] { border: 2px solid var(--accent); color: var(--accent); }
+.tools { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.tools button { font: 600 .9rem system-ui, sans-serif; border-radius: 10px; padding: 9px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.tools button[aria-pressed="true"] { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
+.sens { display: inline-block; margin-top: 4px; font-size: .85rem; font-weight: 600; color: var(--warn); }
+.prog small { color: var(--muted); }
+.remarks { margin-top: 10px; background: var(--ok-bg); border: 0; }
+.remarks ol { padding-left: 20px; }
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 10px; font-size: .92rem; max-width: 92vw; z-index: 1000; display: none; }
+.toast.on { display: block; }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.nav.arrive { border: 0; width: 100%; cursor: pointer; font-family: inherit; }
+.nav[hidden] { display: none; }
+h2.ch { font-size: 1.1rem; margin: 26px 0 8px; }
+ul.communes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.communes li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; }
+.communes li.cur { border: 2px solid var(--accent); }
+.communes li.fin { opacity: .55; }
+.communes small { color: var(--muted); display: block; }
+.communes button { font: 700 .9rem system-ui, sans-serif; border-radius: 10px; padding: 8px 12px; border: 2px solid var(--accent); color: var(--accent); background: transparent; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">D&#x27;click · Ratissage · 2026-11-18</div>
+    <h1>Zineddine · Sortie 6</h1>
+    <p class="sub" id="sub"></p>
+    <div class="banner sq"><b>Tsawer w l'questionnaire ghir f SensQuest.</b> Had la page t'guidik bark.</div>
+    <details class="remarks" id="remarks" open hidden><summary id="remsum"></summary><div id="remtxt"></div></details>
+  </header>
+
+  <div class="bar">
+    <div class="prog"><span id="count"></span><span id="clock"></span></div>
+    <div class="meter"><i id="meter"></i></div>
+    <button class="nav arrive" id="arrive" type="button" hidden></button>
+    <div class="row2"><a class="nav" id="nav" target="_blank" rel="noopener"></a><button class="newbtn" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button></div>
+    <div class="tools"><button type="button" id="pause" aria-pressed="false">Pause (salat, makla)</button><button type="button" id="wake" aria-pressed="false">Garder l'écran allumé</button><button type="button" id="sound" aria-pressed="true">Son : ON</button></div>
+    <div class="status" id="status"></div>
+    <div class="alert" id="late"></div>
+    <div class="alert" id="sendnag"></div>
+  </div>
+
+  <details id="mapbox">
+    <summary>La carte</summary>
+    <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
+    <div class="maptools"><button type="button" id="locate">Win rani ?</button><button type="button" id="gonext">Prochain arrêt</button><button type="button" id="fit">Tout le tracé</button></div>
+  </details>
+
+  <ol class="stops" id="stops"></ol>
+
+  <h2 class="ch">Les communes ta3ak</h2>
+  <ul class="communes" id="communes"></ul>
+
+  <details id="newsbox" hidden>
+    <summary id="newssum">Les panneaux jdad</summary>
+    <ol class="news" id="news"></ol>
+  </details>
+
+  <a class="send main" id="send" target="_blank" rel="noopener">Ab3atli l'bilan f WhatsApp</a>
+  <a class="send" href="tel:+213770880535">Ida 3andak question sa9sini wala 3ayatli f telephone</a>
+
+  <details>
+    <summary>Kifach tkhdem b la page</summary>
+    <ul>
+      <li><b>Tsawer w questionnaire :</b> ghir f SensQuest.</li>
+      <li><b>Wselt :</b> ki tousel l commune, la page tdi la position ta3ak w t3tik l'tracé : tebda b l'panneau l9rib lik, w tkemmel f jiht la commune li jaya. Kayen « Wselt hna » f la liste ida bghit commune okhra.</li>
+      <li><b>Les points gris</b> f la carte : panneaux deja mlah, ma t3awedhomch.</li>
+      <li><b>Maps :</b> Google Maps l had l'arrêt. <b>Roh :</b> les 10 arrêts jayin.</li>
+      <li><b>Fait :</b> ki dir wa7ed. <b>Introuvable :</b> makach panneau. <b>Passer et revenir après :</b> ki ykoun m3amar, rja3lou mba3d.</li>
+      <li>Touchi l'<b>code</b> (ex. 05-01) : ytna9el, 7ottou f « Remarque » f SensQuest.</li>
+      <li><b>+ Nouveau :</b> panneau jdid. La page tsajjel l'GPS w t3tik code (ex. 05-08) : aktab « NOUVEAU 05-08 » f SensQuest.</li>
+      <li><b>Pause :</b> l'chrono yo9ef (salat, makla) : l'wa9t ta3 la pause ma ytt7asbech.</li>
+      <li><b>Ab3atli l'bilan :</b> f kol commune w f lekher.</li>
+    </ul>
+  </details>
+  <details>
+    <summary>Rappels</summary>
+    <ol>
+      <li>Red balak 9bal matsawar : verifiyi daymen ida ta9dar tsawar, surtout fel playas li fihom doula kima fel Val.</li>
+      <li>O9ef l'moto mlih 9bel ma tkharraj l'telephone.</li>
+      <li>GPS : stenna yahbat ta7t 10 m 9bel ma tvalidi.</li>
+      <li>Photos : wa7da men b3id (25 à 30 m) w les photos le9rab, la marque w l'slogan ybanou mlih.</li>
+      <li>Kemmel l'tracé kamel.</li>
+    </ol>
+  </details>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const R = {"key": "rat-2026-11-18-D6BYeV7Q3PzG", "id": "R6", "day": 1, "topic": "", "remarks": null, "geom": [], "friday": false, "agent": "Zineddine · Sortie 6", "title": "D'click · Ratissage · 2026-11-18", "km": 0, "rows": true, "total_min": 240, "n_panels": 52, "stops": [], "communes": [{"name": "Alger Centre", "targets": [{"ref": "ACX-01", "id": "072a7d4e-2205-4b6f-bb5c-7d930364b37f", "lat": 36.778517, "lon": 3.050983, "support": "panneau_4x3", "label": "Panneau 4x3 près de Avant L'entrée De L'hotel El Aurassi", "motif": "sans_photo"}, {"ref": "ACX-02", "id": "09af1285-9437-41b0-a3e8-65cbc4307fab", "lat": 36.777469, "lon": 3.060423, "support": "panneau_4x3", "label": "Panneau 4x3 · Placette Face Hôtel Safir", "motif": "jamais_vu"}, {"ref": "ACX-03", "id": "0e90d69d-34e9-4e05-b174-5f391e4a565d", "lat": 36.774397, "lon": 3.061596, "support": "panneau_4x3", "label": "Panneau 4x3 près de à Coté Du Parking Entrée Du Port D'Alger", "motif": "sans_photo"}, {"ref": "ACX-04", "id": "20c0752a-9cb4-448f-9718-3f18402ce841", "lat": 36.762651, "lon": 3.040422, "support": "panneau_4x3", "label": "Panneau 4x3 · 42 Avenue Du Colonel Bougara", "motif": "jamais_vu"}, {"ref": "ACX-05", "id": "23c410f3-04df-47cc-ac6d-1a426551ecaf", "lat": 36.778083, "lon": 3.050502, "support": "panneau_4x3", "label": "Panneau 4x3 · Hotel el aurassi", "motif": "jamais_vu"}, {"ref": "ACX-06", "id": "249e2232-f4ed-4ce0-8348-a93788fe65fa", "lat": 36.772481, "lon": 3.052564, "support": "panneau_4x3", "label": "Panneau 4x3 · Bd Krim Belkacem Placette à Coté De La Mosquée", "motif": "jamais_vu"}, {"ref": "ACX-07", "id": "25a3e2ed-e669-4b71-af82-285762a3a26c", "lat": 36.768342, "lon": 3.049188, "support": "panneau_4x3", "label": "Panneau 4x3 · Pont de Telemly", "motif": "jamais_vu"}, {"ref": "ACX-08", "id": "29fa41c9-a986-43eb-a6ab-7871b37da59a", "lat": 36.765506, "lon": 3.045245, "support": "panneau_4x3", "label": "Panneau 4x3 · Au Niveau De L'Aérohabitat Et Descente Vers Di", "motif": "jamais_vu"}, {"ref": "ACX-09", "id": "359b8906-63ac-478f-ba16-b4890b12eaa5", "lat": 36.775241, "lon": 3.060996, "support": "panneau_4x3", "label": "Panneau 4x3 · En Face Entrée Parking Du Port Vers Sortie D'A", "motif": "jamais_vu"}, {"ref": "ACX-10", "id": "36649323-c441-4a14-b1dc-f6ff59fe4874", "lat": 36.769711, "lon": 3.054671, "support": "panneau_4x3", "label": "Panneau 4x3 · Ministère des jeunes", "motif": "jamais_vu"}, {"ref": "ACX-11", "id": "38e6f9d2-bea0-4a9c-a3cd-b6f038fa76d4", "lat": 36.76325, "lon": 3.040056, "support": "panneau_4x3", "label": "Panneau 4x3 · Rentacar", "motif": "jamais_vu"}, {"ref": "ACX-12", "id": "3c835aea-7873-43ae-8f28-c85973659a52", "lat": 36.767235, "lon": 3.05123, "support": "panneau_4x3", "label": "Panneau 4x3 · الوكالة الوطنية لتسلية الشباب", "motif": "jamais_vu"}, {"ref": "ACX-13", "id": "3d7bf111-6ad0-4641-bd5b-15f2c4931cda", "lat": 36.7692, "lon": 3.053994, "support": "panneau_4x3", "label": "Panneau 4x3 · Au N°24 - Au Niveau CME Berkani", "motif": "jamais_vu"}, {"ref": "ACX-14", "id": "411c5d36-a7d3-4987-b91d-4bef570dfed0", "lat": 36.763616, "lon": 3.039803, "support": "panneau_4x3", "label": "Panneau 4x3 · 42 Avenue Du Colonel Bougara", "motif": "jamais_vu"}, {"ref": "ACX-15", "id": "4fd3d940-c668-4aaf-b89a-8ef364253fad", "lat": 36.773741, "lon": 3.059856, "support": "abribus", "label": "Abribus près de à Coté Du Parking Entrée Du Port D'Alger", "motif": "sans_photo"}, {"ref": "ACX-16", "id": "509189fc-902d-4ca1-9203-3d788546dcf0", "lat": 36.766092, "lon": 3.047334, "support": "panneau_4x3", "label": "Panneau 4x3 · Au Nivau Montée Vers L'aérohabitat", "motif": "jamais_vu"}, {"ref": "ACX-17", "id": "571e9db0-a64b-4842-85f7-6824a2dfadc9", "lat": 36.765346, "lon": 3.044893, "support": "facade", "label": "Façade · Aéro habitat", "motif": "jamais_vu"}, {"ref": "ACX-18", "id": "5b64ab30-662a-4a40-b367-8945c63f8b28", "lat": 36.777469, "lon": 3.060423, "support": "panneau_4x3", "label": "Panneau 4x3 · Placette Face Hôtel Safir", "motif": "jamais_vu"}, {"ref": "ACX-19", "id": "68016824-04bc-4342-a852-55db51e3f804", "lat": 36.778397, "lon": 3.050914, "support": "panneau_4x3", "label": "Panneau 4x3 · Avant L'entrée De L'hotel El Aurassi", "motif": "jamais_vu"}, {"ref": "ACX-20", "id": "6b52978c-a383-4228-849d-69594881f2f6", "lat": 36.778083, "lon": 3.050502, "support": "panneau_4x3", "label": "Panneau 4x3 · Hotel el aurassi", "motif": "jamais_vu"}, {"ref": "ACX-21", "id": "6daabbdf-b830-4386-bf4a-e302d4f4a692", "lat": 36.766052, "lon": 3.047271, "support": "panneau_4x3", "label": "Panneau 4x3 · Aéro habitat", "motif": "jamais_vu"}, {"ref": "ACX-22", "id": "75f84ccc-0269-4371-a136-7437458b39fd", "lat": 36.774742, "lon": 3.053962, "support": "abribus", "label": "Abribus · Ministère de la culture et du cinéma", "motif": "jamais_vu"}, {"ref": "ACX-23", "id": "7a2d6c9d-9401-4fe8-9c16-904d337df9e3", "lat": 36.765486, "lon": 3.04503, "support": "facade", "label": "Façade · Aéro habitat", "motif": "jamais_vu"}, {"ref": "ACX-24", "id": "7bfb6c0d-7999-4515-9bfe-5e43aeb383ed", "lat": 36.76206, "lon": 3.047432, "support": "abribus", "label": "Abribus · Ministère du Commerce Extérieur et de la Promotion", "motif": "jamais_vu"}, {"ref": "ACX-25", "id": "7d0b69f5-5ff8-48a8-8677-22695bbb9441", "lat": 36.766192, "lon": 3.045965, "support": "panneau_4x3", "label": "Panneau 4x3 · BD Krim Belkacem Avant Le Tunnel De L'aérohabi", "motif": "jamais_vu"}, {"ref": "ACX-26", "id": "7d829766-b359-48c4-898d-1ab8fe5051d0", "lat": 36.766383, "lon": 3.046744, "support": "panneau_4x3", "label": "Panneau 4x3 · Bd Des Frères Azzab Immeuble Algeria / N°96 Au", "motif": "jamais_vu"}, {"ref": "ACX-27", "id": "7dbb8beb-caa4-4af0-8cbb-d35928492838", "lat": 36.772481, "lon": 3.052564, "support": "panneau_4x3", "label": "Panneau 4x3 · Bd Krim Belkacem Placette à Coté De La Mosquée", "motif": "jamais_vu"}, {"ref": "ACX-28", "id": "8174e61f-9a30-4419-9879-fc92514f674b", "lat": 36.766092, "lon": 3.047334, "support": "panneau_4x3", "label": "Panneau 4x3 · Au Nivau Montée Vers L'aérohabitat", "motif": "jamais_vu"}, {"ref": "ACX-29", "id": "821cd2fe-c323-432a-b804-62e97feaff68", "lat": 36.764233, "lon": 3.044236, "support": "panneau_4x3", "label": "Panneau 4x3 · Jardin Tifariti (ex Sfindja)", "motif": "jamais_vu"}, {"ref": "ACX-30", "id": "88c2529f-156c-43bf-829f-eb918980713a", "lat": 36.768921, "lon": 3.053642, "support": "panneau_4x3", "label": "Panneau 4x3 · Cme berkani", "motif": "jamais_vu"}, {"ref": "ACX-31", "id": "8bd1a3d5-512e-4d12-b7b9-593bee0c1fc4", "lat": 36.77325, "lon": 3.052778, "support": "ecran_led", "label": "Écran LED · Ecran Digital 4X3 – Boulevard Krim Belkacem", "motif": "jamais_vu"}, {"ref": "ACX-32", "id": "8ea40350-04fd-42de-a12a-9ee164935e6a", "lat": 36.778397, "lon": 3.050914, "support": "panneau_4x3", "label": "Panneau 4x3 · Avant L'entrée De L'hotel El Aurassi", "motif": "jamais_vu"}, {"ref": "ACX-33", "id": "9537aaf0-5970-4241-939f-9ea25e0e0735", "lat": 36.774839, "lon": 3.061328, "support": "panneau_4x3", "label": "Panneau 4x3 · Parking du port d’Alger", "motif": "jamais_vu"}, {"ref": "ACX-34", "id": "977a5fb3-38c9-47f4-8027-3e15ce89fd2a", "lat": 36.773437, "lon": 3.052697, "support": "panneau_4x3", "label": "Panneau 4x3 · Mosquée cheikh el ouertilani", "motif": "jamais_vu"}, {"ref": "ACX-35", "id": "9f249c82-eeea-46de-a140-11f80717dd46", "lat": 36.763431, "lon": 3.043986, "support": "panneau_4x3", "label": "Panneau 4x3 · N 136 - Allant Vers Rond Point Palais Du Peupl", "motif": "jamais_vu"}, {"ref": "ACX-36", "id": "a7d399e6-6b7b-468d-9ea5-34f56c3ebeb4", "lat": 36.7692, "lon": 3.053994, "support": "panneau_4x3", "label": "Panneau 4x3 · Au N°24 - Au Niveau CME Berkani", "motif": "jamais_vu"}, {"ref": "ACX-37", "id": "b31a7a67-4e52-40c8-abf1-17917542de33", "lat": 36.766192, "lon": 3.045965, "support": "panneau_4x3", "label": "Panneau 4x3 · BD Krim Belkacem Avant Le Tunnel De L'aérohabi", "motif": "jamais_vu"}, {"ref": "ACX-38", "id": "b3b76d85-c9af-4b34-bc89-3ed348c86954", "lat": 36.76832, "lon": 3.049246, "support": "ecran_led", "label": "Écran LED · Ecran Digital 4X3 – B Rue Ben Batouche Abdelali", "motif": "jamais_vu"}, {"ref": "ACX-39", "id": "b67ee3b0-e0bf-4d47-91fd-5b1bc3b42305", "lat": 36.77284, "lon": 3.052576, "support": "panneau_4x3", "label": "Panneau 4x3 · Mosquée", "motif": "jamais_vu"}, {"ref": "ACX-40", "id": "c8ff01d3-cbfe-4fb4-8008-82fa28fa7c36", "lat": 36.774917, "lon": 3.061224, "support": "panneau_4x3", "label": "Panneau 4x3 · à Coté Du Parking Entrée Du Port D'Alger", "motif": "jamais_vu"}, {"ref": "ACX-41", "id": "cc07a914-6fcc-4572-8741-146ecad83442", "lat": 36.771674, "lon": 3.055843, "support": "panneau_4x3", "label": "Panneau 4x3 · Tunel des facultés", "motif": "jamais_vu"}, {"ref": "ACX-42", "id": "d0b132c7-ce1f-40bb-bcf8-7c2fb6674ae8", "lat": 36.770286, "lon": 3.055305, "support": "panneau_4x3", "label": "Panneau 4x3 · Tunnel Des Facultés", "motif": "jamais_vu"}, {"ref": "ACX-43", "id": "d52a10df-d689-49e9-b7bd-4625f81c3403", "lat": 36.764233, "lon": 3.044236, "support": "panneau_4x3", "label": "Panneau 4x3 · Jardin Tifariti (ex Sfindja)", "motif": "jamais_vu"}, {"ref": "ACX-44", "id": "d98d84b1-939b-496f-b573-30a8897e4b9e", "lat": 36.765723, "lon": 3.045575, "support": "panneau_4x3", "label": "Panneau 4x3 · Aéro habitat", "motif": "jamais_vu"}, {"ref": "ACX-45", "id": "e01d7cf2-4bbd-4777-b543-437d248fb7cc", "lat": 36.777394, "lon": 3.060291, "support": "panneau_4x3", "label": "Panneau 4x3 · المجلس الشعبي الوطني", "motif": "jamais_vu"}, {"ref": "ACX-46", "id": "e400c071-502b-4882-a9d9-ceb496c27325", "lat": 36.766567, "lon": 3.049315, "support": "panneau_4x3", "label": "Panneau 4x3 · Pompe a essence boulvar mohamed v", "motif": "jamais_vu"}, {"ref": "ACX-47", "id": "e4bef1dc-7161-4f63-af52-01d22e8de145", "lat": 36.775241, "lon": 3.060996, "support": "panneau_4x3", "label": "Panneau 4x3 · En Face Entrée Parking Du Port Vers Sortie D'A", "motif": "jamais_vu"}, {"ref": "ACX-48", "id": "e7843727-0cb3-48b2-a1a6-afcea28de57f", "lat": 36.763431, "lon": 3.043986, "support": "panneau_4x3", "label": "Panneau 4x3 · N 136 - Allant Vers Rond Point Palais Du Peupl", "motif": "jamais_vu"}, {"ref": "ACX-49", "id": "e9f7d63b-fa67-43d7-9185-4a7ade96d53e", "lat": 36.773375, "lon": 3.057896, "support": "panneau_4x3", "label": "Panneau 4x3 · Albert 1er La Grande Poste", "motif": "jamais_vu"}, {"ref": "ACX-50", "id": "ec201285-57f6-4d23-8d1c-7dedd401d26a", "lat": 36.762651, "lon": 3.040422, "support": "panneau_4x3", "label": "Panneau 4x3 · 36 Avenue Du Colonel Bougara", "motif": "jamais_vu"}, {"ref": "ACX-51", "id": "ec415277-4950-452f-a38e-ea392a15fd4f", "lat": 36.769731, "lon": 3.054617, "support": "panneau_4x3", "label": "Panneau 4x3 · Bd Mohamed V / Au N°7 - En Face De La CNEP", "motif": "jamais_vu"}, {"ref": "ACX-52", "id": "f9714122-e78d-4a87-b3eb-48982c92447a", "lat": 36.774917, "lon": 3.061224, "support": "panneau_4x3", "label": "Panneau 4x3 · à Coté Du Parking Entrée Du Port D'Alger", "motif": "jamais_vu"}], "ok": [[36.774681, 3.061365], [36.77746, 3.060359], [36.772835, 3.058584], [36.764037, 3.05817], [36.77225, 3.059843], [36.775041, 3.06116]]}], "intro": "4 h ta3 ratissage. Ki tousel l awel commune, dir « Wselt » : la page t3tik l'tracé men l'panneau l9rib lik w tkhrjek f jiht la commune li jaya. Tsawer w l'questionnaire ghir f SensQuest. Ki yebda yetla3 l'lil, che33el l'flash, bessah ma tkhdemch f had l'wa9t, w ma tfoutch 18:30."};
+const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
+  terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade" };
+const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pages : la clé distingue chaque tracé
+const CAP = R.total_min, CHUNK = 10, LATE = 30;
+const WA = "213770880535";                   // Zakaria
+
+let state = { done: [], absent: [], skipped: [], news: [], start: null, plan: 540, pauses: [], pauseOn: null, lastAct: null, sound: true, near: [], undone: [], lastSent: null, sentDone: [], finishedAt: null, stops: [] };
+try { state = Object.assign(state, JSON.parse(localStorage.getItem(KEY)) || {}); } catch (e) {}
+R.stops = state.stops;
+const save = () => {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  // secours : l'avancement voyage aussi dans l'adresse de la page, que le navigateur rouvre après un appel
+  try { history.replaceState(null, "", "#p=" + btoa(unescape(encodeURIComponent(JSON.stringify(state))))); } catch (e) {}
+};
+// L'adresse peut venir d'un lien qu'on n'a pas écrit : on ne reprend que des champs de forme attendue.
+function cleanState(x) {
+  const num = v => typeof v === "number" && isFinite(v);
+  const ints = a => Array.isArray(a) ? a.filter(num) : [];
+  const strs = a => Array.isArray(a) ? a.filter(v => typeof v === "string" && /^[\p{L}\p{N} '’.-]{1,60}$/u.test(v)) : [];
+  const out = { done: ints(x.done), absent: ints(x.absent), skipped: ints(x.skipped), near: ints(x.near), undone: ints(x.undone),
+    sentDone: strs(x.sentDone), pauses: Array.isArray(x.pauses) ? x.pauses.filter(p => Array.isArray(p) && p.length === 2 && num(p[0]) && num(p[1])).map(p => [p[0], p[1]]) : [],
+    news: Array.isArray(x.news) ? x.news.filter(n => n && num(n.t) && num(n.lat) && num(n.lon) && num(n.acc))
+      .map(n => ({ t: n.t, lat: n.lat, lon: n.lon, acc: n.acc, code: typeof n.code === "string" && /^[A-Z0-9-]{1,12}$/.test(n.code) ? n.code : undefined })) : [],
+    sound: x.sound !== false };
+  for (const k of ["start", "pauseOn", "lastAct", "lastSent", "finishedAt"]) out[k] = num(x[k]) ? x[k] : null;
+  if (num(x.plan)) out.plan = x.plan;
+  // Plan de ratissage : chaque arrêt est reconstruit à partir des panneaux de la page (R.communes), jamais du texte de l'adresse.
+  if (Array.isArray(x.stops) && Array.isArray(R.communes)) {
+    const byRef = {};
+    R.communes.forEach(c => (c.targets || []).forEach(t => { byRef[t.ref] = { t, c: c.name }; }));
+    const esc = v => String(v).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+    out.stops = x.stops.filter(st => st && num(st.order) && Array.isArray(st.panels) && st.panels.length && st.panels.every(p => p && byRef[p.ref]))
+      .map(st => {
+        const ts = st.panels.map(p => byRef[p.ref]);
+        return { order: st.order, lat: ts[0].t.lat, lon: ts[0].t.lon, svc: num(st.svc) ? st.svc : 0,
+          arrive_min: num(st.arrive_min) ? st.arrive_min : 0, leave_min: num(st.leave_min) ? st.leave_min : 0,
+          kind: "stop", commune: ts[0].c, day: esc(ts[0].c), note: "",
+          panels: ts.map(({ t }) => ({ ref: t.ref, support: t.support, label: t.label || "" })) };
+      });
+  }
+  return out;
+}
+try {
+  const m = location.hash.match(/^#p=(.+)$/);
+  if (m && !localStorage.getItem(KEY)) state = Object.assign(state, cleanState(JSON.parse(decodeURIComponent(escape(atob(m[1]))))));
+} catch (e) {}
+try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch (e) {}
+addEventListener("pagehide", () => save());
+document.addEventListener("visibilitychange", () => { if (document.hidden) save(); });
+
+const pt = s => s.lat.toFixed(6) + "," + s.lon.toFixed(6);
+const hm = m => Math.floor(m / 60) + " h " + String(Math.round(m % 60)).padStart(2, "0");
+const clockOf = t => new Date(t).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const isDone = s => state.done.includes(s.order), isAbs = s => state.absent.includes(s.order), isSkip = s => state.skipped.includes(s.order);
+const closed = s => isDone(s) || isAbs(s) || isSkip(s);
+const dist = (a, b) => { const k = Math.PI / 180, x = (b.lon - a.lon) * k * Math.cos((a.lat + b.lat) * k / 2), y = (b.lat - a.lat) * k; return 6371000 * Math.hypot(x, y); };
+const fmtD = m => m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1).replace(".", ",") + " km";
+let me = null, watchId = null;
+const pausedMin = () => {   // seule la part d'une pause après le départ compte (une pause avant le 1er arrêt ne crée pas de travail négatif)
+  const lo = state.start || 0, now = Date.now();
+  const all = state.pauses.concat(state.pauseOn ? [[state.pauseOn, now]] : []);
+  return all.reduce((a, [s, e]) => a + Math.max(0, Math.min(e, now) - Math.max(s, lo)), 0) / 60000;
+};
+const base = () => { if (!state.start) return state.plan; const d = new Date(state.start); return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60; };
+const T = m => { const x = Math.round(base() + m + pausedMin()); return Math.floor(x / 60) % 24 + " h " + String(x % 60).padStart(2, "0"); };
+const fill = s => String(s).replace(/⟦(\d+)⟧/g, (_, n) => T(Number(n)));
+const elapsed = () => Math.max(0, (Date.now() - state.start) / 60000 - pausedMin());
+
+// Sons discrets (Web Audio, volume bas) + courte vibration. Le navigateur exige un premier toucher pour les autoriser.
+let AC = null;
+function beep(kind) {
+  if (!state.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const notes = kind === "near" ? [660, 880] : kind === "late" ? [440, 330] : [520];
+    notes.forEach((f, i) => {
+      const o = AC.createOscillator(), g = AC.createGain(), t0 = AC.currentTime + i * 0.22;
+      o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.07, t0 + 0.03); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.2);
+      o.connect(g).connect(AC.destination); o.start(t0); o.stop(t0 + 0.22);
+    });
+    if (navigator.vibrate) navigator.vibrate(kind === "late" ? [80, 60, 80] : 80);
+  } catch (e) {}
+}
+document.addEventListener("pointerdown", () => { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); AC.resume(); } catch (e) {} }, { once: true });
+let lastNag = 0, lateBeeped = false;
+// Avancement vers la page de pilotage (relais ntfy.sh, canal secret) : code du tracé, compteurs et heures, ni nom ni GPS.
+let pingTimer = null, lastPing = 0;
+function ping() {
+  if (!R.topic) return;
+  clearTimeout(pingTimer);
+  pingTimer = setTimeout(() => {
+    const left = R.stops.filter(s => !closed(s));
+    const prev = R.stops.filter(closed).pop();
+    const body = { t: R.id, j: R.day, rows: R.stops.length, closed: R.stops.length - left.length,
+      sd: R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0), sn: R.n_panels,
+      abs: R.stops.filter(isAbs).reduce((a, s) => a + s.panels.length, 0), skip: R.stops.filter(isSkip).length,
+      undone: [...new Set(state.undone)].filter(o => !closed(R.stops.find(s => s.order === o))).length,
+      news: state.news.length, st: state.start, pz: !!state.pauseOn, fin: left.length === 0 && !!state.start,
+      nx: left[0] ? left[0].order : null, nxc: left[0] ? left[0].commune : null,
+      late: state.start && prev ? Math.round(elapsed() - prev.leave_min) : 0, sent: state.lastSent, cap: CAP, at: Date.now(),
+      cc: [...new Set(R.stops.map(s => s.commune))].map(c => { const all = R.stops.filter(s => s.commune === c); return [all.filter(closed).length, all.length]; }) };
+    fetch("https://ntfy.sh/" + R.topic, { method: "POST", body: JSON.stringify(body) }).then(() => { lastPing = Date.now(); }, () => {});
+  }, 800);
+}
+function toast(t) { const el = document.getElementById("toast"); el.textContent = t; el.classList.add("on"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("on"), 3500); }
+
+
+function render() {
+  document.getElementById("sub").textContent = fill(R.intro);
+  if (R.remarks) { const rb = document.getElementById("remarks"); rb.hidden = false; document.getElementById("remsum").textContent = R.remarks.title; document.getElementById("remtxt").innerHTML = R.remarks.html; }
+  const sb2 = document.getElementById("sound"); sb2.setAttribute("aria-pressed", String(state.sound)); sb2.textContent = state.sound ? "Son : ON" : "Son : OFF";
+  const pb = document.getElementById("pause"); pb.setAttribute("aria-pressed", !!state.pauseOn);
+  pb.textContent = state.pauseOn ? `Kemmel (pause men ${clockOf(state.pauseOn)})` : "Pause (salat, makla)";
+  const pending = R.stops.filter(s => !closed(s));
+  const closedRows = R.stops.length - pending.length;
+  const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
+  const absPanels = R.stops.filter(isAbs).reduce((a, s) => a + s.panels.length, 0);
+  document.getElementById("count").textContent = `${closedRows} / ${R.stops.length} étapes · ${donePanels} / ${R.n_panels} sûrs` +
+    (absPanels ? ` · ${absPanels} introuvable${absPanels > 1 ? "s" : ""}` : "") + (state.news.length ? ` · ${state.news.length} nouveau${state.news.length > 1 ? "x" : ""}` : "");
+  document.getElementById("meter").style.width = (R.stops.length ? 100 * closedRows / R.stops.length : 0) + "%";
+  renderCommunes(pending);
+
+  const nav = document.getElementById("nav");
+  if (pending.length) {
+    const next = pending.slice(0, CHUNK), last = next[next.length - 1];
+    let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
+    if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
+    nav.href = url; nav.hidden = false;
+    nav.textContent = next.length > 1 ? `Roh : arrêts ${next[0].order} → ${last.order}` : `Roh : arrêt ${last.order}`;
+  } else { nav.hidden = true; }
+
+  // chrono, avance ou retard, distance au prochain arrêt
+  const st = document.getElementById("status"), clock = document.getElementById("clock"), late = document.getElementById("late");
+  let delta = 0;
+  if (state.start) {
+    const el = elapsed();
+    clock.textContent = `${hm(Math.max(0, el))} / ${hm(CAP)}`;
+    const lastClosed = R.stops.filter(closed).pop();
+    delta = lastClosed ? el - lastClosed.leave_min : 0;
+    const pace = Math.abs(delta) < 3 ? "rak f l'wa9t" : delta > 0 ? `<b class="late">rak m3attel b ${Math.round(delta)} min</b>` : `<b class="ahead">rak 9bel l'wa9t b ${Math.round(-delta)} min</b>`;
+    st.innerHTML = state.pauseOn ? `Pause men ${clockOf(state.pauseOn)} : l'chrono wa9ef.`
+      : `Bdit ${clockOf(state.start)} · tkemmel vers ${T(CAP)} · ${pace}.`;
+  } else {
+    clock.textContent = hm(CAP);
+    st.textContent = `${hm(CAP)} khedma. L'chrono yebda ki tdir « Fait » f l'awel arrêt.`;
+  }
+  // rappel discret : plus de 5 min au-delà du temps prévu depuis la dernière action
+  if (state.start && !state.pauseOn && pending[0]) {
+    const prev = R.stops.filter(closed).pop(), planned = pending[0].leave_min - (prev ? prev.leave_min : 0);
+    const since = (Date.now() - (state.lastAct || state.start)) / 60000;
+    const marge = pending[0].kind === "pass" ? 30 : 5;
+    if (since > planned + marge && Date.now() - lastNag > 5 * 60000) {
+      lastNag = Date.now(); beep("nag");
+      toast(pending[0].kind === "pass" ? `Fatet ${Math.round(since)} min f had l'secteur : kemmel l'arrêt li morah.`
+        : `Arrêt ${pending[0].order} : fatek l'wa9t b ${Math.round(since - planned)} min. Ma l9itouch ? « Introuvable » w kemmel.`);
+    }
+  }
+  if (me && pending[0]) {
+    const nx = R.stops.find(s => !closed(s) && s.kind === "stop");
+    if (nx && dist(me, nx) < 150 && !state.near.includes(nx.order)) {
+      state.near.push(nx.order); save(); beep("near");
+      toast(`Panneau sûr 9rib : ${fmtD(dist(me, nx))} (arrêt ${nx.order}). Chouf.`);
+    }
+    const d = dist(me, pending[0]);
+    st.innerHTML += d < 60 ? ` <b class="ahead">Rak f l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} b3id ${fmtD(d)}.`;
+  }
+  // retard : proposer de sauter la fin du ratissage de la commune en cours
+  const cur = pending[0];
+  const restPass = cur ? R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass") : [];
+  const nextC = cur ? R.stops.find(s => s.order > cur.order && s.commune !== cur.commune && !closed(s)) : null;
+  if (!state.pauseOn && delta > LATE && restPass.length) {
+    if (!lateBeeped) { lateBeeped = true; beep("late"); }
+    late.classList.add("on");
+    late.innerHTML = `<b>Rak m3attel b ${Math.round(delta)} min.</b> Fout l'ratissage ta3 ${cur.commune}` +
+      (nextC ? ` w roh l ${nextC.commune} (arrêt ${nextC.order}).` : ".") + `<button type="button" id="skipnow">Passer et revenir après</button>`;
+  } else {
+    const back = R.stops.filter(s => isSkip(s) && s.kind === "stop" && R.stops.filter(x => x.commune === s.commune && !isSkip(x)).every(closed));
+    if (back.length) { late.classList.add("on"); late.innerHTML = `<b>Rja3 l ${back.length > 1 ? "les arrêts" : "l'arrêt"} ${back.map(s => s.order).join(", ")}</b> (${back[0].commune}) : khallitou « revenir après ».`; }
+    else { late.classList.remove("on"); late.innerHTML = ""; }
+  }
+
+  const firstPending = cur && cur.order;
+  document.getElementById("stops").innerHTML = R.stops.map((s, i) => {
+    let head = "";
+    if (s.day && (i === 0 || R.stops[i - 1].day !== s.day)) {
+      const inC = R.stops.filter(x => x.day === s.day), dn = inC.filter(closed).length;
+      head = `<li class="dayh">${fill(s.day)}<br><small>${dn} / ${inC.length} kemmelt</small></li>`;
+    }
+    const cls = [isDone(s) ? "done" : "", isAbs(s) ? "absent" : "", isSkip(s) ? "skipped" : "", s.order === firstPending ? "next" : "", s.kind === "pass" ? "pass" : ""].join(" ");
+    const tag = isAbs(s) ? `<span class="tag abs">introuvable</span>` : isSkip(s) ? `<span class="tag skp">revenir après</span>` : "";
+    const second = (s.kind === "pass" ? "" : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · rja3" : "Introuvable"}</button>`)
+      + `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Rja3t lih" : "Passer et revenir après"}</button>`;
+    return `${head}<li class="${cls}" id="s${s.order}">
+      <div class="n">${s.order}</div>
+      <div>
+        <div class="when">${s.note}${tag}</div>
+        <div class="panels">${s.panels.map(p => `<div><button type="button" class="ref" data-c="${p.ref}" aria-label="Copier le code ${p.ref}">${p.ref}</button> · ${SUP[p.support] || p.support}${p.label ? " · " + p.label : ""}</div>`).join("")}</div>
+      </div>
+      <div class="acts">
+        <a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Maps</a>
+        ${second}
+        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · rja3" : "Fait"}</button>
+      </div>
+    </li>`;
+  }).join("");
+
+  // nouveaux panneaux
+  const nb = document.getElementById("newsbox");
+  nb.hidden = !state.news.length;
+  document.getElementById("newssum").textContent = `Les panneaux jdad (${state.news.length})`;
+  document.getElementById("news").innerHTML = state.news.map((n, i) =>
+    `<li><span><b>${n.code || "N" + (i + 1)}</b> · ${clockOf(n.t)} · ±${Math.round(n.acc)} m · <a href="https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)}" target="_blank" rel="noopener">voir</a></span><button type="button" data-del="${i}">Retirer</button></li>`).join("");
+
+  // bilan WhatsApp : ce qui est fait, introuvable, annulé, sauté, et ce qui reste
+  const refs = f => R.stops.filter(f).flatMap(s => s.panels.length ? s.panels.map(p => p.ref) : []);
+  const rows = f => R.stops.filter(f).map(s => s.order);
+  const doneRefs = refs(isDone), absRefs = refs(isAbs);
+  const left = R.stops.filter(s => !closed(s));
+  const leftSafe = left.filter(s => s.kind === "stop").flatMap(s => s.panels.map(p => p.ref));
+  const undone = [...new Set(state.undone)].filter(o => !closed(R.stops.find(s => s.order === o)));
+  const finished = left.length === 0 && !!state.start && (communesLeft().length === 0 || elapsed() >= CAP);
+  const lines = [`*${R.title} · ${R.agent} · ${new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}*`,
+    finished ? "✅ TRACÉ TERMINÉ" : `⏳ En cours : ${closedRows}/${R.stops.length} étapes · communes : ${[...new Set(R.stops.map(s => s.commune))].join(", ") || "aucune"}`,
+    `✔️ Faits (${doneRefs.length}/${R.n_panels} panneaux sûrs) : ${doneRefs.join(", ") || "aucun"}` + (rows(s => isDone(s) && s.kind === "pass").length ? ` · ratissage : ${rows(s => isDone(s) && s.kind === "pass").length} passe${rows(s => isDone(s) && s.kind === "pass").length > 1 ? "s faites" : " faite"}` : ""),
+    `❌ Introuvables : ${absRefs.join(", ") || "aucun"}`,
+    `⏭️ Passés (revenir après) : ${rows(isSkip).join(", ") || "aucun"}`,
+    ...(undone.length ? [`↩️ Annulés (Fait retiré) : arrêts ${undone.join(", ")}`] : []),
+    ...(left.length ? [`🕒 Pas encore faits : ${leftSafe.length ? leftSafe.join(", ") + " · " : ""}arrêts ${left.map(s => s.order).join(", ")}`] : []),
+    `➕ Nouveaux : ${state.news.length}`,
+    ...state.news.map((n, i) => `${n.code || "N" + (i + 1)} ${clockOf(n.t)} https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)} (±${Math.round(n.acc)} m)`),
+    state.start ? `Départ ${clockOf(state.start)} · ${hm(elapsed())} de travail` + (pausedMin() >= 1 ? ` · ${hm(pausedMin())} de pause` : "") : "Pas encore démarré"];
+  window.BILAN = lines.join("\n");
+  const txt = encodeURIComponent(window.BILAN.length > 1500 ? lines.slice(0, 3).join("\n") + "\n(bilan complet copié : le coller ici)" : window.BILAN);
+  document.getElementById("send").href = `https://wa.me/${WA}?text=${txt}`;
+  const sn = document.getElementById("sendnag"), link = `https://wa.me/${WA}?text=${txt}`;
+  const lastC = R.stops.filter(closed).pop();
+  const communeDone = lastC && R.stops.filter(s => s.commune === lastC.commune).every(closed) && !state.sentDone.includes(lastC.commune);
+  const hourly = state.start && !state.pauseOn && (Date.now() - (state.lastSent || state.start)) > 60 * 60000;
+  if (finished && state.start) {
+    if (!state.finishedAt) { state.finishedAt = Date.now(); save(); beep("near"); }
+    sn.className = "alert on fin";
+    sn.innerHTML = `<b>Kemmelt l'tracé, saha !</b> Ab3at l'bilan daba.<a href="${link}" target="_blank" rel="noopener" data-sent="fin">Ab3at l'bilan</a>`;
+  } else if (communeDone || hourly) {
+    sn.className = "alert on";
+    sn.innerHTML = (communeDone ? `<b>Kemmelt ${lastC.commune}.</b> ` : "<b>Fatet sa3a.</b> ") +
+      `Ab3at l'avancement f WhatsApp.<a href="${link}" target="_blank" rel="noopener" data-sent="${communeDone ? lastC.commune : "heure"}">Ab3at l'avancement</a>`;
+    if (render.nagKey !== (communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000))) {
+      render.nagKey = communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000); beep("nag");
+    }
+  } else { sn.className = "alert"; sn.innerHTML = ""; }
+  if (map) drawDyn();
+}
+
+function startClock(o) { if (!state.start) { state.start = Date.now() - (R.stops.find(s => s.order === o).svc || 0) * 60000; follow(); } }
+document.addEventListener("click", e => {
+  const sent = e.target.closest("[data-sent], #send");
+  if (sent && window.BILAN) {
+    // Un lien wa.me trop long est coupé par le téléphone : le bilan part par le partage du téléphone,
+    // ou il est copié avant l'ouverture de WhatsApp pour être collé en entier.
+    if (navigator.share) {
+      e.preventDefault();
+      navigator.share({ text: window.BILAN }).catch(() => { window.open(sent.href, "_blank"); });
+    } else if (window.BILAN.length > 1500 && navigator.clipboard) {
+      navigator.clipboard.writeText(window.BILAN).then(() => toast("L'bilan kamel tna9el : colli f WhatsApp."), () => {});
+    }
+  }
+  if (sent) {
+    state.lastSent = Date.now();
+    const k = sent.dataset && sent.dataset.sent;
+    if (k && k !== "heure" && k !== "fin") state.sentDone.push(k);
+    if (!k || k === "fin") { const lc = R.stops.filter(closed).pop(); if (lc) state.sentDone.push(lc.commune); }
+    save(); setTimeout(render, 500); ping(); return;
+  }
+  const c = e.target.closest("button[data-c]");
+  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`L'code ${c.dataset.c} tna9el : 7ottou f « Remarque » f SensQuest.`), () => toast(c.dataset.c)); return; }
+  const d = e.target.closest("button[data-del]");
+  if (d) { if (confirm("Retirer ce nouveau panneau de ta liste ?")) { state.news.splice(Number(d.dataset.del), 1); save(); render(); } return; }
+  if (e.target.id === "skipnow") {
+    const cur = R.stops.find(s => !closed(s));
+    R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass").forEach(s => state.skipped.push(s.order));
+    save(); render(); ping(); toast("Passé. Kemmel l'arrêt li morah."); return;
+  }
+  const b = e.target.closest("button[data-a]");
+  if (!b) return;
+  const o = Number(b.dataset.o), a = b.dataset.a;
+  const lists = { done: "done", abs: "absent", skip: "skipped" };
+  const L = lists[a], on = !state[L].includes(o);
+  for (const k of Object.values(lists)) state[k] = state[k].filter(x => x !== o);
+  if (on) { state[L].push(o); startClock(o); state.lastAct = Date.now(); }
+  else { state.undone.push(o); }
+  save(); render(); ping();
+  const next = R.stops.find(s => !closed(s));
+  if (on && next) document.getElementById("s" + next.order).scrollIntoView({ behavior: "smooth", block: "center" });
+});
+
+document.getElementById("sound").addEventListener("click", () => { state.sound = !state.sound; save(); render(); if (state.sound) beep("near"); });
+document.getElementById("pause").addEventListener("click", () => {
+  if (state.pauseOn) { state.pauses.push([state.pauseOn, Date.now()]); state.pauseOn = null; toast("Rja3t : les heures tzad b la pause."); }
+  else { state.pauseOn = Date.now(); toast("Pause : l'chrono wa9ef."); }
+  save(); render(); ping();
+});
+let lock = null;
+async function wake(on) {
+  const b = document.getElementById("wake");
+  try {
+    if (on) { lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => { if (!document.hidden) b.setAttribute("aria-pressed", "false"); }); }
+    else if (lock) { await lock.release(); lock = null; }
+    b.setAttribute("aria-pressed", String(!!on));
+  } catch (e) { toast("Had l'telephone ma ykhallich l'écran cha3el."); }
+}
+document.getElementById("wake").addEventListener("click", e => wake(e.currentTarget.getAttribute("aria-pressed") !== "true"));
+document.addEventListener("visibilitychange", () => { if (!document.hidden && document.getElementById("wake").getAttribute("aria-pressed") === "true") wake(true); });
+function locateOnce(cb) {
+  if (!navigator.geolocation) { toast("Had l'telephone ma y3tich la position."); return; }
+  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("La position mamnou3a : 7ell la localisation l had l'site."),
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+}
+function follow() {
+  if (watchId !== null || !navigator.geolocation) return;
+  watchId = navigator.geolocation.watchPosition(p => { me = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy, t: Date.now() }; drawMe(); if (Date.now() - (follow.t || 0) > 15000) { follow.t = Date.now(); render(); } }, () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
+}
+document.getElementById("newbtn").addEventListener("click", () => {
+  toast("Rani nakhod la position…");
+  locateOnce(c => {
+    state.nextNew = (state.nextNew || 0) + 1;   // jamais réutilisé, même si un nouveau est retiré : le code déjà saisi dans SensQuest reste juste
+    const code = R.id + "-" + String(R.n_panels + state.nextNew).padStart(2, "0");
+    state.news.push({ lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now(), code });
+    save(); follow(); render(); ping();
+    try { navigator.clipboard.writeText("NOUVEAU " + code); } catch (e) {}
+    toast(`Code ${code} (±${Math.round(c.accuracy)} m), tna9el. Aktab « NOUVEAU ${code} » f SensQuest.`);
+  });
+});
+
+// carte : chargée seulement quand on l'ouvre (page légère sur le réseau mobile)
+let map = null, dyn = null, meMark = null, meAcc = null, line = null;
+// repères numérotés comme la liste (pas de bulle qui cache la carte) ; la prochaine étape est plus grosse
+function pin(s, nx) {
+  const pass = s.kind === "pass", sz = nx ? 30 : pass ? 20 : 24;
+  const col = isDone(s) ? "#1c4452" : isAbs(s) ? "#a21d4f" : isSkip(s) ? "#8a8378" : "#d93813";
+  return L.divIcon({ className: "pin" + (nx ? " nx" : "") + (pass && !isAbs(s) && !isSkip(s) ? " ps" : "") + (pass && isDone(s) ? " ok" : ""),
+    html: `<span style="background:${col}">${s.order}</span>`, iconSize: [sz, sz], iconAnchor: [sz / 2, sz / 2] });
+}
+function drawDyn() {
+  dyn.clearLayers();
+  if (line) line.setLatLngs(geomPts());
+  drawContext();
+  const nx = R.stops.find(s => !closed(s));
+  R.stops.forEach(s => L.marker([s.lat, s.lon], { icon: pin(s, nx && s.order === nx.order), zIndexOffset: nx && s.order === nx.order ? 1000 : s.kind === "pass" ? 0 : 500, keyboard: false }).addTo(dyn));
+  state.news.forEach((n, i) => L.circleMarker([n.lat, n.lon], { radius: 7, color: "#1c4452", weight: 3, fillColor: "#fff", fillOpacity: 1 }).bindTooltip(n.code || "N" + (i + 1)).addTo(dyn));
+  drawMe();
+}
+function drawMe() {
+  if (!map || !me) return;
+  if (!meMark) {
+    meAcc = L.circle([me.lat, me.lon], { radius: me.acc || 20, color: "#2a7de1", weight: 1, fillColor: "#2a7de1", fillOpacity: .12, interactive: false }).addTo(map);
+    meMark = L.circleMarker([me.lat, me.lon], { radius: 8, color: "#fff", weight: 3, fillColor: "#2a7de1", fillOpacity: 1, interactive: false }).addTo(map);
+  } else { meAcc.setLatLng([me.lat, me.lon]).setRadius(me.acc || 20); meMark.setLatLng([me.lat, me.lon]); }
+  meMark.bringToFront();
+}
+function initMap() {
+  if (map || typeof L === "undefined") return !!map;
+  map = L.map("map", { zoomControl: true, tap: true });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(map);
+  line = L.polyline(geomPts(), { color: "#d93813", weight: 4, opacity: .75, interactive: false }).addTo(map);
+  dyn = L.layerGroup().addTo(map); map.setView([36.75, 3.05], 12); drawDyn();
+  map.fitBounds(allBounds(), { padding: [24, 24] });
+  return true;
+}
+function withMap(fn) {   // ouvre la carte si besoin, puis agit
+  const box = document.getElementById("mapbox");
+  if (!box.open) { box.open = true; withMap.pending = fn; return; }
+  if (map) fn(); else withMap.pending = fn;
+}
+function showMap() {
+  initMap(); setTimeout(() => { map.invalidateSize(); if (withMap.pending) { withMap.pending(); withMap.pending = null; } }, 60);
+  // la carte vient se placer juste sous la barre du haut, au lieu de rester cachée dessous
+  const top = document.getElementById("mapbox").getBoundingClientRect().top + scrollY - document.querySelector(".bar").offsetHeight - 6;
+  scrollTo({ top, behavior: "smooth" });
+}
+document.getElementById("mapbox").addEventListener("toggle", e => {
+  if (!e.target.open) return;
+  if (typeof L !== "undefined") { showMap(); return; }
+  const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  sc.onload = showMap;
+  sc.onerror = () => { document.getElementById("map").textContent = "La carte ma temchich bla réseau. Khdem b « Maps »."; };
+  document.head.appendChild(sc);
+});
+document.getElementById("locate").addEventListener("click", () => withMap(() => {
+  if (me && Date.now() - (me.t || 0) < 60000) { drawMe(); map.setView([me.lat, me.lon], 16); }
+  else toast("Rani nakhod la position…");
+  locateOnce(c => {
+    me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() }; follow(); drawMe();
+    map.setView([me.lat, me.lon], 16);
+    if (c.accuracy > 50) toast(`La position machi dkika (±${Math.round(c.accuracy)} m) : khrej l'berra wela stenna chwiya.`);
+  });
+}));
+document.getElementById("gonext").addEventListener("click", () => withMap(() => {
+  const nx = R.stops.find(s => !closed(s));
+  if (!nx) { toast("Kemmelt kolchi."); return; }
+  map.setView([nx.lat, nx.lon], 16); toast(`Arrêt ${nx.order} · ${nx.commune}`);
+}));
+document.getElementById("fit").addEventListener("click", () => withMap(() => map.fitBounds(allBounds(), { padding: [24, 24] })));
+
+(function inApp() {
+  const ua = navigator.userAgent || "";
+  if (!/; wv\)|WhatsApp|FBAN|FBAV|Instagram|Snapchat/i.test(ua)) return;
+  const b = document.createElement("div");
+  b.className = "alert on";
+  const url = location.href.replace(/^https?:\/\//, "");
+  b.innerHTML = "<b>Ftah had l'page f Chrome.</b> F WhatsApp, l'avancement yrouh ki tji l'appel. " +
+    `<a href="intent://${url}#Intent;scheme=https;package=com.android.chrome;end">Ftah f Chrome</a>`;
+  document.body.prepend(b);
+})();
+// --- Ratissage dynamique par commune ---------------------------------------------------------
+const DETOUR = 1.3, M_PER_MIN = 300, SVC = 5.5;   // ~18 km/h en ville, 5,5 min par panneau (calage Vague 01)
+const C = Object.fromEntries(R.communes.map(c => [c.name, c]));
+const started = () => new Set(R.stops.map(s => s.commune));
+function communesLeft() { const st = started(); return R.communes.filter(c => !st.has(c.name)).map(c => c.name); }
+const minD = (p, pts) => pts.reduce((m, q) => Math.min(m, dist(p, q)), Infinity);
+const gap = (a, b) => C[a].targets.reduce((m, p) => Math.min(m, minD(p, C[b].targets)), Infinity);
+const estMin = c => Math.round(C[c].targets.length * (SVC + 3));
+function geomPts() { return R.stops.map(s => [s.lat, s.lon]); }
+function allBounds() {
+  const pts = R.communes.flatMap(c => c.targets.map(p => [p.lat, p.lon]).concat(c.ok));
+  return L.latLngBounds(pts.length ? pts : [[36.75, 3.05]]);
+}
+function drawContext() {
+  const st = started();
+  R.communes.forEach(c => {
+    c.ok.forEach(p => L.circleMarker(p, { radius: 4, color: "#8a8378", weight: 1, fillColor: "#8a8378", fillOpacity: .6, interactive: false }).addTo(dyn));
+    if (!st.has(c.name)) c.targets.forEach(p => L.circleMarker([p.lat, p.lon], { radius: 5, color: "#d93813", weight: 2, fillColor: "#fff", fillOpacity: 1 }).bindTooltip(c.name).addTo(dyn));
+  });
+}
+// Chemin le plus court qui part de `a` et finit sur `z` (z peut manquer) : plus proche voisin puis 2-opt.
+function path(a, z, rest) {
+  const out = [a], pool = rest.slice();
+  while (pool.length) {
+    const last = out[out.length - 1];
+    let k = 0; pool.forEach((p, i) => { if (dist(last, p) < dist(last, pool[k])) k = i; });
+    out.push(pool.splice(k, 1)[0]);
+  }
+  if (z) out.push(z);
+  const fixedEnd = z ? 1 : 0;
+  for (let improved = true, n = 0; improved && n < 50; n++) {
+    improved = false;
+    for (let i = 1; i < out.length - 1 - fixedEnd; i++) for (let j = i + 1; j < out.length - fixedEnd; j++) {
+      const a1 = out[i - 1], b1 = out[i], a2 = out[j], b2 = out[j + 1];
+      const before = dist(a1, b1) + (b2 ? dist(a2, b2) : 0), after = dist(a1, a2) + (b2 ? dist(b1, b2) : 0);
+      if (after < before - 1) { out.splice(i, j - i + 1, ...out.slice(i, j + 1).reverse()); improved = true; }
+    }
+  }
+  return out;
+}
+// Les faces d'une même structure (à moins de 20 m) forment un seul arrêt.
+function groups(pts) {
+  const g = [];
+  pts.forEach(p => { const h = g.find(x => dist(x, p) < 20); if (h) h.panels.push(p); else g.push({ lat: p.lat, lon: p.lon, panels: [p] }); });
+  return g;
+}
+function plan(name, here) {
+  const others = communesLeft().filter(c => c !== name);
+  const pts = groups(C[name].targets);
+  if (!pts.length) { toast(`Makach panneaux f ${name}.`); return; }
+  const entry = pts.reduce((b, p) => dist(here, p) < dist(here, b) ? p : b);
+  const nextC = others.length ? others.reduce((b, c) => gap(name, c) < gap(name, b) ? c : b) : null;
+  const cand = pts.filter(p => p !== entry);
+  const exit = nextC && cand.length ? cand.reduce((b, p) => minD(p, C[nextC].targets) < minD(b, C[nextC].targets) ? p : b) : null;
+  const order = path(entry, exit, cand.filter(p => p !== exit));
+  let t = state.start ? elapsed() : 0, prev = here, n = R.stops.reduce((m, s) => Math.max(m, s.order), 0);
+  const k = started().size + 1;
+  const g = p => `<a href="https://maps.google.com/?q=${p.lat.toFixed(6)},${p.lon.toFixed(6)}" target="_blank" rel="noopener">${p.panels[0].ref}</a>`;
+  const head = `${k}. ${name} · ${order.length} arrêts<br><small>Dkhol men ${g(entry)}` + (exit ? ` ou okhraj men ${g(exit)} l ${nextC}` : "") + "</small>";
+  order.forEach(p => {
+    const arrive = t + dist(prev, p) * DETOUR / M_PER_MIN, svc = SVC * p.panels.length;
+    R.stops.push({ order: ++n, lat: p.lat, lon: p.lon, svc, arrive_min: arrive, leave_min: arrive + svc, kind: "stop", commune: name, day: head,
+      note: p === entry ? "Entrée" : p === exit ? `Sortie vers ${nextC}` : MOTIF[p.panels[0].motif] || "",
+      panels: p.panels.map(x => ({ ref: x.ref, support: x.support, label: (MOTIF[x.motif] || "") + (x.label ? " · " + x.label : "") })) });
+    t = arrive + svc; prev = p;
+  });
+  save(); render(); ping();
+  toast(`${name} : ${order.length} arrêts, tebda b ${order[0].panels[0].ref}.`);
+  const first = R.stops.find(s => s.commune === name);
+  document.getElementById("s" + first.order).scrollIntoView({ behavior: "smooth", block: "center" });
+}
+const MOTIF = { jamais_vu: "Jamais tsawer", sans_photo: "Makach tsawer", gps_faux: "GPS ghalet, verifiyi l'blasa" };
+function arrive(forced) {
+  // Le suivi GPS (follow) tient déjà une position fraîche : une 2e demande peut ne jamais revenir pendant qu'il tourne.
+  if (me && Date.now() - me.t < 30000 && me.acc < 100) { arriveAt({ lat: me.lat, lon: me.lon }, forced); return; }
+  toast("Rani nakhod la position…");
+  locateOnce(c => { me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() }; follow(); arriveAt({ lat: me.lat, lon: me.lon }, forced); });
+}
+function arriveAt(here, forced) {
+  {
+    const left = communesLeft();
+    if (!left.length) { toast("Kemmelt ga3 les communes."); return; }
+    const name = forced || left.reduce((b, x) => minD(here, C[x].targets) < minD(here, C[b].targets) ? x : b);
+    plan(name, here);
+  }
+}
+function renderCommunes(pending) {
+  const st = started(), cur = pending[0] && pending[0].commune;
+  const ab = document.getElementById("arrive"), left = communesLeft();
+  ab.hidden = !!pending.length || !left.length || (!!state.start && elapsed() >= CAP);
+  ab.textContent = R.stops.length ? "Wselt l la commune jaya : a3tini l'tracé" : "Wselt : a3tini l'tracé";
+  document.getElementById("communes").innerHTML = R.communes.map(c => {
+    const all = R.stops.filter(s => s.commune === c.name), dn = all.filter(closed).length;
+    const cls = c.name === cur ? "cur" : st.has(c.name) && dn === all.length ? "fin" : "";
+    const info = st.has(c.name) ? `${dn} / ${all.length} arrêts kemmelt` : `${c.targets.length} panneaux · ~${hm(estMin(c.name))}` + (c.ok.length ? ` · ${c.ok.length} deja mlah` : "");
+    return `<li class="${cls}"><div><b>${c.name}</b><small>${info}</small></div>` +
+      (st.has(c.name) ? "" : `<button type="button" data-go="${c.name}">Wselt hna</button>`) + "</li>";
+  }).join("");
+}
+document.getElementById("arrive").addEventListener("click", () => arrive(null));
+document.getElementById("communes").addEventListener("click", e => { const b = e.target.closest("button[data-go]"); if (b) arrive(b.dataset.go); });
+
+render();
+setInterval(render, 30000);
+setInterval(() => { if (state.start && Date.now() - lastPing > 10 * 60000) ping(); }, 60000);
+if (state.start) ping();
+</script>
+</body>
+</html>
