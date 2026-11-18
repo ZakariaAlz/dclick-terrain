@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>D&#x27;click · Mohamed · 6 points</title>
+<style>
+:root {
+  --bg: #f7f5f2; --panel: #fff; --fg: #1c1a16; --muted: #4a463d; --line: #e4dfd7;
+  --accent: #b83210; --btn: linear-gradient(135deg, #c2340f, #d93813); --on-btn: #fff;
+  --ok: #1c4452; --ok-bg: #e3edf1; --warn: #a21d4f; --warn-bg: #f7e4ec;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #0b0b0b; --panel: #151515; --fg: #f2f2f2; --muted: #a3a3a3; --line: #2a2a2a;
+  --accent: #e8581f; --ok: #6aa6bd; --ok-bg: #102e3a; --warn: #e8638c; --warn-bg: #3d1024; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+header { padding: 18px 0 10px; }
+.kicker { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+h1 { margin: 2px 0 4px; font-size: 1.6rem; }
+.sub { color: var(--muted); font-size: .92rem; margin: 0; }
+.banner { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: var(--ok-bg); font-size: .92rem; }
+.banner b { color: var(--ok); }
+.bar { position: sticky; top: 0; z-index: 10; background: var(--bg); padding: 10px 0 12px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.prog { font-variant-numeric: tabular-nums; font-size: .92rem; }
+.nav { display: block; text-align: center; background: var(--btn); color: var(--on-btn); font-weight: 700; text-decoration: none; padding: 16px; border-radius: 10px; font-size: 1.1rem; }
+ol.stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 10px; }
+.stops > li { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 4px 10px; }
+.stops > li.done { opacity: .55; }
+.stops > li.next { border: 2px solid var(--accent); }
+.n { font-size: 1.35rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+.name { font-weight: 700; font-size: 1.05rem; }
+.gps { font: .85rem ui-monospace, Menlo, monospace; color: var(--muted); }
+.note { grid-column: 1 / -1; background: var(--warn-bg); border-radius: 8px; padding: 8px 10px; font-size: .92rem; }
+.note b { color: var(--warn); }
+.acts { grid-column: 1 / -1; display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; margin-top: 6px; }
+.acts a, .acts button { font: 600 .95rem system-ui, sans-serif; border-radius: 10px; padding: 12px 6px; text-align: center; text-decoration: none; cursor: pointer; background: transparent; }
+.acts a { border: 1px solid var(--line); color: var(--fg); }
+.acts .ok { border: 2px solid var(--ok); color: var(--ok); }
+li.done .acts .ok { background: var(--ok-bg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="kicker">D'click · Ratissage</div>
+  <h1>Mohamed · 6 points à voir</h1>
+  <p class="sub">Six panneaux à repérer sur ta route, d'Alger Centre jusqu'à Khraicia, dans l'ordre le plus court.</p>
+  <p class="banner"><b>Le but reste le ratissage.</b> Ces six points te donnent une idée des endroits où passer ; enregistre aussi tous les autres panneaux que tu vois en chemin. Photos et questionnaire uniquement dans SensQuest. À chaque panneau, GPS précis à moins de 10 m, une photo de loin et une de près sur la marque.</p>
+</header>
+<div class="bar">
+  <a class="nav" id="all" target="_blank" rel="noopener">Itinéraire moto : tous les points</a>
+  <div class="prog" id="prog"></div>
+</div>
+<ol class="stops" id="stops"></ol>
+</div>
+<script>
+const P = [
+  { name: "Alger Centre", lat: 36.7723, lon: 3.0598 },
+  { name: "Sidi M'Hamed · 1er Mai", lat: 36.7609, lon: 3.0570 },
+  { name: "El Biar", lat: 36.7688, lon: 3.0215 },
+  { name: "Bir Mourad Raïs · secteur Sidi Yahia", lat: 36.7396, lon: 3.0380,
+    note: "<b>Deux panneaux, deux questionnaires séparés.</b> Ne les regroupe pas dans un seul relevé." },
+  { name: "Birkhadem", lat: 36.7156, lon: 3.0494,
+    note: "<b>Chaque panneau carré doit avoir sa propre photo.</b> Une photo par panneau, jamais une seule pour plusieurs." },
+  { name: "Khraicia", lat: 36.6802, lon: 2.9826 },
+];
+const KEY = "dclick-mohamed-6pts";
+let done = {};
+try { done = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+const ll = p => p.lat + "," + p.lon;
+// Sans origine, Google Maps part de la position du téléphone.
+function url(pts) {
+  const last = pts[pts.length - 1], mid = pts.slice(0, -1);
+  let u = "https://www.google.com/maps/dir/?api=1&travelmode=two-wheeler&destination=" + ll(last);
+  if (mid.length) u += "&waypoints=" + encodeURIComponent(mid.map(ll).join("|"));
+  return u;
+}
+function render() {
+  const left = P.filter((p, i) => !done[i]);
+  const all = document.getElementById("all");
+  all.href = left.length ? url(left) : url(P);
+  all.textContent = left.length === P.length ? "Itinéraire moto : tous les points"
+    : left.length ? "Itinéraire moto : les " + left.length + " points restants" : "Tous les points sont faits";
+  document.getElementById("prog").textContent = (P.length - left.length) + " / " + P.length + " points faits";
+  const next = P.findIndex((p, i) => !done[i]);
+  document.getElementById("stops").innerHTML = P.map((p, i) => `
+    <li class="${done[i] ? "done" : ""} ${i === next ? "next" : ""}">
+      <div class="n">${i + 1}</div>
+      <div><div class="name">${p.name}</div><div class="gps">GPS ${p.lat}, ${p.lon}</div></div>
+      ${p.note ? `<div class="note">${p.note}</div>` : ""}
+      <div class="acts">
+        <a href="${url([p])}" target="_blank" rel="noopener">Y aller en moto</a>
+        <button class="ok" data-i="${i}">${done[i] ? "Fait" : "Marquer fait"}</button>
+      </div>
+    </li>`).join("");
+}
+document.getElementById("stops").addEventListener("click", e => {
+  const b = e.target.closest("button[data-i]"); if (!b) return;
+  const i = b.dataset.i; done[i] = !done[i];
+  try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+  render();
+});
+render();
+</script>
+</body>
+</html>
