@@ -113,7 +113,7 @@ ul.communes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; 
     <div class="kicker">D&#x27;click · Ratissage · 2026-11-18</div>
     <h1>Mohamed · Reprise 4</h1>
     <p class="sub" id="sub"></p>
-    <div class="banner sq"><b>Tsawer w l'questionnaire ghir f SensQuest.</b> Had la page t'guidik bark.</div>
+    <div class="banner sq"><b>Les photos et le questionnaire se font uniquement dans SensQuest.</b> Cette page sert seulement à te guider.</div>
     <details class="remarks" id="remarks" open hidden><summary id="remsum"></summary><div id="remtxt"></div></details>
   </header>
 
@@ -122,7 +122,7 @@ ul.communes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; 
     <div class="meter"><i id="meter"></i></div>
     <button class="nav arrive" id="arrive" type="button" hidden></button>
     <div class="row2"><a class="nav" id="nav" target="_blank" rel="noopener"></a><button class="newbtn" id="newbtn" type="button" aria-label="Noter un nouveau panneau à ma position">+ Nouveau</button></div>
-    <div class="tools"><button type="button" id="pause" aria-pressed="false">Pause (salat, makla)</button><button type="button" id="wake" aria-pressed="false">Garder l'écran allumé</button><button type="button" id="sound" aria-pressed="true">Son : ON</button></div>
+    <div class="tools"><button type="button" id="pause" aria-pressed="false">Pause (prière, repas)</button><button type="button" id="wake" aria-pressed="false">Garder l'écran allumé</button><button type="button" id="sound" aria-pressed="true">Son : ON</button></div>
     <div class="status" id="status"></div>
     <div class="alert" id="late"></div>
     <div class="alert" id="sendnag"></div>
@@ -131,51 +131,51 @@ ul.communes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; 
   <details id="mapbox">
     <summary>La carte</summary>
     <div id="map" role="img" aria-label="Carte du tracé du jour"></div>
-    <div class="maptools"><button type="button" id="locate">Win rani ?</button><button type="button" id="gonext">Prochain arrêt</button><button type="button" id="fit">Tout le tracé</button></div>
+    <div class="maptools"><button type="button" id="locate">Où suis-je ?</button><button type="button" id="gonext">Prochain arrêt</button><button type="button" id="fit">Tout le tracé</button></div>
   </details>
 
   <ol class="stops" id="stops"></ol>
 
-  <h2 class="ch">Les communes ta3ak</h2>
+  <h2 class="ch">Tes communes</h2>
   <ul class="communes" id="communes"></ul>
 
   <details id="newsbox" hidden>
-    <summary id="newssum">Les panneaux jdad</summary>
+    <summary id="newssum">Les nouveaux panneaux</summary>
     <ol class="news" id="news"></ol>
   </details>
 
-  <a class="send main" id="send" target="_blank" rel="noopener">Ab3atli l'bilan f WhatsApp</a>
-  <a class="send" href="tel:+213770880535">Ida 3andak question sa9sini wala 3ayatli f telephone</a>
+  <a class="send main" id="send" target="_blank" rel="noopener">M'envoyer le bilan sur WhatsApp</a>
+  <a class="send" href="tel:+213770880535">Une question ? Appelle-moi</a>
 
   <details>
-    <summary>Kifach tkhdem b la page</summary>
+    <summary>Comment utiliser la page</summary>
     <ul>
-      <li><b>Tsawer w questionnaire :</b> ghir f SensQuest.</li>
-      <li><b>Wselt :</b> ki tousel l commune, la page tdi la position ta3ak w t3tik l'tracé : tebda b l'panneau l9rib lik, w tkemmel f jiht la commune li jaya. Kayen « Wselt hna » f la liste ida bghit commune okhra.</li>
-      <li><b>Les points gris</b> f la carte : panneaux deja mlah, ma t3awedhomch.</li>
-      <li><b>Maps :</b> Google Maps l had l'arrêt. <b>Roh :</b> les 10 arrêts jayin.</li>
-      <li><b>Fait :</b> ki dir wa7ed. <b>Introuvable :</b> makach panneau. <b>Passer et revenir après :</b> ki ykoun m3amar, rja3lou mba3d.</li>
-      <li>Touchi l'<b>code</b> (ex. 05-01) : ytna9el, 7ottou f « Remarque » f SensQuest.</li>
-      <li><b>+ Nouveau :</b> panneau jdid. La page tsajjel l'GPS w t3tik code (ex. 05-08) : aktab « NOUVEAU 05-08 » f SensQuest.</li>
-      <li><b>Pause :</b> l'chrono yo9ef (salat, makla) : l'wa9t ta3 la pause ma ytt7asbech.</li>
-      <li><b>Ab3atli l'bilan :</b> f kol commune w f lekher.</li>
+      <li><b>Photos et questionnaire :</b> uniquement dans SensQuest.</li>
+      <li><b>J'y suis :</b> en arrivant dans une commune, la page prend ta position et affiche le tracé, en partant du bout le plus proche de toi. Le bouton « J'y suis » de la liste sert à choisir une autre commune.</li>
+      <li><b>Les points gris</b> sur la carte : panneaux déjà faits, à ne pas refaire.</li>
+      <li><b>Maps :</b> ouvre Google Maps vers cet arrêt. <b>Itinéraire :</b> les 10 prochains arrêts.</li>
+      <li><b>Fait :</b> le panneau est relevé. <b>Introuvable :</b> le panneau n'existe plus. <b>Passer et revenir après :</b> s'il est inaccessible pour l'instant (stationnement, travaux), tu y reviens plus tard.</li>
+      <li>Touche le <b>code</b> (ex. 05-01) : il est copié, colle-le dans « Remarque » sur SensQuest.</li>
+      <li><b>+ Nouveau :</b> un panneau qui n'est pas sur la liste. La page enregistre le GPS et te donne un code (ex. 05-08) : écris « NOUVEAU 05-08 » dans SensQuest.</li>
+      <li><b>Pause :</b> le chrono s'arrête (prière, repas) ; le temps de pause n'est pas compté.</li>
+      <li><b>M'envoyer le bilan :</b> à la fin de chaque commune et à la fin de la sortie.</li>
     </ul>
   </details>
   <details>
     <summary>Rappels</summary>
     <ol>
-      <li>Red balak 9bal matsawar : verifiyi daymen ida ta9dar tsawar, surtout fel playas li fihom doula kima fel Val.</li>
-      <li>O9ef l'moto mlih 9bel ma tkharraj l'telephone.</li>
-      <li>GPS : stenna yahbat ta7t 10 m 9bel ma tvalidi.</li>
-      <li>Photos : wa7da men b3id (25 à 30 m) w les photos le9rab, la marque w l'slogan ybanou mlih.</li>
-      <li>Kemmel l'tracé kamel.</li>
+      <li>Avant de photographier, vérifie toujours que c'est autorisé, surtout près des sites officiels.</li>
+      <li>Arrête complètement la moto avant de sortir le téléphone.</li>
+      <li>GPS : attends que la précision passe sous 10 m avant de valider.</li>
+      <li>Photos : une de loin (25 à 30 m), puis de près, la marque et le slogan bien lisibles.</li>
+      <li>Termine le tracé en entier.</li>
     </ol>
   </details>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
-const R = {"key": "rat-2026-11-18-Ho1PdQ_jSktx", "id": "R4", "day": 1, "topic": "", "remarks": null, "geom": [], "friday": false, "agent": "Mohamed · Reprise 4", "title": "D'click · Ratissage · 2026-11-18", "km": 0, "rows": true, "total_min": 240, "n_panels": 18, "stops": [], "communes": [{"name": "Staoueli", "targets": [{"ref": "STA-01", "id": "00f51f69-edde-47e6-a34e-04e3f2575827", "lat": 36.739593, "lon": 2.900355, "support": "unipole", "label": "Unipôle", "motif": "sans_photo"}, {"ref": "STA-02", "id": "15ed1e6b-6a99-444a-8420-0ae8c25800db", "lat": 36.739206, "lon": 2.897519, "support": "unipole", "label": "Unipôle", "motif": "sans_photo"}, {"ref": "STA-03", "id": "58e0a0d7-c0c8-486e-91c1-347f0dc1788b", "lat": 36.750561, "lon": 2.886959, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-04", "id": "6f3bbe75-f60f-4417-a143-76d8ab4fe03a", "lat": 36.738724, "lon": 2.895814, "support": "unipole", "label": "Unipôle · Pépinière", "motif": "gps_faux"}, {"ref": "STA-05", "id": "a412954b-3089-4ca3-886b-07caf368a75f", "lat": 36.751092, "lon": 2.876221, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-06", "id": "a8661de8-3cad-4d4b-8b28-126b6a201afb", "lat": 36.739086, "lon": 2.896558, "support": "unipole", "label": "Unipôle", "motif": "sans_photo"}, {"ref": "STA-07", "id": "ab6f4e51-1bac-422f-a42c-913115d981e8", "lat": 36.738724, "lon": 2.895814, "support": "unipole", "label": "Unipôle · Autoroute", "motif": "gps_faux"}, {"ref": "STA-08", "id": "ab791258-1b64-48c9-a55d-139663859735", "lat": 36.752629, "lon": 2.888102, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-09", "id": "ee6f39fa-84ad-4c9d-bddd-5f3a6e8c2f3f", "lat": 36.75111, "lon": 2.87622, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-10", "id": "f4e1251c-f3a3-4028-96df-35970a7a2daf", "lat": 36.757889, "lon": 2.890775, "support": "facade", "label": "Façade", "motif": "sans_photo"}], "ok": []}, {"name": "Zéralda", "targets": [{"ref": "ZER-02", "id": "3799eed0-b1bd-4f00-ac1a-22e960970126", "lat": 36.715094, "lon": 2.844398, "support": "panneau_4x3", "label": "Panneau 4x3", "motif": "sans_photo"}, {"ref": "ZER-03", "id": "b21496c3-ab31-49c0-879b-34073b4909ce", "lat": 36.699685, "lon": 2.820616, "support": "panneau_4x3", "label": "Panneau 4x3 près de U8A – STATION ZÉRALDA", "motif": "sans_photo"}, {"ref": "ZER-04", "id": "d3b1e5e3-5a0d-46c3-b919-3de5b92727a1", "lat": 36.718104, "lon": 2.839801, "support": "panneau_4x3", "label": "Panneau 4x3", "motif": "sans_photo"}, {"ref": "ZER-07", "id": "f0beb184-520e-4b5b-8483-87a382d58d42", "lat": 36.71904, "lon": 2.848591, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "ZER-08", "id": "f3436bd4-5362-4248-8125-a42eaf3cb6dc", "lat": 36.718164, "lon": 2.84772, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "ZER-09", "id": "fa2cd53d-3489-46cf-a345-39fbf47a7291", "lat": 36.699991, "lon": 2.819493, "support": "panneau_4x3", "label": "Panneau 4x3 près de U8A – STATION ZÉRALDA", "motif": "sans_photo"}], "ok": []}, {"name": "Ouled Fayet", "targets": [{"ref": "OFX-01", "id": "082257e5-239d-4001-abad-c3318a49bc5e", "lat": 36.735135, "lon": 2.943763, "support": "abribus", "label": "Abribus", "motif": "sans_photo"}, {"ref": "OFX-02", "id": "ee0c6d8f-5f7c-44fb-8088-b32afadfb887", "lat": 36.735112, "lon": 2.938917, "support": "abribus", "label": "Abribus", "motif": "sans_photo"}], "ok": [[36.733919, 2.934435], [36.735078, 2.944764], [36.73493, 2.938398]]}], "intro": "Reprise 4 : 18 panneaux deja msajjlin bessah ya makach tsawer, ya l'GPS ghalet. F kol panneau : o9ef 9ddamou, checki l'GPS (a9el men 10 m), w tsawer jouj : wahda men b3id (25-40 m) w wahda 9rib 3la l'marque. Ida l'panneau makach, dir « Introuvable ». Ida chefet panneau jdid f triq, sajjlou. Rouh b l'autoroute l l'commune l b3ida w rje3 tdir les points (wela l3ks). Ki tousel l kol commune, dir « Wselt ». Tsawer w l'questionnaire ghir f SensQuest. Ki yebda yetla3 l'lil, che33el l'flash, bessah ma tkhdemch f had l'wa9t, w ma tfoutch 18:30."};
+const R = {"key": "rat-2026-11-18-Ho1PdQ_jSktx", "id": "R4", "day": 1, "topic": "", "remarks": null, "geom": [], "friday": false, "agent": "Mohamed · Reprise 4", "title": "D'click · Ratissage · 2026-11-18", "km": 0, "rows": true, "total_min": 240, "n_panels": 18, "stops": [], "communes": [{"name": "Staoueli", "targets": [{"ref": "STA-01", "id": "00f51f69-edde-47e6-a34e-04e3f2575827", "lat": 36.739593, "lon": 2.900355, "support": "unipole", "label": "Unipôle", "motif": "sans_photo"}, {"ref": "STA-02", "id": "15ed1e6b-6a99-444a-8420-0ae8c25800db", "lat": 36.739206, "lon": 2.897519, "support": "unipole", "label": "Unipôle", "motif": "sans_photo"}, {"ref": "STA-03", "id": "58e0a0d7-c0c8-486e-91c1-347f0dc1788b", "lat": 36.750561, "lon": 2.886959, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-04", "id": "6f3bbe75-f60f-4417-a143-76d8ab4fe03a", "lat": 36.738724, "lon": 2.895814, "support": "unipole", "label": "Unipôle · Pépinière", "motif": "gps_faux"}, {"ref": "STA-05", "id": "a412954b-3089-4ca3-886b-07caf368a75f", "lat": 36.751092, "lon": 2.876221, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-06", "id": "a8661de8-3cad-4d4b-8b28-126b6a201afb", "lat": 36.739086, "lon": 2.896558, "support": "unipole", "label": "Unipôle", "motif": "sans_photo"}, {"ref": "STA-07", "id": "ab6f4e51-1bac-422f-a42c-913115d981e8", "lat": 36.738724, "lon": 2.895814, "support": "unipole", "label": "Unipôle · Autoroute", "motif": "gps_faux"}, {"ref": "STA-08", "id": "ab791258-1b64-48c9-a55d-139663859735", "lat": 36.752629, "lon": 2.888102, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-09", "id": "ee6f39fa-84ad-4c9d-bddd-5f3a6e8c2f3f", "lat": 36.75111, "lon": 2.87622, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "STA-10", "id": "f4e1251c-f3a3-4028-96df-35970a7a2daf", "lat": 36.757889, "lon": 2.890775, "support": "facade", "label": "Façade", "motif": "sans_photo"}], "ok": []}, {"name": "Zéralda", "targets": [{"ref": "ZER-02", "id": "3799eed0-b1bd-4f00-ac1a-22e960970126", "lat": 36.715094, "lon": 2.844398, "support": "panneau_4x3", "label": "Panneau 4x3", "motif": "sans_photo"}, {"ref": "ZER-03", "id": "b21496c3-ab31-49c0-879b-34073b4909ce", "lat": 36.699685, "lon": 2.820616, "support": "panneau_4x3", "label": "Panneau 4x3 près de U8A – STATION ZÉRALDA", "motif": "sans_photo"}, {"ref": "ZER-04", "id": "d3b1e5e3-5a0d-46c3-b919-3de5b92727a1", "lat": 36.718104, "lon": 2.839801, "support": "panneau_4x3", "label": "Panneau 4x3", "motif": "sans_photo"}, {"ref": "ZER-07", "id": "f0beb184-520e-4b5b-8483-87a382d58d42", "lat": 36.71904, "lon": 2.848591, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "ZER-08", "id": "f3436bd4-5362-4248-8125-a42eaf3cb6dc", "lat": 36.718164, "lon": 2.84772, "support": "facade", "label": "Façade", "motif": "sans_photo"}, {"ref": "ZER-09", "id": "fa2cd53d-3489-46cf-a345-39fbf47a7291", "lat": 36.699991, "lon": 2.819493, "support": "panneau_4x3", "label": "Panneau 4x3 près de U8A – STATION ZÉRALDA", "motif": "sans_photo"}], "ok": []}, {"name": "Ouled Fayet", "targets": [{"ref": "OFX-01", "id": "082257e5-239d-4001-abad-c3318a49bc5e", "lat": 36.735135, "lon": 2.943763, "support": "abribus", "label": "Abribus", "motif": "sans_photo"}, {"ref": "OFX-02", "id": "ee0c6d8f-5f7c-44fb-8088-b32afadfb887", "lat": 36.735112, "lon": 2.938917, "support": "abribus", "label": "Abribus", "motif": "sans_photo"}], "ok": [[36.733919, 2.934435], [36.735078, 2.944764], [36.73493, 2.938398]]}], "intro": "Reprise 4 : 18 panneaux déjà enregistrés, mais sans photo ou avec un GPS faux. À chaque panneau : place-toi devant, vérifie que le GPS est précis à moins de 10 m, et prends deux photos, une de loin (25 à 40 m) et une de près sur la marque. Si le panneau n'existe plus, appuie sur « Introuvable ». Si tu vois un nouveau panneau en route, enregistre-le. Va par l'autoroute jusqu'à la commune la plus éloignée et reviens en faisant les points, ou l'inverse. En arrivant dans chaque commune, appuie sur « J'y suis ». Photos et questionnaire uniquement dans SensQuest. Quand la nuit commence à tomber, active le flash, mais évite de travailler à ce moment-là, et ne dépasse jamais 18 h 30."};
 const SUP = { abribus: "Abribus", facade_mur: "Façade / mur", panneau_4x3: "Panneau 4x3", unipole: "Unipole",
   terrasse: "Terrasse", sucette: "Sucette", autre: "Autre", ecran_led: "Écran LED", facade: "Façade" };
 const KEY = "dclick-v6-" + R.key;            // même origine pour toutes les pages : la clé distingue chaque tracé
@@ -289,7 +289,7 @@ function render() {
   if (R.remarks) { const rb = document.getElementById("remarks"); rb.hidden = false; document.getElementById("remsum").textContent = R.remarks.title; document.getElementById("remtxt").innerHTML = R.remarks.html; }
   const sb2 = document.getElementById("sound"); sb2.setAttribute("aria-pressed", String(state.sound)); sb2.textContent = state.sound ? "Son : ON" : "Son : OFF";
   const pb = document.getElementById("pause"); pb.setAttribute("aria-pressed", !!state.pauseOn);
-  pb.textContent = state.pauseOn ? `Kemmel (pause men ${clockOf(state.pauseOn)})` : "Pause (salat, makla)";
+  pb.textContent = state.pauseOn ? `Reprendre (pause depuis ${clockOf(state.pauseOn)})` : "Pause (prière, repas)";
   const pending = R.stops.filter(s => !closed(s));
   const closedRows = R.stops.length - pending.length;
   const donePanels = R.stops.filter(isDone).reduce((a, s) => a + s.panels.length, 0);
@@ -305,7 +305,7 @@ function render() {
     let url = "https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=" + pt(last);
     if (next.length > 1) url += "&waypoints=" + encodeURIComponent(next.slice(0, -1).map(pt).join("|")).replace(/%2C/g, ",");
     nav.href = url; nav.hidden = false;
-    nav.textContent = next.length > 1 ? `Roh : arrêts ${next[0].order} → ${last.order}` : `Roh : arrêt ${last.order}`;
+    nav.textContent = next.length > 1 ? `Itinéraire : arrêts ${next[0].order} → ${last.order}` : `Itinéraire : arrêt ${last.order}`;
   } else { nav.hidden = true; }
 
   // chrono, avance ou retard, distance au prochain arrêt
@@ -316,12 +316,12 @@ function render() {
     clock.textContent = `${hm(Math.max(0, el))} / ${hm(CAP)}`;
     const lastClosed = R.stops.filter(closed).pop();
     delta = lastClosed ? el - lastClosed.leave_min : 0;
-    const pace = Math.abs(delta) < 3 ? "rak f l'wa9t" : delta > 0 ? `<b class="late">rak m3attel b ${Math.round(delta)} min</b>` : `<b class="ahead">rak 9bel l'wa9t b ${Math.round(-delta)} min</b>`;
-    st.innerHTML = state.pauseOn ? `Pause men ${clockOf(state.pauseOn)} : l'chrono wa9ef.`
-      : `Bdit ${clockOf(state.start)} · tkemmel vers ${T(CAP)} · ${pace}.`;
+    const pace = Math.abs(delta) < 3 ? "dans les temps" : delta > 0 ? `<b class="late">en retard de ${Math.round(delta)} min</b>` : `<b class="ahead">en avance de ${Math.round(-delta)} min</b>`;
+    st.innerHTML = state.pauseOn ? `Pause depuis ${clockOf(state.pauseOn)} : le chrono est arrêté.`
+      : `Début ${clockOf(state.start)} · fin prévue vers ${T(CAP)} · ${pace}.`;
   } else {
     clock.textContent = hm(CAP);
-    st.textContent = `${hm(CAP)} khedma. L'chrono yebda ki tdir « Fait » f l'awel arrêt.`;
+    st.textContent = `${hm(CAP)} de travail. Le chrono démarre au premier « Fait ».`;
   }
   // rappel discret : plus de 5 min au-delà du temps prévu depuis la dernière action
   if (state.start && !state.pauseOn && pending[0]) {
@@ -330,18 +330,18 @@ function render() {
     const marge = pending[0].kind === "pass" ? 30 : 5;
     if (since > planned + marge && Date.now() - lastNag > 5 * 60000) {
       lastNag = Date.now(); beep("nag");
-      toast(pending[0].kind === "pass" ? `Fatet ${Math.round(since)} min f had l'secteur : kemmel l'arrêt li morah.`
-        : `Arrêt ${pending[0].order} : fatek l'wa9t b ${Math.round(since - planned)} min. Ma l9itouch ? « Introuvable » w kemmel.`);
+      toast(pending[0].kind === "pass" ? `Déjà ${Math.round(since)} min dans ce secteur : passe à l'arrêt suivant.`
+        : `Arrêt ${pending[0].order} : ${Math.round(since - planned)} min de dépassement. Pas trouvé ? Appuie sur « Introuvable » et continue.`);
     }
   }
   if (me && pending[0]) {
     const nx = R.stops.find(s => !closed(s) && s.kind === "stop");
     if (nx && dist(me, nx) < 150 && !state.near.includes(nx.order)) {
       state.near.push(nx.order); save(); beep("near");
-      toast(`Panneau sûr 9rib : ${fmtD(dist(me, nx))} (arrêt ${nx.order}). Chouf.`);
+      toast(`Panneau connu tout près : ${fmtD(dist(me, nx))} (arrêt ${nx.order}). Regarde bien.`);
     }
     const d = dist(me, pending[0]);
-    st.innerHTML += d < 60 ? ` <b class="ahead">Rak f l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} b3id ${fmtD(d)}.`;
+    st.innerHTML += d < 60 ? ` <b class="ahead">Tu es à l'arrêt ${pending[0].order}.</b>` : ` Arrêt ${pending[0].order} à ${fmtD(d)}.`;
   }
   // retard : proposer de sauter la fin du ratissage de la commune en cours
   const cur = pending[0];
@@ -350,11 +350,11 @@ function render() {
   if (!state.pauseOn && delta > LATE && restPass.length) {
     if (!lateBeeped) { lateBeeped = true; beep("late"); }
     late.classList.add("on");
-    late.innerHTML = `<b>Rak m3attel b ${Math.round(delta)} min.</b> Fout l'ratissage ta3 ${cur.commune}` +
-      (nextC ? ` w roh l ${nextC.commune} (arrêt ${nextC.order}).` : ".") + `<button type="button" id="skipnow">Passer et revenir après</button>`;
+    late.innerHTML = `<b>En retard de ${Math.round(delta)} min.</b> Arrête le ratissage de ${cur.commune}` +
+      (nextC ? ` et passe à ${nextC.commune} (arrêt ${nextC.order}).` : ".") + `<button type="button" id="skipnow">Passer et revenir après</button>`;
   } else {
     const back = R.stops.filter(s => isSkip(s) && s.kind === "stop" && R.stops.filter(x => x.commune === s.commune && !isSkip(x)).every(closed));
-    if (back.length) { late.classList.add("on"); late.innerHTML = `<b>Rja3 l ${back.length > 1 ? "les arrêts" : "l'arrêt"} ${back.map(s => s.order).join(", ")}</b> (${back[0].commune}) : khallitou « revenir après ».`; }
+    if (back.length) { late.classList.add("on"); late.innerHTML = `<b>Reviens ${back.length > 1 ? "aux arrêts" : "à l'arrêt"} ${back.map(s => s.order).join(", ")}</b> (${back[0].commune}) : tu les avais laissés pour plus tard.`; }
     else { late.classList.remove("on"); late.innerHTML = ""; }
   }
 
@@ -363,12 +363,12 @@ function render() {
     let head = "";
     if (s.day && (i === 0 || R.stops[i - 1].day !== s.day)) {
       const inC = R.stops.filter(x => x.day === s.day), dn = inC.filter(closed).length;
-      head = `<li class="dayh">${fill(s.day)}<br><small>${dn} / ${inC.length} kemmelt</small></li>`;
+      head = `<li class="dayh">${fill(s.day)}<br><small>${dn} / ${inC.length} faits</small></li>`;
     }
     const cls = [isDone(s) ? "done" : "", isAbs(s) ? "absent" : "", isSkip(s) ? "skipped" : "", s.order === firstPending ? "next" : "", s.kind === "pass" ? "pass" : ""].join(" ");
     const tag = isAbs(s) ? `<span class="tag abs">introuvable</span>` : isSkip(s) ? `<span class="tag skp">revenir après</span>` : "";
-    const second = (s.kind === "pass" ? "" : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · rja3" : "Introuvable"}</button>`)
-      + `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "Rja3t lih" : "Passer et revenir après"}</button>`;
+    const second = (s.kind === "pass" ? "" : `<button type="button" class="abs" data-a="abs" data-o="${s.order}">${isAbs(s) ? "Introuvable · annuler" : "Introuvable"}</button>`)
+      + `<button type="button" class="abs" data-a="skip" data-o="${s.order}">${isSkip(s) ? "J'y suis revenu" : "Passer et revenir après"}</button>`;
     return `${head}<li class="${cls}" id="s${s.order}">
       <div class="n">${s.order}</div>
       <div>
@@ -378,7 +378,7 @@ function render() {
       <div class="acts">
         <a href="https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(s)}" target="_blank" rel="noopener">Maps</a>
         ${second}
-        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · rja3" : "Fait"}</button>
+        <button type="button" class="ok" data-a="done" data-o="${s.order}">${isDone(s) ? "Fait · annuler" : "Fait"}</button>
       </div>
     </li>`;
   }).join("");
@@ -386,7 +386,7 @@ function render() {
   // nouveaux panneaux
   const nb = document.getElementById("newsbox");
   nb.hidden = !state.news.length;
-  document.getElementById("newssum").textContent = `Les panneaux jdad (${state.news.length})`;
+  document.getElementById("newssum").textContent = `Les nouveaux panneaux (${state.news.length})`;
   document.getElementById("news").innerHTML = state.news.map((n, i) =>
     `<li><span><b>${n.code || "N" + (i + 1)}</b> · ${clockOf(n.t)} · ±${Math.round(n.acc)} m · <a href="https://maps.google.com/?q=${n.lat.toFixed(6)},${n.lon.toFixed(6)}" target="_blank" rel="noopener">voir</a></span><button type="button" data-del="${i}">Retirer</button></li>`).join("");
 
@@ -418,11 +418,11 @@ function render() {
   if (finished && state.start) {
     if (!state.finishedAt) { state.finishedAt = Date.now(); save(); beep("near"); }
     sn.className = "alert on fin";
-    sn.innerHTML = `<b>Kemmelt l'tracé, saha !</b> Ab3at l'bilan daba.<a href="${link}" target="_blank" rel="noopener" data-sent="fin">Ab3at l'bilan</a>`;
+    sn.innerHTML = `<b>Tracé terminé, bravo.</b> Envoie le bilan maintenant.<a href="${link}" target="_blank" rel="noopener" data-sent="fin">Envoyer le bilan</a>`;
   } else if (communeDone || hourly) {
     sn.className = "alert on";
-    sn.innerHTML = (communeDone ? `<b>Kemmelt ${lastC.commune}.</b> ` : "<b>Fatet sa3a.</b> ") +
-      `Ab3at l'avancement f WhatsApp.<a href="${link}" target="_blank" rel="noopener" data-sent="${communeDone ? lastC.commune : "heure"}">Ab3at l'avancement</a>`;
+    sn.innerHTML = (communeDone ? `<b>${lastC.commune} terminée.</b> ` : "<b>Une heure est passée.</b> ") +
+      `Envoie l'avancement sur WhatsApp.<a href="${link}" target="_blank" rel="noopener" data-sent="${communeDone ? lastC.commune : "heure"}">Envoyer l'avancement</a>`;
     if (render.nagKey !== (communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000))) {
       render.nagKey = communeDone ? lastC.commune : "h" + Math.floor((Date.now() - state.start) / 3600000); beep("nag");
     }
@@ -440,7 +440,7 @@ document.addEventListener("click", e => {
       e.preventDefault();
       navigator.share({ text: window.BILAN }).catch(() => { window.open(sent.href, "_blank"); });
     } else if (window.BILAN.length > 1500 && navigator.clipboard) {
-      navigator.clipboard.writeText(window.BILAN).then(() => toast("L'bilan kamel tna9el : colli f WhatsApp."), () => {});
+      navigator.clipboard.writeText(window.BILAN).then(() => toast("Bilan complet copié : colle-le dans WhatsApp."), () => {});
     }
   }
   if (sent) {
@@ -451,13 +451,13 @@ document.addEventListener("click", e => {
     save(); setTimeout(render, 500); ping(); return;
   }
   const c = e.target.closest("button[data-c]");
-  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`L'code ${c.dataset.c} tna9el : 7ottou f « Remarque » f SensQuest.`), () => toast(c.dataset.c)); return; }
+  if (c) { navigator.clipboard && navigator.clipboard.writeText(c.dataset.c).then(() => toast(`Code ${c.dataset.c} copié : colle-le dans « Remarque » sur SensQuest.`), () => toast(c.dataset.c)); return; }
   const d = e.target.closest("button[data-del]");
   if (d) { if (confirm("Retirer ce nouveau panneau de ta liste ?")) { state.news.splice(Number(d.dataset.del), 1); save(); render(); } return; }
   if (e.target.id === "skipnow") {
     const cur = R.stops.find(s => !closed(s));
     R.stops.filter(s => !closed(s) && s.commune === cur.commune && s.kind === "pass").forEach(s => state.skipped.push(s.order));
-    save(); render(); ping(); toast("Passé. Kemmel l'arrêt li morah."); return;
+    save(); render(); ping(); toast("Passé. Continue à l'arrêt suivant."); return;
   }
   const b = e.target.closest("button[data-a]");
   if (!b) return;
@@ -474,8 +474,8 @@ document.addEventListener("click", e => {
 
 document.getElementById("sound").addEventListener("click", () => { state.sound = !state.sound; save(); render(); if (state.sound) beep("near"); });
 document.getElementById("pause").addEventListener("click", () => {
-  if (state.pauseOn) { state.pauses.push([state.pauseOn, Date.now()]); state.pauseOn = null; toast("Rja3t : les heures tzad b la pause."); }
-  else { state.pauseOn = Date.now(); toast("Pause : l'chrono wa9ef."); }
+  if (state.pauseOn) { state.pauses.push([state.pauseOn, Date.now()]); state.pauseOn = null; toast("Reprise : la fin prévue est décalée de la durée de la pause."); }
+  else { state.pauseOn = Date.now(); toast("Pause : le chrono est arrêté."); }
   save(); render(); ping();
 });
 let lock = null;
@@ -485,13 +485,13 @@ async function wake(on) {
     if (on) { lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => { if (!document.hidden) b.setAttribute("aria-pressed", "false"); }); }
     else if (lock) { await lock.release(); lock = null; }
     b.setAttribute("aria-pressed", String(!!on));
-  } catch (e) { toast("Had l'telephone ma ykhallich l'écran cha3el."); }
+  } catch (e) { toast("Ce téléphone ne permet pas de garder l'écran allumé."); }
 }
 document.getElementById("wake").addEventListener("click", e => wake(e.currentTarget.getAttribute("aria-pressed") !== "true"));
 document.addEventListener("visibilitychange", () => { if (!document.hidden && document.getElementById("wake").getAttribute("aria-pressed") === "true") wake(true); });
 function locateOnce(cb) {
-  if (!navigator.geolocation) { toast("Had l'telephone ma y3tich la position."); return; }
-  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("La position mamnou3a : 7ell la localisation l had l'site."),
+  if (!navigator.geolocation) { toast("Ce téléphone ne donne pas sa position."); return; }
+  navigator.geolocation.getCurrentPosition(p => cb(p.coords), () => toast("Position refusée : autorise la localisation pour ce site."),
     { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
 }
 function follow() {
@@ -499,14 +499,14 @@ function follow() {
   watchId = navigator.geolocation.watchPosition(p => { me = { lat: p.coords.latitude, lon: p.coords.longitude, acc: p.coords.accuracy, t: Date.now() }; drawMe(); if (Date.now() - (follow.t || 0) > 15000) { follow.t = Date.now(); render(); } }, () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
 }
 document.getElementById("newbtn").addEventListener("click", () => {
-  toast("Rani nakhod la position…");
+  toast("Recherche de la position…");
   locateOnce(c => {
     state.nextNew = (state.nextNew || 0) + 1;   // jamais réutilisé, même si un nouveau est retiré : le code déjà saisi dans SensQuest reste juste
     const code = R.id + "-" + String(R.n_panels + state.nextNew).padStart(2, "0");
     state.news.push({ lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now(), code });
     save(); follow(); render(); ping();
     try { navigator.clipboard.writeText("NOUVEAU " + code); } catch (e) {}
-    toast(`Code ${code} (±${Math.round(c.accuracy)} m), tna9el. Aktab « NOUVEAU ${code} » f SensQuest.`);
+    toast(`Code ${code} (±${Math.round(c.accuracy)} m) copié. Écris « NOUVEAU ${code} » dans SensQuest.`);
   });
 });
 
@@ -561,21 +561,21 @@ document.getElementById("mapbox").addEventListener("toggle", e => {
   if (typeof L !== "undefined") { showMap(); return; }
   const sc = document.createElement("script"); sc.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
   sc.onload = showMap;
-  sc.onerror = () => { document.getElementById("map").textContent = "La carte ma temchich bla réseau. Khdem b « Maps »."; };
+  sc.onerror = () => { document.getElementById("map").textContent = "La carte ne fonctionne pas sans réseau. Utilise les boutons « Maps »."; };
   document.head.appendChild(sc);
 });
 document.getElementById("locate").addEventListener("click", () => withMap(() => {
   if (me && Date.now() - (me.t || 0) < 60000) { drawMe(); map.setView([me.lat, me.lon], 16); }
-  else toast("Rani nakhod la position…");
+  else toast("Recherche de la position…");
   locateOnce(c => {
     me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() }; follow(); drawMe();
     map.setView([me.lat, me.lon], 16);
-    if (c.accuracy > 50) toast(`La position machi dkika (±${Math.round(c.accuracy)} m) : khrej l'berra wela stenna chwiya.`);
+    if (c.accuracy > 50) toast(`Position imprécise (±${Math.round(c.accuracy)} m) : mets-toi à découvert ou attends un peu.`);
   });
 }));
 document.getElementById("gonext").addEventListener("click", () => withMap(() => {
   const nx = R.stops.find(s => !closed(s));
-  if (!nx) { toast("Kemmelt kolchi."); return; }
+  if (!nx) { toast("Tout est terminé."); return; }
   map.setView([nx.lat, nx.lon], 16); toast(`Arrêt ${nx.order} · ${nx.commune}`);
 }));
 document.getElementById("fit").addEventListener("click", () => withMap(() => map.fitBounds(allBounds(), { padding: [24, 24] })));
@@ -585,10 +585,10 @@ document.getElementById("fit").addEventListener("click", () => withMap(() => map
   if (!/; wv\)|WhatsApp|FBAN|FBAV|Instagram|Snapchat/i.test(ua)) return;
   const b = document.createElement("div");
   b.className = "alert on";
-  const t = document.createElement("b"); t.textContent = "Ftah had l'page f Chrome.";
+  const t = document.createElement("b"); t.textContent = "Ouvre cette page dans Chrome.";
   const a = document.createElement("a");
   a.href = "intent://" + location.host + location.pathname + "#Intent;scheme=https;package=com.android.chrome;end";
-  a.textContent = "Ftah f Chrome";
+  a.textContent = "Ouvrir dans Chrome";
   b.append(t, " F WhatsApp, l'avancement yrouh ki tji l'appel. ", a);
   document.body.prepend(b);
 })();
@@ -599,8 +599,8 @@ const started = () => new Set(R.stops.map(s => s.commune));
 function communesLeft() { const st = started(); return R.communes.filter(c => !st.has(c.name)).map(c => c.name); }
 const minD = (p, pts) => pts.reduce((m, q) => Math.min(m, dist(p, q)), Infinity);
 const gap = (a, b) => C[a].targets.reduce((m, p) => Math.min(m, minD(p, C[b].targets)), Infinity);
-const RAT = 200;   // ~12 km/h en ratissant rue par rue
-const estMin = c => Math.round(C[c].route ? C[c].route_km * 1000 / RAT + C[c].targets.length * SVC : C[c].targets.length * (SVC + 3));
+const RAT = 200;   // ~12 km/h en ratissant rue par rue ; 15 km/h sur les axes (C[c].rat)
+const estMin = c => Math.round(C[c].route ? C[c].route_km * 1000 / (C[c].rat || RAT) + C[c].targets.length * SVC : C[c].targets.length * (SVC + 3));
 function geomPts() { return R.stops.map(s => [s.lat, s.lon]); }
 function allBounds() {
   const pts = R.communes.flatMap(c => c.targets.map(p => [p.lat, p.lon]).concat(c.ok));
@@ -643,7 +643,7 @@ function groups(pts) {
 function plan(name, here) {
   const others = communesLeft().filter(c => c !== name);
   const pts = groups(C[name].targets);
-  if (!pts.length) { toast(`Makach panneaux f ${name}.`); return; }
+  if (!pts.length) { toast(`Aucun panneau à ${name}.`); return; }
   const entry = pts.reduce((b, p) => dist(here, p) < dist(here, b) ? p : b);
   const nextC = others.length ? others.reduce((b, c) => gap(name, c) < gap(name, b) ? c : b) : null;
   const cand = pts.filter(p => p !== entry);
@@ -658,31 +658,31 @@ function plan(name, here) {
   const k = started().size + 1;
   const g = p => `<a href="https://maps.google.com/?q=${p.lat.toFixed(6)},${p.lon.toFixed(6)}" target="_blank" rel="noopener">${p.panels[0].ref}</a>`;
   const head = byRoute
-    ? `${k}. ${name} · ${order.length} panneaux · ${C[name].route_km} km de rues<br><small>Tba3 l'khatt l'bortoqali : ydour 3la ga3 les rues. Tebda men ${g(order[0])} w tkemmel f ${g(order[order.length - 1])}.</small>`
-    : `${k}. ${name} · ${order.length} arrêts<br><small>Dkhol men ${g(entry)}` + (exit ? ` ou okhraj men ${g(exit)} l ${nextC}` : "") + "</small>";
+    ? `${k}. ${name} · ${order.length} panneaux · ${C[name].route_km} km de parcours<br><small>Suis le trait orange : il passe par toutes les rues prévues. Départ ${g(order[0])}, fin ${g(order[order.length - 1])}.</small>`
+    : `${k}. ${name} · ${order.length} arrêts<br><small>Entrée ${g(entry)}` + (exit ? `, sortie ${g(exit)} vers ${nextC}` : "") + "</small>";
   order.forEach(p => {
-    const arrive = t + (byRoute && prev.panels ? Math.abs(rk(p) - rk(prev)) / RAT : dist(prev, p) * DETOUR / M_PER_MIN), svc = SVC * p.panels.length;
+    const arrive = t + (byRoute && prev.panels ? Math.abs(rk(p) - rk(prev)) / (C[name].rat || RAT) : dist(prev, p) * DETOUR / M_PER_MIN), svc = SVC * p.panels.length;
     R.stops.push({ order: ++n, lat: p.lat, lon: p.lon, svc, arrive_min: arrive, leave_min: arrive + svc, kind: "stop", commune: name, day: head,
-      note: p === entry ? "Entrée" : p === exit ? `Sortie vers ${nextC}` : MOTIF[p.panels[0].motif] || "",
-      panels: p.panels.map(x => ({ ref: x.ref, support: x.support, label: (MOTIF[x.motif] || "") + (x.label ? " · " + x.label : "") })) });
+      note: [!byRoute && p === entry ? "Entrée" : !byRoute && p === exit ? `Sortie vers ${nextC}` : "", MOTIF[p.panels[0].motif] || ""].filter(Boolean).join(" · "),
+      panels: p.panels.map(x => ({ ref: x.ref, support: x.support, label: x.label && x.label !== SUP[x.support] ? x.label : "" })) });
     t = arrive + svc; prev = p;
   });
   save(); render(); ping();
-  toast(`${name} : ${order.length} arrêts, tebda b ${order[0].panels[0].ref}.`);
+  toast(`${name} : ${order.length} arrêts, premier : ${order[0].panels[0].ref}.`);
   const first = R.stops.find(s => s.commune === name);
   document.getElementById("s" + first.order).scrollIntoView({ behavior: "smooth", block: "center" });
 }
-const MOTIF = { jamais_vu: "Jamais tsawer", sans_photo: "Makach tsawer", gps_faux: "GPS ghalet, verifiyi l'blasa" };
+const MOTIF = { jamais_vu: "Jamais photographié", sans_photo: "Sans photo", gps_faux: "GPS faux, vérifier l'emplacement" };
 function arrive(forced) {
   // Le suivi GPS (follow) tient déjà une position fraîche : une 2e demande peut ne jamais revenir pendant qu'il tourne.
   if (me && Date.now() - me.t < 30000 && me.acc < 100) { arriveAt({ lat: me.lat, lon: me.lon }, forced); return; }
-  toast("Rani nakhod la position…");
+  toast("Recherche de la position…");
   locateOnce(c => { me = { lat: c.latitude, lon: c.longitude, acc: c.accuracy, t: Date.now() }; follow(); arriveAt({ lat: me.lat, lon: me.lon }, forced); });
 }
 function arriveAt(here, forced) {
   {
     const left = communesLeft();
-    if (!left.length) { toast("Kemmelt ga3 les communes."); return; }
+    if (!left.length) { toast("Toutes les communes sont terminées."); return; }
     const name = forced || left.reduce((b, x) => minD(here, C[x].targets) < minD(here, C[b].targets) ? x : b);
     plan(name, here);
   }
@@ -691,13 +691,13 @@ function renderCommunes(pending) {
   const st = started(), cur = pending[0] && pending[0].commune;
   const ab = document.getElementById("arrive"), left = communesLeft();
   ab.hidden = !!pending.length || !left.length || (!!state.start && elapsed() >= CAP);
-  ab.textContent = R.stops.length ? "Wselt l la commune jaya : a3tini l'tracé" : "Wselt : a3tini l'tracé";
+  ab.textContent = R.stops.length ? "Arrivé à la commune suivante : afficher le tracé" : "J'y suis : afficher le tracé";
   document.getElementById("communes").innerHTML = R.communes.map(c => {
     const all = R.stops.filter(s => s.commune === c.name), dn = all.filter(closed).length;
     const cls = c.name === cur ? "cur" : st.has(c.name) && dn === all.length ? "fin" : "";
-    const info = st.has(c.name) ? `${dn} / ${all.length} arrêts kemmelt` : `${c.targets.length} panneaux · ~${hm(estMin(c.name))}` + (c.ok.length ? ` · ${c.ok.length} deja mlah` : "");
+    const info = st.has(c.name) ? `${dn} / ${all.length} arrêts faits` : `${c.targets.length} panneaux · ~${hm(estMin(c.name))}` + (c.ok.length ? ` · ${c.ok.length} déjà faits` : "");
     return `<li class="${cls}"><div><b>${c.name}</b><small>${info}</small></div>` +
-      (st.has(c.name) ? "" : `<button type="button" data-go="${c.name}">Wselt hna</button>`) + "</li>";
+      (st.has(c.name) ? "" : `<button type="button" data-go="${c.name}">J'y suis</button>`) + "</li>";
   }).join("");
 }
 document.getElementById("arrive").addEventListener("click", () => arrive(null));
