@@ -585,9 +585,11 @@ document.getElementById("fit").addEventListener("click", () => withMap(() => map
   if (!/; wv\)|WhatsApp|FBAN|FBAV|Instagram|Snapchat/i.test(ua)) return;
   const b = document.createElement("div");
   b.className = "alert on";
-  const url = location.href.replace(/^https?:\/\//, "");
-  b.innerHTML = "<b>Ftah had l'page f Chrome.</b> F WhatsApp, l'avancement yrouh ki tji l'appel. " +
-    `<a href="intent://${url}#Intent;scheme=https;package=com.android.chrome;end">Ftah f Chrome</a>`;
+  const t = document.createElement("b"); t.textContent = "Ftah had l'page f Chrome.";
+  const a = document.createElement("a");
+  a.href = "intent://" + location.host + location.pathname + "#Intent;scheme=https;package=com.android.chrome;end";
+  a.textContent = "Ftah f Chrome";
+  b.append(t, " F WhatsApp, l'avancement yrouh ki tji l'appel. ", a);
   document.body.prepend(b);
 })();
 // --- Ratissage dynamique par commune ---------------------------------------------------------
